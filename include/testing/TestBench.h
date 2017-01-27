@@ -194,6 +194,25 @@
                 { BTC_Record(#EXP1, tb::TestResult::PASSED, "Code did not produce any exceptions"); } \
             } while (false)
 
+#define TC_CheckConstexprEqual(EXP1, EXP2) \
+            do { \
+                constexpr decltype(EXP1) temp1{EXP1}; \
+                constexpr decltype(EXP2) temp2{EXP2}; \
+                if (temp1 == temp2) \
+                { BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
+                else \
+                { BTC_Record(#EXP1 " != " #EXP2, tb::TestResult::FAILED, temp1 << " != " << temp2); } \
+            } while (false)
+
+#define TC_CheckConstexpr(EXP) \
+            do { \
+                constexpr decltype(EXP) temp{EXP}; \
+                if (temp) \
+                { BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
+                else \
+                { BTC_Record(#EXP, tb::TestResult::FAILED, "\"" << #EXP << "\" is not true"); } \
+            } while (false)
+
 #define TC_Require(EXP) \
             do { \
                 decltype(EXP) temp{EXP}; \
@@ -220,6 +239,25 @@
                 { BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
                 else \
                 { BTC_ThrowRecord(#EXP1 " != " #EXP2, tb::TestResult::CRIT_FAILED, temp1 << " != " << temp2); } \
+            } while (false)
+
+#define TC_RequireConstexprEqual(EXP1, EXP2) \
+            do { \
+                constexpr decltype(EXP1) temp1{EXP1}; \
+                constexpr decltype(EXP2) temp2{EXP2}; \
+                if (temp1 == temp2) \
+                { BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
+                else \
+                { BTC_ThrowRecord(#EXP1 " != " #EXP2, tb::TestResult::CRIT_FAILED, temp1 << " != " << temp2); } \
+            } while (false)
+
+#define TC_RequireConstexpr(EXP) \
+            do { \
+                constexpr decltype(EXP) temp{EXP}; \
+                if (temp) \
+                { BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
+                else \
+                { BTC_ThrowRecord(#EXP, tb::TestResult::CRIT_FAILED, "\"" << #EXP << "\" is not true, exiting case"); } \
             } while (false)
 
 #define TC_RequireException(EXP1, EXCEPTION_TYPE) \

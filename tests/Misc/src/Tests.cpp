@@ -13,7 +13,7 @@ public:
     template <typename ClassT>
     static constexpr u64 getId()
     { return mId<ClassT>; }
-//private:
+private:
     template <typename ClassT>
     struct Tag
     {
@@ -55,6 +55,7 @@ public:
         { return val; }
 
         //static_assert(sizeof(SpecHolder<0>));
+        /*
         static_assert(sizeof(mark<0>()));
         static_assert(noexcept(cId(Flag<0>{})));
         static_assert(sizeof(mark<1>()));
@@ -64,6 +65,7 @@ public:
             static_assert(sizeof(mark<2>()));
             static_assert(noexcept(cId(Flag<2>{})));
         } t;
+         */
 
         /*
         template <u64 N>
@@ -123,6 +125,53 @@ public:
 protected:
 };
 
+/*
+template <typename A>
+class ClassA
+{
+public:
+    class ClassB
+    {
+    public:
+        template <typename T>
+        static constexpr u64 a{0};
+    };
+
+    static constexpr auto oc{ClassB::template a<ClassB>};
+    static constexpr auto c{&ClassB::template a<int> - &ClassB::template a<ClassB>};
+    //static constexpr u64 c{&ClassB::template a<int> - &ClassB::template a<double>};
+};
+ */
+
+/*
+template <typename A>
+class MemberOrderTest
+{
+public:
+    template <typename B>
+    class Order
+    {
+    public:
+        template <typename T>
+        static u8 beg;
+        template <typename T>
+        static u8 pos;
+    };
+
+    template <typename T>
+    static constexpr auto val{&Order<A>::pos<T>};
+private:
+protected:
+};
+
+template <typename T>
+u8 MemberOrderTest::Order::pos<T>{0};
+
+template <typename T>
+u8 MemberOrderTest::Order::beg<T>{0};
+ */
+
+/*
 template <u64 N>
 struct flag {
     friend constexpr u64 adl_flag(flag<N>);
@@ -155,6 +204,7 @@ template <u64 N = 1>
 constexpr u64 next(u64 R = writer<reader(0, flag<32> {}) + N>::value) {
     return R;
 }
+ */
 
 TU_Begin(MiscUnit)
 
@@ -173,30 +223,19 @@ TU_Begin(MiscUnit)
         using Gen1 = ClassIdGenerator<int>;
         using Gen2 = ClassIdGenerator<double>;
 
-        std::cout << next() << " ";
-        std::cout << next() << " ";
-        std::cout << next() << " ";
-        std::cout << next() << " ";
-        std::cout << std::endl;
+        // Generator 1
+        TC_RequireConstexpr(Gen1::getId<int>() == 0);
+        TC_RequireConstexpr(Gen1::getId<double>() == 1);
+        TC_RequireConstexpr(Gen1::getId<float>() == 2);
+        TC_RequireConstexpr(Gen1::getId<long>() == 3);
+        TC_RequireConstexpr(Gen1::getId<int>() == 0);
 
-        std::cout << "Generator 1: ";
-        std::cout << Gen1::getId<int>() << " ";
-        std::cout << Gen1::getId<double>() << " ";
-        std::cout << Gen1::getId<float>() << " ";
-        std::cout << Gen1::getId<long>() << " ";
-        std::cout << Gen1::getId<int>() << " ";
-        std::cout << Gen1::ClassIdHolder::next() << " ";
-        std::cout << Gen1::ClassIdHolder::next() << " ";
-        Gen1::ClassIdHolder::fun();
-        std::cout << std::endl;
-
-        std::cout << "Generator 2: ";
-        std::cout << Gen2::getId<int>() << " ";
-        std::cout << Gen2::getId<double>() << " ";
-        std::cout << Gen2::getId<float>() << " ";
-        std::cout << Gen2::getId<long>() << " ";
-        std::cout << Gen2::getId<int>() << " ";
-        std::cout << std::endl;
+        // Generator 2
+        TC_RequireConstexpr(Gen2::getId<double>() == 0);
+        TC_RequireConstexpr(Gen2::getId<int>() == 1);
+        TC_RequireConstexpr(Gen2::getId<float>() == 2);
+        TC_RequireConstexpr(Gen2::getId<long>() == 3);
+        TC_RequireConstexpr(Gen2::getId<double>() == 0);
     }
 
 TU_End(MiscUnit)
