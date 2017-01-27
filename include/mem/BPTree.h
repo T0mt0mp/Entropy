@@ -542,6 +542,7 @@ namespace mem
         /**
          * Remove the first element under given key.
          * @param key The key of the element.
+         * @return Returns true, if the element has been removed.
          */
         bool remove(const KeyT &key);
 

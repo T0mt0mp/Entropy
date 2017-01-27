@@ -1230,49 +1230,49 @@ namespace tst {
 
                 for (u64 iii = 0; iii < 1000000; ++iii)
                 {
-                    PROF_SCOPE(CSBP_Insert1M);
+                    PROF_SCOPE("CSBP_Insert1M");
                     newTree.insert(iii, iii);
                 }
 
                 {
-                    PROF_SCOPE(CSBP_Verify);
+                    PROF_SCOPE("CSBP_Verify");
                     newTree.verify();
                 }
 
                 for (u64 iii = 0; iii < 1000000; ++iii)
                 {
-                    PROF_SCOPE(CSBP_Search1M);
+                    PROF_SCOPE("CSBP_Search1M");
                     newTree.search(iii);
                 }
 
                 for (u64 iii = 0; iii < 1000000; ++iii)
                 {
                     u64 randNum{std::rand() % 1000000};
-                    PROF_SCOPE(CSBP_RandomSearch1M);
+                    PROF_SCOPE("CSBP_RandomSearch1M");
                     newTree.search(randNum);
                 }
 
                 u64 jumpyIndex{0};
                 while (jumpyIndex < 1000000)
                 {
-                    PROF_SCOPE(CSBP_JumpySearch);
+                    PROF_SCOPE("CSBP_JumpySearch");
                     newTree.search(jumpyIndex);
                     jumpyIndex += std::rand() % 8;
                 }
 
                 {
-                    PROF_SCOPE(CSBP_Verify);
+                    PROF_SCOPE("CSBP_Verify");
                     newTree.verify();
                 }
 
                 for (u64 iii = 0; iii < 1000000; ++iii)
                 {
-                    PROF_SCOPE(CSBP_Remove1M);
+                    PROF_SCOPE("CSBP_Remove1M");
                     newTree.remove(iii);
                 }
 
                 {
-                    PROF_SCOPE(CSBP_Verify);
+                    PROF_SCOPE("CSBP_Verify");
                     newTree.verify();
                 }
 

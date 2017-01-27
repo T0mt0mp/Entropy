@@ -28,6 +28,7 @@ namespace tb
     {
         PASSED,
         FAILED,
+        CRIT_FAILED,
         EXCEPTION,
         UNK
     };
@@ -55,15 +56,42 @@ namespace tb
 
         /**
          * Convert TestResult to C-string.
+         * @param result Result to convert.
          * @return Text representation of the result.
          */
         static const char *resultToStr(TestResult result);
 
         /**
+         * Convert TestResult to C-string. Short version.
+         * @param result Result to convert.
+         * @return Text representation of the result.
+         */
+        static const char *resultToStrShort(TestResult result);
+
+        /**
          * Should this record be printed?
          * @return Returns true, if this record should be printed.
          */
-        bool shouldBePrinted();
+        bool shouldBePrinted() const
+        { return mResult != TestResult::PASSED; }
+
+        /**
+         * Should this record count as exception escaped?
+         */
+        bool exceptionEscaped() const
+        { return mResult == TestResult::EXCEPTION; }
+
+        /**
+         * Should this record count to the passed tests?
+         */
+        bool passed() const
+        { return mResult == TestResult::PASSED; }
+
+        /**
+         * Should this record count to the failed tests?
+         */
+        bool failed() const
+        { return mResult != TestResult::PASSED; }
 
         friend std::ostream &operator<<(std::ostream &out,
                                         const TestRecord &tr);
@@ -84,11 +112,90 @@ namespace tb
     };
 
     /**
+     * Wrapper object around results from a single test case.
+     */
+    class TestCase
+    {
+    public:
+        /**
+         * @param name
+         * @param description
+         */
+        TestCase(const char *name, const char *description);
+
+        /**
+         * Record a new result.
+         * @param record Record entry.
+         */
+        void record(TestRecord &&record);
+
+        /**
+         * Print information about this test case.
+         * @param out Output stream.
+         */
+        void printInfo(std::ostream &out) const;
+    private:
+        /// How many exceptions escaped from testing function.
+        u32 mExceptionsEscaped{0};
+        /// Number of test assertions.
+        u32 mNumTests{0};
+        /// Number of successful test assertions.
+        u32 mNumPassed{0};
+        /// Number of failed test assertions.
+        u32 mNumFailed{0};
+        /// Name of this test case.
+        const char *mName;
+        /// Description of this test case.
+        const char *mDescription;
+        /// List of recorded entries for this test case.
+        std::vector<TestRecord> mRecords;
+    protected:
+    };
+
+    /**
      * Contains statistics about a single TestUnit run.
      */
     class TestRun
     {
     public:
+        /**
+         * Enter a new test case.
+         * @param testCase The test case object.
+         */
+        void enterTestCase(TestCase &&testCase);
+
+        /**
+         * Record a new result.
+         * Test case has to be entered first!
+         * @param record Record entry.
+         */
+        void record(TestRecord &&record);
+
+        /**
+         * Print information about this test run.
+         * @param out Output stream.
+         */
+        void printInfo(std::ostream &out) const;
+
+        /**
+         * Did all the tests succeed?
+         * @return Returns true, if all tests succeeded.
+         */
+        bool passed() const
+        { return mNumPassed >= mNumTests; }
+
+        u32 getExceptionsEscaped() const
+        { return mExceptionsEscaped; }
+
+        u32 getNumTests() const
+        { return mNumTests; }
+
+        u32 getNumPassed() const
+        { return mNumPassed; }
+
+        u32 getNumFailed() const
+        { return mNumFailed; }
+    private:
         /// How many exceptions escaped from testing functions.
         u32 mExceptionsEscaped{0};
         /// Number of test assertions.
@@ -97,20 +204,9 @@ namespace tb
         u32 mNumPassed{0};
         /// Number of failed test assertions.
         u32 mNumFailed{0};
-        /// List of recorded test assertions.
-        std::vector<TestRecord> mRecords;
-    private:
+        /// List of test cases.
+        std::vector<TestCase> mTestCases;
     protected:
-    };
-
-    enum class TestStatus
-    {
-        BEFORE_SETUP,
-        FAILED_SETUP,
-        RUNNABLE,
-        BEFORE_TEARDOWN,
-        FAILED_TEARDOWN,
-        UNK
     };
 
     /**
@@ -130,55 +226,28 @@ namespace tb
         { }
 
         /**
-         * Setup function, ran only once - at the start.
-         * Implemented by the test writer, should set all
-         * required "global" variables.
-         * May also contain testing macros.
+         * Are all test runs of this Unit finished?
+         * @return Returns true, if all runs were finished.
          */
-        virtual void setUp() = 0;
+        bool allFinished() const
+        { return mNumRan >= mNumRuns; }
 
         /**
-         * Teardown function, ran only once - at the end.
-         * Implemented by the test writer, should clean up
-         * everything done by the test.
-         * May also contain testing macros.
+         * Did any of the tests failed?
+         * @return Returns true, if any of the tests failed.
          */
-        virtual void tearDown() = 0;
-
-        /**
-         * Main test function, may be ran multiple times.
-         * Contains testing macros.
-         */
-        virtual void testMain() = 0;
-
-        /**
-         * Record a test result.
-         * @param code Code executed in the test.
-         * @param result Result of the test.
-         * @param file Name of the file, where the record was taken.
-         * @param line Line of code, where the record was taken.
-         * @param function Name of the function of the record.
-         * @param text Optional text.
-         */
-        void record(const char *code,
-                    TestResult result,
-                    const char *file,
-                    u64 line,
-                    const char *function,
-                    std::string text);
+        bool anyFailed() const
+        {
+            for (const TestRun &tr : mRuns)
+            {
+                if (!tr.passed())
+                    return true;
+            }
+            return false;
+        }
     private:
         friend class TestBed;
-        /**
-         * Wrapper method for the setUp method.
-         * Called by the TestBed before running this test.
-         */
-        void unitSetUp();
-
-        /**
-         * Wrapper method for the TearDown method.
-         * Called by the TestBed after running the test.
-         */
-        void unitTearDown();
+        friend class TestHolder;
 
         /**
          * Wrapper method for the testMain method.
@@ -198,16 +267,10 @@ namespace tb
         void reset();
 
         /**
-         * Get status of this TestUnit.
-         * @return Status of this TestUnit.
-         */
-        TestStatus getStatus();
-
-        /**
          * Attempt to run this test.
          * @return Returns false, if everything went ok.
          */
-        i8 run();
+        bool run();
 
         /**
          * Create new statistics object on the stack.
@@ -227,12 +290,61 @@ namespace tb
         u32 mNumRuns{0};
         /// How many times has this test been run.
         u32 mNumRan{0};
-        /// State of this test.
-        TestStatus mStatus{TestStatus::UNK};
 
         /// Test statistics.
         std::vector<TestRun> mRuns;
     protected:
+        /**
+         * Setup function, ran only once - at the start.
+         * Implemented by the test writer, should set all
+         * required "global" variables.
+         * May also contain testing macros.
+         */
+        virtual void setUp() {};
+
+        /**
+         * Teardown function, ran only once - at the end.
+         * Implemented by the test writer, should clean up
+         * everything done by the test.
+         * May also contain testing macros.
+         */
+        virtual void tearDown() {};
+
+        /**
+         * Main test function, may be ran multiple times.
+         * Contains testing macros.
+         */
+        virtual void testMain() = 0;
+
+        /**
+         * Record a test result.
+         * @param code Code executed in the test.
+         * @param result Result of the test.
+         * @param file Name of the file, where the record was taken.
+         * @param line Line of code, where the record was taken.
+         * @param function Name of the function of the record.
+         * @param text Optional text.
+         */
+        void _record(const char *code,
+                     TestResult result,
+                     const char *file,
+                     u64 line,
+                     const char *function,
+                     std::string text);
+
+        /**
+         * Add prepared record.
+         * @param record Adding this record.
+         */
+        void _record(TestRecord &record);
+
+        /**
+         * Enter a new test case.
+         * @param name Name of the test case.
+         * @param description Description string.
+         */
+        void _enterTestCase(const char *name,
+                            const char *description);
     };
 }
 

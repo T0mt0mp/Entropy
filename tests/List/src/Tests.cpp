@@ -491,7 +491,7 @@ namespace tst {
             static constexpr u64 sampleSize{1000000};
             using ElementT = std::string;
 
-            PROF_BLOCK(vec_push_out);
+            PROF_BLOCK("vec_push_out");
 
             std::vector<ElementT> profVecPush;
 
@@ -502,7 +502,7 @@ namespace tst {
 
             PROF_BLOCK_END();
 
-            PROF_BLOCK(vec_emplace_out);
+            PROF_BLOCK("vec_emplace_out");
 
             std::vector<ElementT> profVecEmplace;
 
@@ -513,7 +513,7 @@ namespace tst {
 
             PROF_BLOCK_END();
 
-            PROF_BLOCK(list_push_out);
+            PROF_BLOCK("list_push_out");
 
             mem::List<ElementT> profListPush;
 
@@ -524,7 +524,7 @@ namespace tst {
 
             PROF_BLOCK_END();
 
-            PROF_BLOCK(list_emplace_out);
+            PROF_BLOCK("list_emplace_out");
 
             mem::List<ElementT> profListEmplace;
 
@@ -535,7 +535,7 @@ namespace tst {
 
             PROF_BLOCK_END();
 
-            PROF_BLOCK(list_iter);
+            PROF_BLOCK("list_iter");
 
             for (const auto &el : profListPush)
             {
@@ -544,7 +544,7 @@ namespace tst {
 
             PROF_BLOCK_END();
 
-            PROF_BLOCK(vector_iter);
+            PROF_BLOCK("vector_iter");
 
             for (const auto &el : profVecPush)
             {
@@ -559,7 +559,7 @@ namespace tst {
                 TC_AssertTrue(profListPush[iii] == profVecPush[iii]);
             }
 
-            PROF_BLOCK(list_pop);
+            PROF_BLOCK("list_pop");
 
             while (!profListPush.empty())
             {
@@ -570,7 +570,7 @@ namespace tst {
 
             PROF_BLOCK_END();
 
-            PROF_BLOCK(vec_pop);
+            PROF_BLOCK("vec_pop");
 
             while (!profVecPush.empty())
             {

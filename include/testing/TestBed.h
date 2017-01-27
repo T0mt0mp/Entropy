@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <sstream>
 
 #include "testing/TestUnit.h"
 
@@ -68,6 +69,17 @@ namespace tb
     class TestBed
     {
     public:
+        /// Status enum for the testing.
+        enum class TestStatus
+        {
+            /// All tests were successful.
+            SUCCESS = 0,
+            /// At least one test failed.
+            FAILED,
+            /// Tests did not finish.
+            DNF
+        };
+
         /**
          * Register TestUnit instance to this TestBed.
          * @param test TestUnit to add.
@@ -88,6 +100,12 @@ namespace tb
          * Report information about tests.
          */
         void report();
+
+        /**
+         * Return status code for the finished tests.
+         * @return
+         */
+        TestStatus reportSuccess();
 
         /**
          * Get singleton instance of the TestBed.

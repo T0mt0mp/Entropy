@@ -54,6 +54,20 @@ namespace tb
         }
     }
 
+    TestBed::TestStatus TestBed::reportSuccess()
+    {
+        for (TestHolder &th : mTests)
+        {
+            auto inst = th.instance();
+            if (!inst->allFinished())
+                return TestStatus::DNF;
+            if (th.instance()->anyFailed())
+                return TestStatus::FAILED;
+        }
+
+        return TestStatus::SUCCESS;
+    }
+
     TestHolder::TestHolder(UnitFactoryFun *factory) :
         mFactory{factory}
     {
@@ -79,19 +93,12 @@ namespace tb
     {
         if (mInstanceValid)
         {
-            mInstanceValid = false;
-            delete mInstance;
+            mInstance->reset();
         }
-
-        mInstance = nullptr;
     }
 
     TestHolder::~TestHolder()
     {
-        if (mInstanceValid)
-        {
-            delete mInstance;
-        }
     }
 
     TestHolder::TestHolder(TestHolder &&other)

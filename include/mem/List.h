@@ -190,6 +190,13 @@ namespace mem
          */
         List(u64 startSize = 0);
 
+        /**
+         * Create a list with given size.
+         * @param startSize Starting size of the list.
+         * @param val All elements will be set to this value.
+         */
+        List(u64 startSize, const ElementT &val);
+
         /// Copy-assignment operator
         ListType &operator=(const ListType &rhs);
         /// Move-assignment operator.
@@ -494,7 +501,25 @@ namespace mem
         mMem{0, 0, nullptr}
     {
         if (startSize)
+        {
             realloc(mMem, startSize > MIN_SIZE ? startSize : MIN_SIZE);
+        }
+    }
+
+    template <typename ET,
+              typename AT>
+    inline
+    List<ET, AT>::List(u64 startSize, const ET &val) :
+        mMem{0, 0, nullptr}
+    {
+        realloc(mMem, startSize > MIN_SIZE ? startSize : MIN_SIZE);
+
+        for (u64 iii = 0; iii < mMem.capacity; ++iii)
+        {
+            mMem.data[iii] = val;
+        }
+
+        mMem.used = mMem.capacity;
     }
 
     template <typename ET,

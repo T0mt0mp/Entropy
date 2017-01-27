@@ -11,79 +11,29 @@ namespace tb
     std::ostream &operator<<(std::ostream &out,
                              const TestRecord &tr)
     {
-        out << TestRecord::resultToStr(tr.mResult) <<
-            " {" << tr.mCode << "} " <<
-            tr.mFile << ":" << tr.mLine <<
-            "(" << tr.mFunction << ") " <<
-            tr.mText;
+        out << "[" << TestRecord::resultToStrShort(tr.mResult)
+            << "] {" << tr.mCode << "} : "
+            << tr.mText << " < "
+            << tr.mFile << ":" << tr.mLine << " > ";
+            //<< "(" << tr.mFunction << ") "
         return out;
     }
 
     TestUnit::TestUnit(const char *name, u32 numRuns) :
         mName{name},
-        mNumRuns{numRuns},
-        mStatus{TestStatus::BEFORE_SETUP}
+        mNumRuns{numRuns ? numRuns : 1}
     {
-    }
-
-    void TestUnit::unitSetUp()
-    {
-        reset();
-
-        try
-        {
-            setUp();
-        } catch(...)
-        {
-            currentStatistics().mExceptionsEscaped++;
-        }
-
-        if ( !(currentStatistics().mNumFailed ||
-               currentStatistics().mExceptionsEscaped)
-           )
-        {
-            mStatus = TestStatus::RUNNABLE;
-        }
-        else
-        {
-            mStatus = TestStatus::FAILED_SETUP;
-        }
-    }
-
-    void TestUnit::unitTearDown()
-    {
-        mStatus = TestStatus::BEFORE_SETUP;
-
-        try
-        {
-            tearDown();
-        } catch(...)
-        {
-            currentStatistics().mExceptionsEscaped++;
-            mStatus = TestStatus ::FAILED_TEARDOWN;
-        }
     }
 
     void TestUnit::unitRunTest()
     {
-        try
-        {
-            testMain();
-        } catch(...)
-        {
-            currentStatistics().mExceptionsEscaped++;
-        }
+        testMain();
 
         mNumRan++;
 
         if (mNumRan < mNumRuns)
         {
-            mStatus = TestStatus::RUNNABLE;
             newStatistics();
-        }
-        else
-        {
-            mStatus = TestStatus::BEFORE_TEARDOWN;
         }
     }
 
@@ -92,24 +42,17 @@ namespace tb
         mNumRan = 0;
 
         newStatistics();
-
-        mStatus = TestStatus::BEFORE_SETUP;
-    }
-
-    TestStatus TestUnit::getStatus()
-    {
-        return mStatus;
     }
 
     void TestUnit::printInfo(std::ostream &out)
     {
-        if (mStatus != TestStatus::BEFORE_SETUP)
+        if (mNumRan < mNumRuns)
         {
-            out << "Test : " << mName << " Failed to execute." << std::endl;
+            out << "====TestUnit : " << mName << " Failed to execute.====" << std::endl;
         }
 
-        out << "Test : " << mName
-            << " [" << mNumRan << " / "  << mNumRuns << "]" << std::endl;
+        out << "====TestUnit : " << mName
+            << " [" << mNumRan << " / "  << mNumRuns << "]====" << std::endl;
 
         if (mRuns.size() != mNumRan)
         {
@@ -121,22 +64,18 @@ namespace tb
         {
             TestRun &tr = mRuns[run];
 
-            out << "Run #" << run << std::endl;
-            out << "[ " << tr.mNumPassed << " / "
-                << tr.mNumFailed << " / "
-                << tr.mNumTests << " ] "
-                << "{! " << tr.mExceptionsEscaped << "}" << std::endl;
+            out << "===#" << run + 1
+                          << " [ " << tr.getNumPassed() << "P / "
+                          << tr.getNumFailed() << "F / "
+                          << tr.getNumTests() << "T ] "
+                          << "{ " << tr.getExceptionsEscaped() << "E }===" << std::endl;
 
-            for (TestRecord &record : tr.mRecords)
-            {
-                if (record.shouldBePrinted())
-                {
-                    out << record << std::endl;
-                }
-            }
+            tr.printInfo(out);
 
-            out << "End of run #" << run << "\n" << std::endl;
+            out << "===$" << run + 1 << "===" << std::endl;
         }
+
+        out << "====$TestUnit : " << mName << "====\n" << std::endl;
     }
 
     TestRun &TestUnit::currentStatistics()
@@ -145,72 +84,41 @@ namespace tb
         return mRuns.back();
     }
 
-    i8 TestUnit::run()
+    bool TestUnit::run()
     {
-        if (mStatus != TestStatus::BEFORE_SETUP)
-        {
-            return true;
-        }
-
-        unitSetUp();
-
-        if (mStatus != TestStatus::RUNNABLE)
-        {
-            return true;
-        }
+        newStatistics();
 
         do
         {
             unitRunTest();
-        } while (mStatus == TestStatus::RUNNABLE);
-
-        if (mStatus != TestStatus::BEFORE_TEARDOWN)
-        {
-            return true;
-        }
-
-        unitTearDown();
-
-        if (mStatus != TestStatus::BEFORE_SETUP)
-        {
-            return false;
-        }
+        } while (mNumRan < mNumRuns);
 
         return false;
     }
 
-    void TestUnit::record(const char *code,
+    void TestUnit::_record(const char *code,
                           TestResult result,
                           const char *file,
                           u64 line,
                           const char *function,
                           std::string text)
     {
-        TestRun &tr = currentStatistics();
-        tr.mNumTests++;
-
-        switch (result)
-        {
-            case TestResult::PASSED:
-                tr.mNumPassed++;
-                break;
-            case TestResult::FAILED:
-                tr.mNumFailed++;
-                break;
-            case TestResult::EXCEPTION:
-                tr.mExceptionsEscaped++;
-                break;
-            default:
-                break;
-        }
-
-        tr.mRecords.push_back(
-            TestRecord(code, result, file, line, function, text));
+        currentStatistics().record(TestRecord(code, result, file, line, function, text));
     }
 
     void TestUnit::newStatistics()
     {
-        mRuns.push_back(TestRun());
+        mRuns.emplace_back(TestRun());
+    }
+
+    void TestUnit::_enterTestCase(const char *name, const char *description)
+    {
+        currentStatistics().enterTestCase(TestCase(name, description));
+    }
+
+    void TestUnit::_record(TestRecord &record)
+    {
+        currentStatistics().record(TestRecord(record));
     }
 
     const char *TestRecord::resultToStr(TestResult result)
@@ -221,6 +129,8 @@ namespace tb
                 return "Passed";
             case TestResult::FAILED:
                 return "Failed";
+            case TestResult::CRIT_FAILED:
+                return "Critically failed";
             case TestResult::EXCEPTION:
                 return "Except";
             default:
@@ -228,9 +138,21 @@ namespace tb
         }
     }
 
-    bool TestRecord::shouldBePrinted()
+    const char *TestRecord::resultToStrShort(TestResult result)
     {
-        return mResult != TestResult::PASSED;
+        switch (result)
+        {
+            case TestResult::PASSED:
+                return "P";
+            case TestResult::FAILED:
+                return "F";
+            case TestResult::CRIT_FAILED:
+                return "C";
+            case TestResult::EXCEPTION:
+                return "E";
+            default:
+                return "U";
+        }
     }
 
     TestRecord::TestRecord(const char *code,
@@ -246,6 +168,70 @@ namespace tb
         mFunction{function},
         mText{text}
     {
+    }
+
+    void TestRun::enterTestCase(TestCase &&testCase)
+    {
+        mTestCases.emplace_back(testCase);
+    }
+
+    void TestRun::record(TestRecord &&record)
+    {
+        ASSERT_FAST(!mTestCases.empty());
+        mTestCases.back().record(std::forward<TestRecord&&>(record));
+
+        mNumTests++;
+        if (record.passed())
+            mNumPassed++;
+        if (record.exceptionEscaped())
+            mExceptionsEscaped++;
+        if (record.failed())
+            mNumFailed++;
+    }
+
+    void TestRun::printInfo(std::ostream &out) const
+    {
+        for (const TestCase &testCase : mTestCases)
+        {
+            testCase.printInfo(out);
+        }
+
+    }
+
+    TestCase::TestCase(const char *name, const char *description) :
+        mName{name},
+        mDescription{description}
+    {
+    }
+
+    void TestCase::record(TestRecord &&record)
+    {
+        mRecords.emplace_back(record);
+
+        mNumTests++;
+        if (record.passed())
+            mNumPassed++;
+        if (record.exceptionEscaped())
+            mExceptionsEscaped++;
+        if (record.failed())
+            mNumFailed++;
+    }
+
+    void TestCase::printInfo(std::ostream &out) const
+    {
+        out << "==Case : " << mName
+            << " [ " << mNumPassed << "P / "
+            << mNumFailed << "F / "
+            << mNumTests << "T ] "
+            << "{ " << mExceptionsEscaped << "E }==\n"
+            << mDescription <<  std::endl;
+        for (const TestRecord &tr : mRecords)
+        {
+            if (tr.shouldBePrinted())
+            {
+                out << tr << std::endl;
+            }
+        }
     }
 }
 

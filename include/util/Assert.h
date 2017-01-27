@@ -21,6 +21,7 @@
         fprintf(stderr, "Fatal error \"" #COND_EXP "\"" \
                         "%s : %d ( %s ) failed.\n", \
                         __FILE__, __LINE__, __func__); \
+        std::raise(SIGABRT); \
         exit(-1); \
     }
 

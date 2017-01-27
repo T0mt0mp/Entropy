@@ -34,6 +34,7 @@ namespace prof
             printf("Threads exited : %llu\n",
                    mgr.getNumThreadExit());
             printf("============================\n");
+            printf("InclCh[Mt] Parent[%%] Samples[num] AvgPS[Mt] Self[Mt] Self[%%] Name\n");
 
             ForeachPrintThread threadPrinter;
             root->foreachnn(threadPrinter);

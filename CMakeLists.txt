@@ -27,6 +27,15 @@ set(ECS_HEADERS
         ${ECS_INCLUDE_DIR}/math/Math.h
 
         # Entity Component System
+        ${ECS_INCLUDE_DIR}/Entropy/Component.h
+        ${ECS_INCLUDE_DIR}/Entropy/Entity.h
+        ${ECS_INCLUDE_DIR}/Entropy/System.h
+        ${ECS_INCLUDE_DIR}/Entropy/Universe.h
+        ${ECS_INCLUDE_DIR}/Entropy/Types.h
+        ${ECS_INCLUDE_DIR}/Entropy/Entropy.h
+        ${ECS_INCLUDE_DIR}/Entropy/Assert.h
+        ${ECS_INCLUDE_DIR}/Entropy/Group.h
+        ${ECS_INCLUDE_DIR}/Entropy/Util.h
 
         # Memory structures
         ${ECS_INCLUDE_DIR}/mem/List.h
@@ -53,6 +62,7 @@ set(ECS_SOURCES
         ${ECS_SOURCE_DIR}/math/Math.cpp
 
         # Entity Component System
+        ${ECS_SOURCE_DIR}/Entropy/Util.cpp
 
         # Memory structures
 

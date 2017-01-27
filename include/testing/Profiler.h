@@ -16,22 +16,28 @@
 
 // Profiling macros:
 #ifndef NPROFILE
-#   define PROF_NAME(FIRST, SECOND) \
+#   define PROF_CONCAT(FIRST, SECOND) \
         FIRST ## SECOND
+#   define PROF_NAME(FIRST, SECOND) \
+        PROF_CONCAT(FIRST, SECOND)
 #   define PROF_BLOCK(NAME) \
-        prof::BlockProfiler PROF_NAME(_bp, NAME)(#NAME)
+        prof::BlockProfiler PROF_NAME(_bp, __LINE__)(NAME)
 #   define PROF_BLOCK_END() \
         prof::BlockProfiler::end()
 #   define PROF_SCOPE(NAME) \
-        prof::ScopeProfiler PROF_NAME(_sp, NAME)(#NAME)
+        prof::ScopeProfiler PROF_NAME(_sp, __LINE__)(NAME)
 #   define PROF_DUMP(CRAWLER) \
         prof::ProfilingManager::instance().useCrawler(CRAWLER)
+#   define PROF_THREAD(NAME) \
+        prof::ThreadProfiler PROF_NAME(_tp, __LINE__)(NAME)
 #else
+#   define PROF_CONCAT(F, S)
 #   define PROF_NAME(F, S)
 #   define PROF_BLOCK(_)
 #   define PROF_BLOCK_END(_)
 #   define PROF_SCOPE(_)
 #   define PROF_DUMP(_)
+#   define PROF_THREAD(_)
 #endif
 
 namespace prof
