@@ -10,12 +10,20 @@ class TestSystem: public ent::System
 {
 public:
     TestSystem(u32 num) :
-        mNum{num}
-    { }
+        mNum{num} {}
     u32 mNum;
 };
 
+class TestComponent {};
 
+template <typename ComponentT>
+class TestComponentHolder
+{
+public:
+    TestComponentHolder(u32 num) :
+        mNum{num} {}
+    u32 mNum;
+};
 
 TU_Begin(EntropyEntity)
 
@@ -32,28 +40,55 @@ TU_Begin(EntropyEntity)
     TU_Case(ClassIdGenerator0, "Testing the ClassIdGenerator class")
     {
         class GenA : public ent::ClassIdGenerator<GenA> {};
+        TC_RequireConstexpr(!GenA::generated<u32>());
         TC_RequireConstexprEqual(GenA::getId<u32>(), 0);
+        TC_RequireConstexpr(GenA::generated<u32>());
+        TC_RequireConstexpr(!GenA::generated<u64>());
+        TC_RequireConstexpr(!GenA::generated<double>());
+        TC_RequireConstexpr(!GenA::generated<float>());
         TC_RequireConstexprEqual(GenA::getId<u64>(), 1);
         TC_RequireConstexprEqual(GenA::getId<double>(), 2);
         TC_RequireConstexprEqual(GenA::getId<float>(), 3);
         TC_RequireConstexprEqual(GenA::getId<u32>(), 0);
         TC_RequireConstexprEqual(GenA::getId<u64>(), 1);
+        TC_RequireConstexpr(GenA::generated<u32>());
+        TC_RequireConstexpr(GenA::generated<u64>());
+        TC_RequireConstexpr(GenA::generated<double>());
+        TC_RequireConstexpr(GenA::generated<float>());
 
         class GenB : public ent::ClassIdGenerator<GenB> {};
+        TC_RequireConstexpr(!GenB::generated<double>());
         TC_RequireConstexprEqual(GenB::getId<double>(), 0);
+        TC_RequireConstexpr(GenB::generated<double>());
+        TC_RequireConstexpr(!GenB::generated<u32>());
+        TC_RequireConstexpr(!GenB::generated<u64>());
+        TC_RequireConstexpr(!GenB::generated<float>());
         TC_RequireConstexprEqual(GenB::getId<float>(), 1);
         TC_RequireConstexprEqual(GenB::getId<u32>(), 2);
         TC_RequireConstexprEqual(GenB::getId<u64>(), 3);
         TC_RequireConstexprEqual(GenB::getId<double>(), 0);
         TC_RequireConstexprEqual(GenB::getId<float>(), 1);
+        TC_RequireConstexpr(GenB::generated<u32>());
+        TC_RequireConstexpr(GenB::generated<u64>());
+        TC_RequireConstexpr(GenB::generated<double>());
+        TC_RequireConstexpr(GenB::generated<float>());
 
         class GenC : public ent::ClassIdGenerator<GenC, 5> {};
+        TC_RequireConstexpr(!GenC::generated<double>());
         TC_RequireConstexprEqual(GenC::getId<double>(), 5);
+        TC_RequireConstexpr(GenC::generated<double>());
+        TC_RequireConstexpr(!GenC::generated<u32>());
+        TC_RequireConstexpr(!GenC::generated<u64>());
+        TC_RequireConstexpr(!GenC::generated<float>());
         TC_RequireConstexprEqual(GenC::getId<float>(), 6);
         TC_RequireConstexprEqual(GenC::getId<u32>(), 7);
         TC_RequireConstexprEqual(GenC::getId<u64>(), 8);
         TC_RequireConstexprEqual(GenC::getId<double>(), 5);
         TC_RequireConstexprEqual(GenC::getId<float>(), 6);
+        TC_RequireConstexpr(GenC::generated<u32>());
+        TC_RequireConstexpr(GenC::generated<u64>());
+        TC_RequireConstexpr(GenC::generated<double>());
+        TC_RequireConstexpr(GenC::generated<float>());
     }
 
     TU_Case(Universe0, "Testing the Universe class")
@@ -61,6 +96,7 @@ TU_Begin(EntropyEntity)
         ent::Universe<0> u;
         TC_Require(u.addSystem<TestSystem>(1).mNum == 1);
         TC_RequireNoException(u.removeSystem<TestSystem>());
+        u.registerComponent<TestComponentHolder<TestComponent>>();
     }
 
     TU_Case(ComponentBitset0, "Testing the ComponentBitset class")

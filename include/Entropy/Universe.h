@@ -36,7 +36,7 @@ namespace ent
         /**
          * Register given System for this universe.
          * @tparam SystemT Type of the system, has to inherit from base ent::System.
-         * @tparam CArgTs System constructor arguments types.
+         * @tparam CArgTs System constructor argument types.
          * @param args System constructor arguments, passed to the System on construction.
          * @return Returns reference to the newly registered System.
          */
@@ -50,7 +50,32 @@ namespace ent
          */
         template <typename SystemT>
         void removeSystem();
+
+        /**
+         * Register given Component and its ComponentHolder.
+         * @tparam HolderT Type of the ComponentHolder.
+         * @tparam ComponentT Type of the Component.
+         * @tparam CArgTs ComponentHolder constructor argument types.
+         * @param args ComponentHolder constructor arguments, passed to the ComponentHolder on construction.
+         */
+        template <typename HolderT,
+                  typename... CArgTs>
+        void registerComponent(CArgTs... args);
     private:
+        /// Used for extracting Component type.
+        template <typename HolderT>
+        struct ComponentTypeExtractor;
+        /// Used for extracting Component type.
+        template <template <typename, typename...> typename HolderTT,
+                  typename... Other,
+                  typename ComponentTT>
+        struct ComponentTypeExtractor<HolderTT<ComponentTT, Other...>>
+        {
+            using ComponentT = ComponentTT;
+            using HolderT = HolderTT<ComponentTT, Other...>;
+        };
+        /// Component ID generator.
+        class ComponentIdGenerator : public ClassIdGenerator<ComponentIdGenerator> {};
         /// Used for managing Systems.
         SystemManager<ThisType> mSM;
         /// Used for managing EntityGroups.
@@ -82,6 +107,19 @@ namespace ent
     void Universe<N>::removeSystem()
     {
         static_assert(std::is_base_of<System, SystemT>::value, "The System has to inherit from ent::System!");
+        ENT_WARNING("Called unfinished method!");
+    }
+
+    template <u64 N>
+    template <typename HolderT,
+              typename... CArgTs>
+    void Universe<N>::registerComponent(CArgTs... args)
+    {
+        using Extract = ComponentTypeExtractor<HolderT>;
+        using ComponentT = typename Extract::ComponentT;
+        static_assert(!ComponentIdGenerator::template generated<ComponentT>(), "Each component type can have only one holder!");
+        constexpr u64 cId{ComponentIdGenerator::template getId<ComponentT>()};
+        ENT_UNUSED(cId);
         ENT_WARNING("Called unfinished method!");
     }
 

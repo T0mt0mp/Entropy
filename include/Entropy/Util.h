@@ -120,9 +120,38 @@ namespace ent
         {
             return mId<ClassT>;
         }
+
+        /**
+         * Check, if an ID has been generated for given type.
+         * @tparam ClassT Type to check.
+         * @param b Dummy parameter, do not pass.
+         * @return Returns true, if ID has already been given.
+         */
+        template <typename ClassT>
+        static constexpr bool generated(bool b = generatedImpl<ClassT>())
+        {
+            return b;
+        }
     private:
+        // TODO - Comments!
         struct ClassIdHolder
         {
+            template <typename ClassT, u64 = 0>
+            struct TFlag
+            {
+                template <u64 M>
+                friend constexpr bool typeIded(TFlag<ClassT, M>);
+            };
+
+            template <typename ClassT>
+            struct TSpecHolder
+            {
+                template <u64 M>
+                friend constexpr bool typeIded(TFlag<ClassT, M>)
+                { return true; }
+                static constexpr bool value{true};
+            };
+
             template <u64 N, u64 = N>
             struct Flag
             {
@@ -139,12 +168,14 @@ namespace ent
                 static constexpr u64 value{N};
             };
 
-            template <u64 N>
-            static constexpr u64 mark(u64 val = SpecHolder<N>::value)
-            { return val; }
+            template <u64 N,
+                      typename ClassT>
+            static constexpr u64 mark(u64 val = SpecHolder<N>::value,
+                                      bool b = TSpecHolder<ClassT>::value)
+            { ENT_UNUSED(b); return val; }
 
             template <u64 N,
-                typename Enable = typename std::enable_if<!noexcept(cId(Flag<N>{}))>::type>
+                      typename Enable = typename std::enable_if<!noexcept(cId(Flag<N>{}))>::type>
             static constexpr u64 reader(int, Flag<N> = {})
             { static_assert(!noexcept(cId(Flag<N>{}))); return N; }
 
@@ -152,12 +183,39 @@ namespace ent
             static constexpr u64 reader(float, Flag<N> = {}, u64 val = reader<N + 1>(0))
             { return val; }
 
-            template <u64 V = mark<reader<START>(0)>()>
+            template <typename ClassT,
+                      u64 V = mark<reader<START>(0), ClassT>()>
             static constexpr u64 next()
             {
                 return V;
             }
+
+            template <typename ClassT,
+                      typename Enable = typename std::enable_if<!noexcept(typeIded(TFlag<ClassT>{}))>::type>
+            static constexpr bool typeExists(int, TFlag<ClassT> = {})
+            { return false; }
+
+            template <typename ClassT>
+            static constexpr bool typeExists(float, TFlag<ClassT> = {})
+            { return true; }
+
+            template <typename ClassT>
+            static constexpr bool exists(bool val = typeExists<ClassT>(0))
+            { return val; }
         };
+
+        /**
+         * Check, if an ID has been generated for given type.
+         * @tparam ClassT Type to check.
+         * @tparam B Dummy parameter, do not pass.
+         * @return Returns true, if ID has already been given.
+         */
+        template <typename ClassT,
+                  bool B = ClassIdHolder::template exists<ClassT>()>
+        static constexpr bool generatedImpl()
+        {
+            return B;
+        }
 
         /**
          * Contains unique ID for each type it is requested using getId<...>();
@@ -165,7 +223,7 @@ namespace ent
          * @tparam ClassT Type for which the ID is generated.
          */
         template <typename ClassT>
-        static constexpr u64 mId{ClassIdHolder::next()};
+        static constexpr u64 mId{ClassIdHolder::template next<ClassT>()};
     protected:
     };
 } // namespace ent
