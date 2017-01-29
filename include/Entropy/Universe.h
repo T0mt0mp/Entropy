@@ -25,6 +25,21 @@ namespace ent
     template <u64 N>
     class Universe : NonCopyable
     {
+    private:
+        /// Component ID generator.
+        class ComponentIdGenerator : public ClassIdGenerator<ComponentIdGenerator> {};
+        /// Used for extracting Component type.
+        template <typename HolderT>
+        struct ComponentTypeExtractor;
+        /// Used for extracting Component type.
+        template <template <typename, typename...> typename HolderTT,
+            typename... Other,
+            typename ComponentTT>
+        struct ComponentTypeExtractor<HolderTT<ComponentTT, Other...>>
+        {
+            using ComponentT = ComponentTT;
+            using HolderT = HolderTT<ComponentTT, Other...>;
+        };
     public:
         using ThisType = Universe<N>;
 
@@ -56,26 +71,17 @@ namespace ent
          * @tparam HolderT Type of the ComponentHolder.
          * @tparam ComponentT Type of the Component.
          * @tparam CArgTs ComponentHolder constructor argument types.
+         * @tparam B Used for inner template generation hacks.
+         * @tparam ID Used for inner template generation hacks.
          * @param args ComponentHolder constructor arguments, passed to the ComponentHolder on construction.
          */
         template <typename HolderT,
+                  typename ComponentT = typename ComponentTypeExtractor<HolderT>::ComponentT,
+                  bool B = ComponentIdGenerator::template generated<ComponentT>(),
+                  u64 ID = ComponentIdGenerator::template getId<ComponentT>(),
                   typename... CArgTs>
         void registerComponent(CArgTs... args);
     private:
-        /// Used for extracting Component type.
-        template <typename HolderT>
-        struct ComponentTypeExtractor;
-        /// Used for extracting Component type.
-        template <template <typename, typename...> typename HolderTT,
-                  typename... Other,
-                  typename ComponentTT>
-        struct ComponentTypeExtractor<HolderTT<ComponentTT, Other...>>
-        {
-            using ComponentT = ComponentTT;
-            using HolderT = HolderTT<ComponentTT, Other...>;
-        };
-        /// Component ID generator.
-        class ComponentIdGenerator : public ClassIdGenerator<ComponentIdGenerator> {};
         /// Used for managing Systems.
         SystemManager<ThisType> mSM;
         /// Used for managing EntityGroups.
@@ -112,13 +118,18 @@ namespace ent
 
     template <u64 N>
     template <typename HolderT,
+              typename ComponentT,
+              bool B,
+              u64 ID,
               typename... CArgTs>
     void Universe<N>::registerComponent(CArgTs... args)
     {
+        /*
         using Extract = ComponentTypeExtractor<HolderT>;
         using ComponentT = typename Extract::ComponentT;
-        static_assert(!ComponentIdGenerator::template generated<ComponentT>(), "Each component type can have only one holder!");
-        constexpr u64 cId{ComponentIdGenerator::template getId<ComponentT>()};
+         */
+        static_assert(!B, "Each component type can have only one holder!");
+        constexpr u64 cId{ID};
         ENT_UNUSED(cId);
         ENT_WARNING("Called unfinished method!");
     }

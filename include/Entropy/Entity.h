@@ -8,6 +8,7 @@
 #define ECS_FIT_ENTITY_H
 
 #include "Types.h"
+#include "Component.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -24,7 +25,86 @@ namespace ent
     class EntityManager : NonCopyable
     {
     public:
+        /**
+         * Default EntityManger constructor.
+         */
+        EntityManager();
+
+
     private:
+        /// Wrapper around Entity management implementation.
+        class EntityStates
+        {
+        public:
+            /**
+             * Create a new Entity and return its ID.
+             * @return Returns ID of the new Entity.
+             */
+            EIdType create();
+
+            /**
+             * Activate given Entity.
+             * @param id ID of the Entity.
+             * @return Returns false, if the Entity does not exist.
+             */
+            bool activate(EIdType id);
+
+            /**
+             * Deactivate given Entity.
+             * @param id ID of the Entity.
+             * @return Returns false, if the Entity does not exist.
+             */
+            bool deactivate(EIdType id);
+
+            /**
+             * Destroy given Entity.
+             * @param id ID of the Entity.
+             * @return Returns false, if the Entity does not exist.
+             */
+            bool destroy(EIdType id);
+
+            /**
+             * Checks validity of given Entity.
+             * @param id ID of the Entity.
+             * @return Returns true, if the Entity exists.
+             */
+            bool valid(EIdType id);
+
+            /**
+             * Checks if the given Entity is active.
+             * @param id ID of the Entity.
+             * @return Returns true, if the Entity is active, else returns false
+             *   (if it doesn't exist, return value is also false).
+             */
+            bool active(EIdType id);
+        private:
+            /// Record about state of a single Entity
+            struct EntityRecord
+            {
+                /// Is the Entity active?
+                bool active;
+                /// Present Components bitset.
+                ComponentBitset components;
+                /// Current generation number.
+                EIdType generation;
+            };
+            struct PoolRecord
+            {
+                /// How many Entities are in this pool.
+                u64 capacity;
+                /// How many Entities from this pool are in use.
+                u64 inUse;
+                /// Entity ID of the first Entity from this pool.
+                EIdType poolStartId;
+                /// Entity ID of the last (inclusive) Entity from this pool.
+                EIdType poolEndId;
+            };
+            /// Records of Entities.
+            std::vector<EntityRecord> mRecords;
+            /// Records of Entity pools.
+            std::vector<PoolRecord> mPools;
+        protected:
+        };
     protected:
     }; // EntityManager
 

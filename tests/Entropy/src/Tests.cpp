@@ -14,14 +14,33 @@ public:
     u32 mNum;
 };
 
-class TestComponent {};
+struct TestComponent1
+{
+    TestComponent1()
+    {
+        std::cout << "TestComponent1" << std::endl;
+    }
+    u32 x, y;
+};
+
+struct TestComponent2
+{
+    TestComponent2()
+    {
+        std::cout << "TestComponent1" << std::endl;
+    }
+    u32 x, y;
+};
 
 template <typename ComponentT>
 class TestComponentHolder
 {
 public:
     TestComponentHolder(u32 num) :
-        mNum{num} {}
+        mNum{num}
+    {
+        std::cout << "TestComponentHolder : " << mNum << std::endl;
+    }
     u32 mNum;
 };
 
@@ -35,10 +54,11 @@ TU_Begin(EntropyEntity)
     TU_Teardown
     {
 
-    };
+    }
 
     TU_Case(ClassIdGenerator0, "Testing the ClassIdGenerator class")
     {
+        PROF_SCOPE("IdGenerator0");
         class GenA : public ent::ClassIdGenerator<GenA> {};
         TC_RequireConstexpr(!GenA::generated<u32>());
         TC_RequireConstexprEqual(GenA::getId<u32>(), 0);
@@ -93,14 +113,17 @@ TU_Begin(EntropyEntity)
 
     TU_Case(Universe0, "Testing the Universe class")
     {
+        PROF_SCOPE("Universe0");
         ent::Universe<0> u;
         TC_Require(u.addSystem<TestSystem>(1).mNum == 1);
         TC_RequireNoException(u.removeSystem<TestSystem>());
-        u.registerComponent<TestComponentHolder<TestComponent>>();
+        u.registerComponent<TestComponentHolder<TestComponent1>>();
+        u.registerComponent<TestComponentHolder<TestComponent2>>();
     }
 
     TU_Case(ComponentBitset0, "Testing the ComponentBitset class")
     {
+        PROF_SCOPE("ComponentBitset0");
         ent::ComponentBitset cbs;
         TC_Require(!cbs.any());
         TC_Require(cbs.none());
@@ -117,6 +140,7 @@ TU_Begin(EntropyEntity)
 
     TU_Case(ComponentFilter0, "Testing the ComponentFilter class")
     {
+        PROF_SCOPE("ComponentFilter0");
         ent::ComponentFilter filter(0b1010, 0b1100);
         TC_Require(filter.match(0b1011));
         TC_Require(filter.match(0b1010));
@@ -128,6 +152,7 @@ TU_Begin(EntropyEntity)
 
     TU_Case(EntityId0, "Testing the EntityId class")
     {
+        PROF_SCOPE("EntityId0");
         ent::EntityId eid;
         TC_Check(eid.id() == 0);
         TC_Check(eid.index() == 0);
@@ -136,6 +161,7 @@ TU_Begin(EntropyEntity)
 
     TU_Case(EntityId1, "Testing the EntityId class")
     {
+        PROF_SCOPE("EntityId1");
         TC_Require(ent::EID_GEN_BITS == 8 && ent::EID_INDEX_BITS == 24);
         ent::EIdType gen{123};
         ent::EIdType index{123};
@@ -147,6 +173,7 @@ TU_Begin(EntropyEntity)
 
     TU_Case(EntityId2, "Testing the EntityId class")
     {
+        PROF_SCOPE("EntityId2");
         TC_Require(ent::EID_GEN_BITS == 8 && ent::EID_INDEX_BITS == 24);
         ent::EIdType gen{(ent::EIdType(1) << ent::EID_GEN_BITS) - 1};
         ent::EIdType index{(ent::EIdType(1) << ent::EID_INDEX_BITS) - 1};
@@ -160,11 +187,11 @@ TU_End(EntropyEntity)
 
 int main(int argc, char* argv[])
 {
-    prof::PrintCrawler pc;
-    PROF_DUMP(pc);
-
     TCC_Run();
     TCC_Report();
+
+    prof::PrintCrawler pc;
+    PROF_DUMP(pc);
 
     return TCC_ReturnCode;
 }

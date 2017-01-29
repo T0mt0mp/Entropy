@@ -123,6 +123,7 @@ namespace ent
 
         /**
          * Check, if an ID has been generated for given type.
+         * !! Must be used as default template parameter value, or default function value !!
          * @tparam ClassT Type to check.
          * @param b Dummy parameter, do not pass.
          * @return Returns true, if ID has already been given.
@@ -133,9 +134,14 @@ namespace ent
             return b;
         }
     private:
-        // TODO - Comments!
+        /// Wrapper around template generation hacks.
         struct ClassIdHolder
         {
+            /**
+             * Flag represents a template variable.
+             * It can be UNSET, or SET.
+             * @tparam ClassT For which type is this Flag used.
+             */
             template <typename ClassT, u64 = 0>
             struct TFlag
             {
@@ -143,6 +149,11 @@ namespace ent
                 friend constexpr bool typeIded(TFlag<ClassT, M>);
             };
 
+            /**
+             * If this class has been generated, it means the corresponding
+             * Flag is in SET state.
+             * @tparam ClassT For which type is the Flag used.
+             */
             template <typename ClassT>
             struct TSpecHolder
             {
@@ -152,6 +163,11 @@ namespace ent
                 static constexpr bool value{true};
             };
 
+            /**
+             * Flag represents a template variable.
+             * It can be UNSET, or SET.
+             * @tparam N Which number does this Flag represent.
+             */
             template <u64 N, u64 = N>
             struct Flag
             {
@@ -159,6 +175,11 @@ namespace ent
                 friend constexpr u64 cId(Flag<N, M>);
             };
 
+            /**
+             * If this class has been generated, it means the corresponding
+             * Flag is in SET state.
+             * @tparam N Which number does this Flag represent.
+             */
             template <u64 N>
             struct SpecHolder
             {
@@ -168,21 +189,49 @@ namespace ent
                 static constexpr u64 value{N};
             };
 
+            /**
+             * Helper method for SETing Flag and TFlag.
+             * @tparam N Which Flag should be SET.
+             * @tparam ClassT Which TFlag should be SET.
+             * @param val Used for inner template generation hack.
+             * @param b Used for inner template generation hack.
+             * @return Returns the value of FLAG which has been set.
+             */
             template <u64 N,
                       typename ClassT>
             static constexpr u64 mark(u64 val = SpecHolder<N>::value,
                                       bool b = TSpecHolder<ClassT>::value)
             { ENT_UNUSED(b); return val; }
 
+            /**
+             * Reader for Flag template variable.
+             * This is the method, which is called, when an UNSET Flag has been found.
+             * @tparam N Which Flag are we checking.
+             * @tparam Enable Used for inner template checking.
+             * @return Returns which lowest UNSET Flag has been found.
+             */
             template <u64 N,
                       typename Enable = typename std::enable_if<!noexcept(cId(Flag<N>{}))>::type>
             static constexpr u64 reader(int, Flag<N> = {})
             { static_assert(!noexcept(cId(Flag<N>{}))); return N; }
 
+            /**
+             * Reader for Flag template variable.
+             * This is the searcher method, called, when Flag is SET.
+             * @tparam N Which Flag are we checking.
+             * @param val Used for searching of the lowest UNSET Flag.
+             * @return Returns which lowest UNSET Flag has been found.
+             */
             template <u64 N>
             static constexpr u64 reader(float, Flag<N> = {}, u64 val = reader<N + 1>(0))
             { return val; }
 
+            /**
+             * Interface method, returns next unused unique number and marks it as SET.
+             * @tparam ClassT For which class are we generating ID.
+             * @tparam V Finds the lowest UNSET Flag and SETs Flag and TFlag for the ClassT.
+             * @return Next unique ID number.
+             */
             template <typename ClassT,
                       u64 V = mark<reader<START>(0), ClassT>()>
             static constexpr u64 next()
@@ -190,15 +239,32 @@ namespace ent
                 return V;
             }
 
+            /**
+             * Method for checking if given type has been given an ID.
+             * @tparam ClassT Which type should we check.
+             * @tparam Enable Used for generating the right response method.
+             * @return Returns true, if the type has been given an ID.
+             */
             template <typename ClassT,
                       typename Enable = typename std::enable_if<!noexcept(typeIded(TFlag<ClassT>{}))>::type>
             static constexpr bool typeExists(int, TFlag<ClassT> = {})
             { return false; }
 
+            /**
+             * Method for checking if given type has been given an ID.
+             * @tparam ClassT Which type should we check.
+             * @return Returns true, if the type has been given an ID.
+             */
             template <typename ClassT>
             static constexpr bool typeExists(float, TFlag<ClassT> = {})
             { return true; }
 
+            /**
+             * Interface method for checking if type has been given an ID.
+             * @tparam ClassT Which type should we check.
+             * @param val Used for getting the reponse value.
+             * @return Returns true, if the type has been given an ID.
+             */
             template <typename ClassT>
             static constexpr bool exists(bool val = typeExists<ClassT>(0))
             { return val; }
