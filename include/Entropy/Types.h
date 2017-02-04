@@ -9,6 +9,7 @@
 
 #include <type_traits>
 #include <bitset>
+#include <deque>
 
 #include "Assert.h"
 #include "Util.h"
@@ -26,13 +27,26 @@ namespace ent
     using u64 = unsigned long long int;
     using i64 = signed long long int;
 
+    // TODO - implement (if needed) svector.
+    /// Normal vector type.
+    using vector = std::vector;
+    /// Sparse vector type.
+    using svector = std::vector;
+    /// Double ended queue.
+    using deque = std::deque;
+
     /// Entity ID type
     using EIdType = u32;
+
     /**
      * Number of bits in EID used for entity index.
      * Default value : 24 => ~16M entities
      */
     static constexpr u64 EID_INDEX_BITS{24};
+
+    /// Minimal number of free Entity indices, before new are created.
+    static constexpr u64 ENT_MIN_FREE{8};
+
     /**
      * Number of bits in EID used for entity generation.
      * Default value : 8 => 256 generations

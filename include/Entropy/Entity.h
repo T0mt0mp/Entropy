@@ -14,101 +14,6 @@
 namespace ent
 {
     /**
-     * EntityManager is a part of Entropy ECS Universe.
-     * Contains lists of Entities, their status and
-     * currently used generation for given index.
-     * Contains methods for adding/removing entities and
-     * their refresh.
-     * @tparam UniverseT Type of the Universe, where this class is being used.
-     */
-    template <typename UniverseT>
-    class EntityManager : NonCopyable
-    {
-    public:
-        /**
-         * Default EntityManger constructor.
-         */
-        EntityManager();
-
-
-    private:
-        /// Wrapper around Entity management implementation.
-        class EntityStates
-        {
-        public:
-            /**
-             * Create a new Entity and return its ID.
-             * @return Returns ID of the new Entity.
-             */
-            EIdType create();
-
-            /**
-             * Activate given Entity.
-             * @param id ID of the Entity.
-             * @return Returns false, if the Entity does not exist.
-             */
-            bool activate(EIdType id);
-
-            /**
-             * Deactivate given Entity.
-             * @param id ID of the Entity.
-             * @return Returns false, if the Entity does not exist.
-             */
-            bool deactivate(EIdType id);
-
-            /**
-             * Destroy given Entity.
-             * @param id ID of the Entity.
-             * @return Returns false, if the Entity does not exist.
-             */
-            bool destroy(EIdType id);
-
-            /**
-             * Checks validity of given Entity.
-             * @param id ID of the Entity.
-             * @return Returns true, if the Entity exists.
-             */
-            bool valid(EIdType id);
-
-            /**
-             * Checks if the given Entity is active.
-             * @param id ID of the Entity.
-             * @return Returns true, if the Entity is active, else returns false
-             *   (if it doesn't exist, return value is also false).
-             */
-            bool active(EIdType id);
-        private:
-            /// Record about state of a single Entity
-            struct EntityRecord
-            {
-                /// Is the Entity active?
-                bool active;
-                /// Present Components bitset.
-                ComponentBitset components;
-                /// Current generation number.
-                EIdType generation;
-            };
-            struct PoolRecord
-            {
-                /// How many Entities are in this pool.
-                u64 capacity;
-                /// How many Entities from this pool are in use.
-                u64 inUse;
-                /// Entity ID of the first Entity from this pool.
-                EIdType poolStartId;
-                /// Entity ID of the last (inclusive) Entity from this pool.
-                EIdType poolEndId;
-            };
-            /// Records of Entities.
-            std::vector<EntityRecord> mRecords;
-            /// Records of Entity pools.
-            std::vector<PoolRecord> mPools;
-        protected:
-        };
-    protected:
-    }; // EntityManager
-
-    /**
      * Wrapper around Entity ID.
      * Contains 2 parts :
      *  Entity index        (on the lower significance bits)
@@ -144,6 +49,10 @@ namespace ent
          * @return Generation starting at the LSb.
          */
         constexpr EIdType generation() const;
+
+        /// Equal operator
+        constexpr bool operator==(const EntityId &rhs) const
+        { return mId == rhs.mId; }
     private:
         /**
          * Take generation number aligned to the right (least significant bits) and
@@ -210,7 +119,212 @@ namespace ent
         static constexpr EIdType MAX_ENTITIES{INDEX_MASK + 1};
     }; // EntityId
 
+    /**
+     * Wrapper around Entity management implementation.
+     */
+    class EntityHolder : NonCopyable
+    {
+    public:
+        /**
+         * Default holder contructor
+         */
+        EntityHolder();
 
+        /**
+         * Create a new Entity and return its ID.
+         * @return Returns ID of the new Entity.
+         */
+        inline EntityId create();
+
+        /**
+         * Activate given Entity.
+         * !! Does NOT check index bounds !!
+         * @param id ID of the Entity.
+         */
+        inline void activate(EntityId id);
+
+        /**
+         * Deactivate given Entity.
+         * !! Does NOT check index bounds !!
+         * @param id ID of the Entity.
+         */
+        inline void deactivate(EntityId id);
+
+        /**
+         * Destroy given Entity.
+         * @param id ID of the Entity.
+         * @return Returns false, if the Entity does not exist.
+         */
+        inline bool destroy(EntityId id);
+
+        /**
+         * Checks validity of given Entity.
+         * @param id ID of the Entity.
+         * @return Returns true, if the Entity exists.
+         */
+        inline bool valid(EntityId id) const;
+
+        /**
+         * Checks if the given Entity is active.
+         * !! Does NOT check index bounds !!
+         * @param id ID of the Entity.
+         * @return Returns true, if the Entity is active.
+         */
+        inline bool active(EntityId id) const;
+    private:
+        /// Record about state of a single Entity
+        struct EntityRecord
+        {
+            EntityRecord() :
+                active{false}, components{0}, generation{0}
+            { }
+            EntityRecord(bool a, ComponentBitset b, EIdType g) :
+                active{a}, components{b}, generation{g}
+            { }
+            /// Present Components bitset.
+            ComponentBitset components;
+            /// Current generation number.
+            EIdType generation;
+            /// Is the Entity active?
+            bool active;
+        };
+        /// Record about an Entity Pool.
+        struct PoolRecord
+        {
+            /// Entity ID of the first Entity from this pool.
+            EIdType poolStartId;
+            /// Entity ID of the last (inclusive) Entity from this pool.
+            EIdType poolEndId;
+        };
+
+        /**
+         * Check for validity of given index and generation number.
+         * @param index Index of the Entity.
+         * @param gen Generation of the Entity.
+         * @return Returns true, if the Entity is valid.
+         */
+        bool validImpl(EIdType index, EIdType gen) const
+        { return indexValid(index) && genValid(index, gen); }
+
+        /**
+         * Check if given index is valid.
+         * @param index Index of the Entity.
+         * @return Returns true, if the index is valid.
+         */
+        bool indexValid(EIdType index) const
+        { return index && index < mRecords.size(); }
+
+        /**
+         * Check if given generation corresponds to the index.
+         * !! Does NOT check index bounds !!
+         * @param index Index of the Entity.
+         * @param gen Generation of the Entity.
+         * @return Returns true, if the generation number is current.
+         */
+        bool genValid(EIdType index, EIdType gen) const
+        { return mRecords[index].generation == gen; }
+
+        /// Records of Entities.
+        vector<EntityRecord> mRecords;
+        /// Records of Entity pools.
+        vector<PoolRecord> mPools;
+        /// Freed Entity indices.
+        deque<EIdType> mFree;
+    protected:
+    };
+
+    /**
+     * EntityManager is a part of Entropy ECS Universe.
+     * Contains lists of Entities, their status and
+     * currently used generation for given index.
+     * Contains methods for adding/removing entities and
+     * their refresh.
+     * @tparam UniverseT Type of the Universe, where this class is being used.
+     */
+    template <typename UniverseT>
+    class EntityManager : NonCopyable
+    {
+    public:
+        /**
+         * Default EntityManger constructor.
+         */
+        EntityManager();
+    private:
+    protected:
+    };// EntityManager
+
+    // EntityHolder implementation.
+    EntityHolder::EntityHolder()
+    {
+        // Create the 0th record, valid Entity indexes start at 1!.
+        mRecords.emplace_back();
+    }
+
+    EntityId EntityHolder::create()
+    {
+        EIdType index{0};
+        EIdType gen{0};
+
+        if (mFree.size() > ENT_MIN_FREE)
+        {
+            index = mFree.front();
+            ENT_ASSERT_SLOW(index < mRecords.size());
+            mFree.pop_front();
+            // Generation is incremented in Entity destroy.
+            gen = mRecords[index].generation;
+        } else
+        {
+            u64 numEntities{mRecords.size()};
+            ENT_ASSERT_SLOW(numEntities < EntityId::MAX_ENTITIES)
+            index = static_cast<EIdType>(mRecords.size());
+            gen = EntityId::START_GEN;
+            mRecords.emplace_back(EntityRecord{true, 0, EntityId::START_GEN});
+        }
+
+        return EntityId(index, gen);
+    }
+
+    void EntityHolder::activate(EntityId id)
+    {
+        mRecords[id.index()].active = true;
+    }
+
+    void EntityHolder::deactivate(EntityId id)
+    {
+        mRecords[id.index()].active = false;
+    }
+
+    bool EntityHolder::destroy(EntityId id)
+    {
+        if (!valid(id))
+        { // Entity does not exist!
+            return false;
+        }
+
+        EntityRecord &rec{mRecords[id.index()]};
+        rec.active = false;
+        rec.components = 0;
+        rec.generation++;
+
+        mFree.push_back(id.index());
+
+        return true;
+    }
+
+    bool EntityHolder::valid(EntityId id) const
+    { return validImpl(id.index(), id.generation()); }
+
+    bool EntityHolder::active(EntityId id) const
+    { return mRecords[id.index()].active; }
+    // EntityHolder implementation end.
+
+    // EntityManager implementation.
+    template <typename U>
+    EntityManager<U>::EntityManager()
+    {
+
+    }
+    // EntityManager implementation end.
 
     // EntityId implementation.
     constexpr EntityId::EntityId(EIdType index, EIdType generation) :
@@ -218,19 +332,13 @@ namespace ent
     { }
 
     constexpr EIdType EntityId::id() const
-    {
-        return mId;
-    }
+    { return mId; }
 
     constexpr EIdType EntityId::index() const
-    {
-        return indexPart(mId);
-    }
+    { return indexPart(mId); }
 
     constexpr EIdType EntityId::generation() const
-    {
-        return genPart(mId);
-    }
+    { return genPart(mId); }
 
     constexpr EIdType EntityId::rGenToLGen(EIdType rGen)
     {
@@ -240,19 +348,13 @@ namespace ent
     }
 
     constexpr EIdType EntityId::lGenToRGen(EIdType lGen)
-    {
-        return lGen >> EID_INDEX_BITS;
-    }
+    { return lGen >> EID_INDEX_BITS; }
 
     constexpr EIdType EntityId::indexPart(EIdType packedId)
-    {
-        return packedId & INDEX_MASK;
-    }
+    { return packedId & INDEX_MASK; }
 
     constexpr EIdType EntityId::genPart(EIdType packedId)
-    {
-        return lGenToRGen(packedId & GEN_MASK);
-    }
+    { return lGenToRGen(packedId & GEN_MASK); }
 
     constexpr EIdType EntityId::combineGenIndex(EIdType lGen, EIdType index)
     {

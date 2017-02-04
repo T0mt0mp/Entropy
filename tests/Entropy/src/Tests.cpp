@@ -114,7 +114,8 @@ TU_Begin(EntropyEntity)
     TU_Case(Universe0, "Testing the Universe class")
     {
         PROF_SCOPE("Universe0");
-        ent::Universe<0> u;
+        using Universe = ent::Universe<0>;
+        Universe &u{Universe::instance()};
         TC_Require(u.addSystem<TestSystem>(1).mNum == 1);
         TC_RequireNoException(u.removeSystem<TestSystem>());
         u.registerComponent<TestComponentHolder<TestComponent1>>();
@@ -181,6 +182,53 @@ TU_Begin(EntropyEntity)
         TC_CheckEqual(eid.id(), ((gen << ent::EID_INDEX_BITS) | (index)));
         TC_CheckEqual(eid.index(), index);
         TC_CheckEqual(eid.generation(), gen);
+    }
+
+    TU_Case(EntityHolder0, "Testing the EntityHolder class")
+    {
+        PROF_SCOPE("EntityHolder0");
+        using ent::EntityHolder;
+        using ent::EntityId;
+        static constexpr u64 CREATE_NUM{100};
+        EntityHolder h1;
+
+        for (u64 iii = 1; iii <= CREATE_NUM; ++iii)
+        {
+            TC_RequireEqual(h1.create(), EntityId(iii, 0));
+        }
+        TC_Require(!h1.destroy(EntityId()));
+        for (u64 iii = 1; iii <= ent::ENT_MIN_FREE + 1; ++iii)
+        {
+            TC_RequireEqual(h1.create(), EntityId(CREATE_NUM + iii, 0));
+            TC_Require(h1.destroy(EntityId(iii, 0)));
+        }
+        TC_RequireEqual(h1.create(), EntityId(1, 1));
+        TC_RequireEqual(h1.create(), EntityId(CREATE_NUM + ent::ENT_MIN_FREE + 2, 0));
+        TC_Require(h1.valid(EntityId(1, 1)));
+        for (u64 iii = 2; iii <= ent::ENT_MIN_FREE + 1; ++iii)
+        {
+            TC_Require(!h1.valid(EntityId(iii, 0)));
+        }
+        for (u64 iii = ent::ENT_MIN_FREE + 2; iii <= CREATE_NUM + ent::ENT_MIN_FREE + 2; ++iii)
+        {
+            TC_Require(h1.valid(EntityId(iii, 0)));
+            TC_Require(h1.active(EntityId(iii, 0)));
+        }
+        TC_Require(!h1.valid(EntityId(CREATE_NUM + ent::ENT_MIN_FREE + 3)));
+
+        EntityHolder h2;
+        for (u64 iii = 1; iii <= 10; ++iii)
+        {
+            TC_RequireEqual(h2.create(), EntityId(iii, 0));
+        }
+        for (u64 iii = 1; iii <= 10; ++iii)
+        {
+            TC_Require(h2.valid(EntityId(iii, 0)));
+            TC_Require(h2.active(EntityId(iii, 0)));
+            h2.deactivate(EntityId(iii, 0));
+            TC_Require(h2.valid(EntityId(iii, 0)));
+            TC_Require(!h2.active(EntityId(iii, 0)));
+        }
     }
 
 TU_End(EntropyEntity)

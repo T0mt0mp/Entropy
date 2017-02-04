@@ -65,6 +65,9 @@ namespace ent
         constexpr ComponentBitset &operator=(CBitset &&rhs)
         { mBitset = std::move(rhs); return *this; }
 
+        ComponentBitset &operator=(u64 val)
+        { mBitset = val; return *this; }
+
         /// Set all bits to true.
         void set()
         { mBitset.set(); }

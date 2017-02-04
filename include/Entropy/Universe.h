@@ -44,9 +44,14 @@ namespace ent
         using ThisType = Universe<N>;
 
         /**
-         * Universe default constructor.
+         * Singleton instance getter.
+         * @return Instance of the Universe.
          */
-        Universe() = default;
+        static Universe &instance()
+        {
+            static Universe u;
+            return u;
+        }
 
         /**
          * Register given System for this universe.
@@ -82,6 +87,11 @@ namespace ent
                   typename... CArgTs>
         void registerComponent(CArgTs... args);
     private:
+        /**
+         * Universe default constructor.
+         */
+        Universe();
+
         /// Used for managing Systems.
         SystemManager<ThisType> mSM;
         /// Used for managing EntityGroups.
@@ -92,6 +102,12 @@ namespace ent
         EntityManager<ThisType> mEM;
     protected:
     }; // Universe
+
+    std::ostream &operator<<(std::ostream &out, const EntityId &id)
+    {
+        out << "E(" << id.index() << ":" << id.generation() << ")";
+        return out;
+    }
 
     template <u64 N>
     template <typename SystemT,
@@ -124,14 +140,16 @@ namespace ent
               typename... CArgTs>
     void Universe<N>::registerComponent(CArgTs... args)
     {
-        /*
-        using Extract = ComponentTypeExtractor<HolderT>;
-        using ComponentT = typename Extract::ComponentT;
-         */
         static_assert(!B, "Each component type can have only one holder!");
         constexpr u64 cId{ID};
         ENT_UNUSED(cId);
         ENT_WARNING("Called unfinished method!");
+    }
+
+    template <u64 N>
+    Universe<N>::Universe()
+    {
+
     }
 
 } // namespace ent
