@@ -32,17 +32,34 @@ struct TestComponent2
     u32 x, y;
 };
 
-template <typename ComponentT>
-class TestComponentHolder
+template <typename ComponentT,
+          typename NUM>
+class TestComponentHolder : public ent::BaseComponentHolder<ComponentT>
 {
 public:
     TestComponentHolder(u32 num) :
         mNum{num}
     {
-        std::cout << "TestComponentHolder : " << mNum << std::endl;
+        std::cout << "TestComponentHolder : " << mNum << " " << mInstantiated << std::endl;
+        mInstantiated++;
     }
     u32 mNum;
+
+    static u64 mInstantiated;
+
+    ComponentT* add(ent::EntityId id) noexcept override
+    { return nullptr; }
+    ComponentT* get(ent::EntityId id) noexcept override
+    { return nullptr; }
+    bool has(ent::EntityId id) const noexcept override
+    { return false; }
+    void remove(ent::EntityId id) noexcept override
+    { return; }
 };
+
+template <typename ComponentT,
+          typename NUM>
+u64 TestComponentHolder<ComponentT, NUM>::mInstantiated{0};
 
 TU_Begin(EntropyEntity)
 
@@ -118,8 +135,10 @@ TU_Begin(EntropyEntity)
         Universe &u{Universe::instance()};
         TC_Require(u.addSystem<TestSystem>(1).mNum == 1);
         TC_RequireNoException(u.removeSystem<TestSystem>());
-        u.registerComponent<TestComponentHolder<TestComponent1>>();
-        u.registerComponent<TestComponentHolder<TestComponent2>>();
+        u.registerComponent<TestComponentHolder<TestComponent1, int>>(1);
+        u.registerComponent<TestComponentHolder<TestComponent2, int>>(2);
+        TC_RequireEqual((TestComponentHolder<TestComponent1, int>::mInstantiated), 1u);
+        TC_RequireEqual((TestComponentHolder<TestComponent2, int>::mInstantiated), 1u);
     }
 
     TU_Case(ComponentBitset0, "Testing the ComponentBitset class")
@@ -228,7 +247,15 @@ TU_Begin(EntropyEntity)
             h2.deactivate(EntityId(iii, 0));
             TC_Require(h2.valid(EntityId(iii, 0)));
             TC_Require(!h2.active(EntityId(iii, 0)));
+            h2.activate(EntityId(iii, 0));
+            TC_Require(h2.valid(EntityId(iii, 0)));
+            TC_Require(h2.active(EntityId(iii, 0)));
         }
+    }
+
+    TU_Case(ComponentHolder0, "Testing the ComponentHolder class")
+    {
+        TC_RequireMessage(false, "TODO");
     }
 
 TU_End(EntropyEntity)

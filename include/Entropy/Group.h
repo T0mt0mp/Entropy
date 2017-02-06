@@ -21,7 +21,7 @@ namespace ent
      * @tparam UniverseT Type of the Universe, where this class is being used.
      */
     template <typename UniverseT>
-    class GroupManager
+    class GroupManager final : NonCopyable
     {
     public:
     private:

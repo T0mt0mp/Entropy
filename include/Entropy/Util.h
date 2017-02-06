@@ -15,7 +15,7 @@
 namespace ent
 {
     /**
-     * Used for making classes non copyable, used through inheritance.
+     * Used for making classes non copyable/movable, used through inheritance.
      * @code
      *  class MyClass : NonCopyable
      *  {
@@ -38,7 +38,7 @@ namespace ent
         // Only usable for inheritance.
         NonCopyable()
         { }
-        ~NonCopyable()
+        virtual ~NonCopyable()
         { }
     }; // NonCopyable
 

@@ -21,17 +21,143 @@ namespace ent
      * @tparam UniverseT Type of the Universe, where this class is being used.
      */
     template <typename UniverseT>
-    class ComponentManager : NonCopyable
+    class ComponentManager final : NonCopyable
     {
     public:
+        /**
+         * Default constructor.
+         */
+        ComponentManager();
+
+        /// Destructor.
+        ~ComponentManager();
+
+        /**
+         * Register given Component with its ComponentHolder.
+         * @tparam ComponentT Type of the Component.
+         * @tparam HolderT Type of the Holder.
+         * @tparam CArgTs Constructor argument types.
+         * @param args Constructor arguments passed to the Holder constructor.
+         */
+        template <typename ComponentT,
+                  typename HolderT,
+                  typename... CArgTs>
+        inline void registerComponent(CArgTs... args);
     private:
+        /**
+         * Holder instance.
+         * @tparam HolderT Type of the Holder.
+         */
+        template <typename HolderT>
+        static HolderT* mHolder{nullptr};
+
+
     protected:
     }; // ComponentManager
 
     /**
+     * Base Component holder.
+     * @tparam ComponentT Type of the Component contained within.
+     */
+    template <typename ComponentT>
+    class BaseComponentHolder : NonCopyable
+    {
+    public:
+        using CompT = ComponentT;
+        using CompRef = CompT&;
+        using CompPtr = CompT*;
+
+        /**
+         * Add Component for given EntityId, if the Component
+         * already exists, nothing happens.
+         * @param id Id of the Entity.
+         * @return Returns pointer to the Component.
+         */
+        virtual CompPtr add(EntityId id) noexcept = 0;
+
+        /**
+         * Get Component belonging to given EntityId.
+         * @param id Id of the Entity.
+         * @return Returns pointer to the Component, or nullptr, if it does not exist.
+         */
+        virtual CompPtr get(EntityId id) noexcept = 0;
+
+        /**
+         * Does given Entity have an Component associated with it?
+         * @param id Id of the Entity.
+         * @return Returns true, if there IS an Component associated.
+         */
+        virtual bool has(EntityId id) const noexcept = 0;
+
+        /**
+         * Remove Component for given Entity. If the Entity does not have
+         * Component associated with it, nothing happens.
+         * @param id Id of the Entity.
+         */
+        virtual void remove(EntityId id) noexcept = 0;
+    private:
+    protected:
+    };
+
+    /**
+     * Default ComponentHolder with all required functionality.
+     * Basic implementation.
+     * @tparam ComponentT Type of the Component contained within.
+     */
+    template <typename ComponentT>
+    class ComponentHolder final : public BaseComponentHolder<ComponentT>
+    {
+    public:
+        using CompT = ComponentT;
+        using CompRef = CompT&;
+        using CompPtr = CompT*;
+
+        /**
+         * Default constructor.
+         */
+        ComponentHolder();
+
+        /// Destructor
+        ~ComponentHolder();
+
+        /**
+         * Add Component for given EntityId, if the Component
+         * already exists, nothing happens.
+         * @param id Id of the Entity.
+         * @return Returns pointer to the Component.
+         */
+        virtual inline CompPtr add(EntityId id) noexcept;
+
+        /**
+         * Get Component belonging to given EntityId.
+         * @param id Id of the Entity.
+         * @return Returns pointer to the Component, or nullptr, if it does not exist.
+         */
+        virtual inline CompPtr get(EntityId id) noexcept;
+
+        /**
+         * Does given Entity have an Component associated with it?
+         * @param id Id of the Entity.
+         * @return Returns true, if there IS an Component associated.
+         */
+        virtual inline bool has(EntityId id) const noexcept;
+
+        /**
+         * Remove Component for given Entity. If the Entity does not have
+         * Component associated with it, nothing happens.
+         * @param id Id of the Entity.
+         */
+        virtual inline void remove(EntityId id) noexcept;
+    private:
+        /// Mapping from EntityId to Component.
+        std::map<EntityId, CompT> mMap;
+    protected:
+    };
+
+    /**
      * Bitset, where each bit represents a single Component type.
      */
-    class ComponentBitset
+    class ComponentBitset final
     {
     public:
         /// Type of the inner bitset.
@@ -142,7 +268,7 @@ namespace ent
     /**
      * ComponentFilter is used for filtering Entities by their present/missing Components.
      */
-    class ComponentFilter
+    class ComponentFilter final
     {
     public:
         /**
@@ -184,6 +310,42 @@ namespace ent
         ComponentBitset mMask;
     protected:
     };
+
+    // ComponentHolder implementation.
+    template <typename ComponentT>
+    ComponentT* ComponentHolder<ComponentT>::add(EntityId id) noexcept
+    {
+        return get(id);
+    }
+
+    template <typename ComponentT>
+    ComponentT* ComponentHolder<ComponentT>::get(EntityId id) noexcept
+    {
+        ComponentT* result{nullptr};
+        try {
+            result = &mMap[id];
+        } catch(...) {
+            ENT_WARNING("Get has thrown an exception!");
+        }
+        return result;
+    }
+
+    template <typename ComponentT>
+    bool ComponentHolder<ComponentT>::has(EntityId id) const noexcept
+    {
+        return (mMap.find(id) != mMap.end());
+    }
+
+    template <typename ComponentT>
+    void ComponentHolder<ComponentT>::remove(EntityId id) noexcept
+    {
+        try {
+            mMap.erase(id);
+        } catch(...) {
+            ENT_WARNING("Remove has thrown an exception!");
+        }
+    }
+    // ComponentHolder implementation end.
 } // namespace ent
 
 #endif //ECS_FIT_COMPONENT_H

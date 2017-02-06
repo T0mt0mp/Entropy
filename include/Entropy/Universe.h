@@ -141,6 +141,9 @@ namespace ent
     void Universe<N>::registerComponent(CArgTs... args)
     {
         static_assert(!B, "Each component type can have only one holder!");
+        static_assert(std::is_base_of<ent::BaseComponentHolder<ComponentT>, HolderT>::value,
+                      "Component holder has to inherit from ent::BaseComponentHolder!");
+        static_assert(sizeof(HolderT(args...)), "Component holder has to be instantiable!");
         constexpr u64 cId{ID};
         ENT_UNUSED(cId);
         ENT_WARNING("Called unfinished method!");

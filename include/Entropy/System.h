@@ -20,7 +20,7 @@ namespace ent
      * @tparam UniverseT Type of the Universe, where this class is being used.
      */
     template <typename UniverseT>
-    class SystemManager : NonCopyable
+    class SystemManager final : NonCopyable
     {
     public:
     private:
