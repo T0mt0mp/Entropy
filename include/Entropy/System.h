@@ -14,6 +14,16 @@
 namespace ent
 {
     /**
+     * SystemManager base class containing code which does not need to be templated.
+     */
+    class SystemManagerBase : NonCopyable
+    {
+    public:
+    private:
+    protected:
+    }; // SystemManagerBase
+
+    /**
      * SystemManager is a part of Entropy ECS Universe.
      * Its main purpose is to manage Systems within a one Universe.
      * It contains methods for adding/removing systems, their
@@ -21,7 +31,7 @@ namespace ent
      * @tparam UniverseT Type of the Universe, where this class is being used.
      */
     template <typename UniverseT>
-    class SystemManager final : NonCopyable
+    class SystemManager final : public SystemManagerBase
     {
     public:
     private:

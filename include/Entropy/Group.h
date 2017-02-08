@@ -14,6 +14,16 @@
 namespace ent
 {
     /**
+     * GroupManager base class containing code which does not need to be templated.
+     */
+    class GroupManagerBase : NonCopyable
+    {
+    public:
+    private:
+    protected:
+    }; // GroupManagerBase
+
+    /**
      * GroupManager is a part of Entropy ECS Universe.
      * GroupManager keeps a catalogue of EntityGroups for
      * Systems to use.
@@ -22,7 +32,7 @@ namespace ent
      * @tparam UniverseT Type of the Universe, where this class is being used.
      */
     template <typename UniverseT>
-    class GroupManager final : NonCopyable
+    class GroupManager final : public GroupManagerBase
     {
     public:
     private:

@@ -6,51 +6,18 @@
 
 #include "Tests.h"
 
-class TestSystem: public ent::System
-{
-public:
-    TestSystem(u32 num) :
-        mNum{num} {}
-    u32 mNum;
-};
-
-struct TestComponent1
-{
-    TestComponent1()
-    {
-        std::cout << "TestComponent1" << std::endl;
-    }
-    u32 x, y;
-};
-
-struct TestComponent2
-{
-    TestComponent2()
-    {
-        std::cout << "TestComponent1" << std::endl;
-    }
-    u32 x, y;
-};
-
-template <u64 N>
-struct TestComponent
-{
-    u32 v;
-};
-
 template <typename ComponentT,
-          typename NUM>
+    typename NUM>
 class TestComponentHolder : public ent::BaseComponentHolder<ComponentT>
 {
 public:
-    TestComponentHolder(u32 num) :
-        mNum{num}
+    TestComponentHolder(u32 num)
     {
+        mNum = num;
         std::cout << "TestComponentHolder : " << mNum << " " << mInstantiated << std::endl;
         mInstantiated++;
     }
-    u32 mNum;
-
+    static u32 mNum;
     static u64 mInstantiated;
 
     ComponentT* add(ent::EntityId id) noexcept override
@@ -64,8 +31,47 @@ public:
 };
 
 template <typename ComponentT,
-          typename NUM>
+    typename NUM>
 u64 TestComponentHolder<ComponentT, NUM>::mInstantiated{0};
+template <typename ComponentT,
+    typename NUM>
+u32 TestComponentHolder<ComponentT, NUM>::mNum{0};
+
+class TestSystem: public ent::System
+{
+public:
+    TestSystem(u32 num) :
+        mNum{num} {}
+    u32 mNum;
+};
+
+struct TestComponent1
+{
+    using HolderT = TestComponentHolder<TestComponent1, int>;
+
+    TestComponent1()
+    {
+        std::cout << "TestComponent1" << std::endl;
+    }
+    u32 x, y;
+};
+
+struct TestComponent2
+{
+    using HolderT = TestComponentHolder<TestComponent2, int>;
+
+    TestComponent2()
+    {
+        std::cout << "TestComponent1" << std::endl;
+    }
+    u32 x, y;
+};
+
+template <u64 N>
+struct TestComponent
+{
+    u32 v;
+};
 
 TU_Begin(EntropyEntity)
 
@@ -138,15 +144,17 @@ TU_Begin(EntropyEntity)
     {
         PROF_SCOPE("Universe0");
         using Universe = FirstUniverse;
+        Universe::UniverseT &u{Universe::instance()};
         TC_Require(u.addSystem<TestSystem>(1).mNum == 1);
         TC_RequireNoException(u.removeSystem<TestSystem>());
-        u64 id1{(u.registerComponent<TestComponentHolder<TestComponent1, int>>(1))};
-        u64 id2{(u.registerComponent<TestComponentHolder<TestComponent2, int>>(2))};
-        std::cout << Universe::mCId<TestComponent1> << " " << Universe::mCId<TestComponent2> << std::endl;
+        u64 id1{(u.registerComponent<TestComponent1>(1))};
+        u64 id2{(u.registerComponent<TestComponent2>(2))};
         TC_RequireEqual(id1, 2u);
         TC_RequireEqual(id2, 3u);
         TC_RequireEqual((TestComponentHolder<TestComponent1, int>::mInstantiated), 1u);
+        TC_RequireEqual((TestComponentHolder<TestComponent1, int>::mNum), 1u);
         TC_RequireEqual((TestComponentHolder<TestComponent2, int>::mInstantiated), 1u);
+        TC_RequireEqual((TestComponentHolder<TestComponent2, int>::mNum), 2u);
     }
 
     TU_Case(ComponentBitset0, "Testing the ComponentBitset class")

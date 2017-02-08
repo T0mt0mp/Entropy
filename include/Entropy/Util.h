@@ -8,6 +8,8 @@
 #define ECS_FIT_UTIL_H
 
 #include <limits>
+#include <utility>
+#include <memory>
 
 #include "Types.h"
 
@@ -42,6 +44,59 @@ namespace ent
         { }
     }; // NonCopyable
 
+    /**
+     * Allows the allocation of memory for given type, without calling the constructor on it.
+     * @tparam T Type which will be contained within.
+     */
+    template <typename T>
+    class alignas(T) ConstructionHandler
+    {
+    public:
+        /// Default constructor, does nothing.
+        ConstructionHandler() {}
+
+        /// Destructor, calls destructor on inner class iff it was constructed.
+        ~ConstructionHandler() {}
+
+        /**
+         * Construct the inner object.
+         * @tparam CArgTs Constructor argument types.
+         * @param args Constructor arguments
+         */
+        template <typename... CArgTs>
+        void construct(CArgTs... args)
+        {
+            mHandler.reset(new (mObjectMem) T(std::forward<CArgTs>(args)...));
+        }
+
+        /**
+         * Explicit destruct the inner object.
+         */
+        void destruct()
+        { mHandler.reset(nullptr); }
+
+        /**
+         * Is the inner object constructed?
+         * @return Returns true, if the inner object has been constructed.
+         */
+        bool constructed() const
+        { return mHandler.get() == nullptr; }
+
+        T &operator()()
+        { return (*mHandler); }
+    private:
+        /// Functor acting as a deletion function called by unique_ptr
+        struct Destructor
+        {
+            void operator()(T *ptr) const
+            { ptr->~T(); }
+        };
+        /// Memory for the inner object.
+        alignas(T) u8 mObjectMem[sizeof(T)];
+        /// Memory handler.
+        std::unique_ptr<T, Destructor> mHandler{nullptr};
+    protected:
+    };
 
     /**
      * Used for creation of classes used for generation of unique IDs for types.

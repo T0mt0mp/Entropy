@@ -129,6 +129,16 @@ namespace ent
     };
 
     /**
+     * EntityManager base class containing code which does not need to be templated.
+     */
+    class EntityManagerBase : NonCopyable
+    {
+    public:
+    private:
+    protected:
+    }; // EntityManagerBase
+
+    /**
      * EntityManager is a part of Entropy ECS Universe.
      * Contains lists of Entities, their status and
      * currently used generation for given index.
@@ -137,7 +147,7 @@ namespace ent
      * @tparam UniverseT Type of the Universe, where this class is being used.
      */
     template <typename UniverseT>
-    class EntityManager final : NonCopyable
+    class EntityManager final : public EntityManagerBase
     {
     public:
         /**

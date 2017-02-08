@@ -26,20 +26,6 @@ namespace ent
     class Universe : NonCopyable
     {
     private:
-        /// Component ID generator.
-        class ComponentIdGenerator : public ClassIdGenerator<ComponentIdGenerator> {};
-        /// Used for extracting Component type.
-        template <typename HolderT>
-        struct ComponentTypeExtractor;
-        /// Used for extracting Component type.
-        template <template <typename, typename...> typename HolderTT,
-            typename... Other,
-            typename ComponentTT>
-        struct ComponentTypeExtractor<HolderTT<ComponentTT, Other...>>
-        {
-            using ComponentT = ComponentTT;
-            using HolderT = HolderTT<ComponentTT, Other...>;
-        };
     public:
         using UniverseT = Universe<T>;
 
@@ -47,9 +33,9 @@ namespace ent
          * Singleton instance getter.
          * @return Instance of the Universe.
          */
-        static Universe &instance()
+        static UniverseT &instance()
         {
-            static Universe u;
+            static UniverseT u;
             return u;
         }
 
@@ -73,22 +59,14 @@ namespace ent
 
         /**
          * Register given Component and its ComponentHolder.
-         * @tparam HolderT Type of the ComponentHolder.
          * @tparam ComponentT Type of the Component.
          * @tparam CArgTs ComponentHolder constructor argument types.
-         * @tparam B Used for inner template generation hacks.
-         * @tparam ID Used for inner template generation hacks.
          * @param args ComponentHolder constructor arguments, passed to the ComponentHolder on construction.
+         * @return Returns ID of the Component.
          */
-        template <typename HolderT,
-                  typename ComponentT = typename ComponentTypeExtractor<HolderT>::ComponentT,
-                  bool B = ComponentIdGenerator::template generated<ComponentT>(),
-                  //u64 ID = ComponentIdGenerator::template getId<ComponentT>(),
+        template <typename ComponentT,
                   typename... CArgTs>
         u64 registerComponent(CArgTs... args);
-
-        template <typename ComponentT>
-        static constexpr u64 mCId{ComponentIdGenerator::template getId<ComponentT>()};
     private:
         /**
          * Universe default constructor.
@@ -130,21 +108,21 @@ namespace ent
     }
 
     template <typename T>
-    template <typename HolderT,
-              typename ComponentT,
-              bool B,
-              //u64 ID,
+    template <typename ComponentT,
               typename... CArgTs>
     u64 Universe<T>::registerComponent(CArgTs... args)
     {
-        static_assert(!B, "Each component type can have only one holder!");
-        static_assert(std::is_base_of<ent::BaseComponentHolder<ComponentT>, HolderT>::value,
-                      "Component holder has to inherit from ent::BaseComponentHolder!");
-        static_assert(sizeof(HolderT(args...)), "Component holder has to be instantiable!");
-        //constexpr u64 cId{ID};
-        constexpr u64 cId{mCId<ComponentT>};
-        ENT_UNUSED(cId);
-        ENT_WARNING("Called unfinished method!");
+        static bool registered{false};
+        // Check for multiple calls for single Component.
+        if (registered)
+        {
+            ENT_WARNING("registerComponent called multiple times!");
+        }
+
+        static const u64 cId{mCM.registerComponent<ComponentT>(std::forward<CArgTs>(args)...)};
+
+        registered = true;
+
         return cId;
     }
 

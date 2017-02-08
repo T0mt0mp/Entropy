@@ -6,32 +6,6 @@
 
 #include "SecondModule.h"
 
-class TestSystem: public ent::System
-{
-public:
-    TestSystem(u32 num) :
-        mNum{num} {}
-    u32 mNum;
-};
-
-struct TestComponent3
-{
-    TestComponent3()
-    {
-        std::cout << "TestComponent1" << std::endl;
-    }
-    u32 x, y;
-};
-
-struct TestComponent4
-{
-    TestComponent4()
-    {
-        std::cout << "TestComponent1" << std::endl;
-    }
-    u32 x, y;
-};
-
 template <typename ComponentT,
     typename NUM>
 class TestComponentHolder : public ent::BaseComponentHolder<ComponentT>
@@ -61,6 +35,34 @@ template <typename ComponentT,
     typename NUM>
 u64 TestComponentHolder<ComponentT, NUM>::mInstantiated{0};
 
+class TestSystem: public ent::System
+{
+public:
+    TestSystem(u32 num) :
+        mNum{num} {}
+    u32 mNum;
+};
+
+struct TestComponent3
+{
+    TestComponent3()
+    {
+        std::cout << "TestComponent1" << std::endl;
+    }
+    u32 x, y;
+};
+
+struct TestComponent4
+{
+    using HolderT = TestComponentHolder<TestComponent4, int>;
+
+    TestComponent4()
+    {
+        std::cout << "TestComponent1" << std::endl;
+    }
+    u32 x, y;
+};
+
 TU_Begin(EntropyEntityModule)
 
     TU_Setup
@@ -73,19 +75,21 @@ TU_Begin(EntropyEntityModule)
 
     }
 
-    TU_Case(Universe0, "Testing the Universe class")
+    TU_Case(UniverseSecondModule, "Testing the Universe class in second module")
     {
-        PROF_SCOPE("Universe0");
-        //using Universe = ent::Universe<0>;
+        PROF_SCOPE("UniverseSecondModule");
+
         using Universe = FirstUniverse;
-        auto &u{Universe::instance()};
+        Universe::UniverseT &u{Universe::instance()};
+
         TC_Require(u.addSystem<TestSystem>(1).mNum == 1);
         TC_RequireNoException(u.removeSystem<TestSystem>());
-        u64 id1{(u.registerComponent<TestComponentHolder<TestComponent3, int>>(3))};
-        u64 id2{(u.registerComponent<TestComponentHolder<TestComponent4, int>>(4))};
+
+        u64 id1{(u.registerComponent<TestComponent3>())};
+        u64 id2{(u.registerComponent<TestComponent4>(1))};
         TC_RequireEqual(id1, 0u);
         TC_RequireEqual(id2, 1u);
-        TC_RequireEqual((TestComponentHolder<TestComponent3, int>::mInstantiated), 1u);
+
         TC_RequireEqual((TestComponentHolder<TestComponent4, int>::mInstantiated), 1u);
     }
 TU_End(EntropyEntityModule)

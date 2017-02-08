@@ -16,53 +16,11 @@
 namespace ent
 {
     /**
-     * ComponentManager is a part of Entropy ECS Universe.
-     * Used for handling list of ComponentHolders.
-     * Contains methods for adding new ComponentHolders and
-     * their refreshing.
-     * @tparam UniverseT Type of the Universe, where this class is being used.
-     */
-    template <typename UniverseT>
-    class ComponentManager final : NonCopyable
-    {
-    public:
-        /**
-         * Default constructor.
-         */
-        ComponentManager();
-
-        /// Destructor.
-        ~ComponentManager();
-
-        /**
-         * Register given Component with its ComponentHolder.
-         * @tparam ComponentT Type of the Component.
-         * @tparam HolderT Type of the Holder.
-         * @tparam CArgTs Constructor argument types.
-         * @param args Constructor arguments passed to the Holder constructor.
-         */
-        template <typename ComponentT,
-                  typename HolderT,
-                  typename... CArgTs>
-        inline void registerComponent(CArgTs... args);
-    private:
-        /**
-         * Holder instance.
-         * @tparam HolderT Type of the Holder.
-         */
-        template <typename HolderT>
-        static HolderT* mHolder{nullptr};
-
-
-    protected:
-    }; // ComponentManager
-
-    /**
      * Base Component holder.
      * @tparam ComponentT Type of the Component contained within.
      */
     template <typename ComponentT>
-    class BaseComponentHolder : NonCopyable
+    class BaseComponentHolder
     {
     public:
         using CompT = ComponentT;
@@ -155,6 +113,107 @@ namespace ent
         std::map<EntityId, CompT> mMap;
     protected:
     };
+
+    /**
+     * ComponentManager base class containing code which does not need to be templated.
+     */
+    class ComponentManagerBase : NonCopyable
+    {
+    public:
+    private:
+    protected:
+    }; // ComponentManagerBase
+
+    /**
+     * ComponentManager is a part of Entropy ECS Universe.
+     * Used for handling list of ComponentHolders.
+     * Contains methods for adding new ComponentHolders and
+     * their refreshing.
+     * @tparam UniverseT Type of the Universe, where this class is being used.
+     */
+    template <typename UniverseT>
+    class ComponentManager final : public ComponentManagerBase
+    {
+    private:
+        /**
+         * Extract Component holder type from given Component.
+         * Default value is ent::ComponentHolder.
+         * This is the base case, where Component has no specified Holder type.
+         * @tparam ComponentT Type of the Component.
+         * @tparam Check SFINAE check.
+         */
+        template <typename ComponentT,
+                  typename = void>
+        struct HolderExtractor
+        {
+            using type = ent::ComponentHolder<ComponentT>;
+        };
+
+        /**
+         * Extract Component holder type from given Component.
+         * Default value is ent::ComponentHolder.
+         * This is the case, when Component does have a Holder type specified.
+         * @tparam ComponentT Type of the Component.
+         * @tparam Check SFINAE check.
+         */
+        template <typename ComponentT>
+        struct HolderExtractor<ComponentT,
+            typename std::enable_if<
+                std::is_base_of<ent::BaseComponentHolder<ComponentT>, typename ComponentT::HolderT>::value
+            >::type>
+        {
+            using type = typename ComponentT::HolderT;
+        };
+    public:
+        /**
+         * Default constructor.
+         */
+        ComponentManager();
+
+        /// Destructor.
+        ~ComponentManager();
+
+        /**
+         * Register given Component with its ComponentHolder.
+         * @tparam ComponentT Type of the Component.
+         * @tparam HolderT Type of the Holder.
+         * @tparam CArgTs Constructor argument types.
+         * @param args Constructor arguments passed to the Holder constructor.
+         */
+        template <typename ComponentT,
+                  typename HolderT = typename HolderExtractor<ComponentT>::type,
+                  typename... CArgTs>
+        inline u64 registerComponent(CArgTs... args);
+
+        /**
+         * Get ID for given Component type.
+         * @tparam ComponentT Component type.
+         * @return ID of the Component type.
+         */
+        template <typename ComponentT>
+        inline static u64 id();
+    private:
+        /// Component ID generator.
+        class ComponentIdGenerator : public StaticClassIdGenerator<ComponentIdGenerator> {};
+
+        /**
+         * Construct Holder with given constructor parameters.
+         * @tparam HolderT Type of the Holder.
+         * @tparam CArgTs Constructor argument types.
+         * @param args Constructor arguments.
+         */
+        template <typename HolderT,
+                  typename... CArgTs>
+        inline void initHolder(CArgTs... args);
+
+        /**
+         * Holder instance.
+         * @tparam HolderT Type of the Holder.
+         */
+        template <typename HolderT>
+        static ConstructionHandler<HolderT> mHolder;
+    protected:
+    }; // ComponentManager
 
     /**
      * Bitset, where each bit represents a single Component type.
@@ -321,9 +380,54 @@ namespace ent
     template <typename UniverseT>
     ComponentManager<UniverseT>::~ComponentManager()
     { }
+
+    template <typename UniverseT>
+    template <typename ComponentT,
+              typename HolderT,
+              typename... CArgTs>
+    u64 ComponentManager<UniverseT>::registerComponent(CArgTs... args)
+    {
+        const u64 cId{id<ComponentT>()};
+
+        static_assert(std::is_base_of<ent::BaseComponentHolder<ComponentT>, HolderT>::value,
+                      "Component holder has to inherit from ent::BaseComponentHolder!");
+        static_assert(sizeof(HolderT(args...)), "Component holder has to be instantiable!");
+
+        initHolder<HolderT>(std::forward<CArgTs>(args)...);
+
+        return cId;
+    }
+
+    template <typename UniverseT>
+    template <typename ComponentT>
+    u64 ComponentManager<UniverseT>::id()
+    {
+        static const u64 cId{ComponentIdGenerator::template getId<ComponentT>()};
+        return cId;
+    }
+
+    template <typename UniverseT>
+    template <typename HolderT,
+        typename... CArgTs>
+    void ComponentManager<UniverseT>::initHolder(CArgTs... args)
+    {
+        mHolder<HolderT>.construct(std::forward<CArgTs>(args)...);
+    }
+
+    template <typename UniverseT>
+    template <typename HolderT>
+    ConstructionHandler<HolderT> ComponentManager<UniverseT>::mHolder;
     // ComponentManager implementation end.
 
     // ComponentHolder implementation.
+    template <typename ComponentT>
+    ComponentHolder<ComponentT>::ComponentHolder()
+    { }
+
+    template <typename ComponentT>
+    ComponentHolder<ComponentT>::~ComponentHolder()
+    { }
+
     template <typename ComponentT>
     ComponentT* ComponentHolder<ComponentT>::add(EntityId id) noexcept
     {
