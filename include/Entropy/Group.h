@@ -8,6 +8,7 @@
 #define ECS_FIT_GROUP_H
 
 #include "Types.h"
+#include "Util.h"
 
 /// Main Entropy namespace
 namespace ent

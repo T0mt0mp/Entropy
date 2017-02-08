@@ -9,6 +9,8 @@
 #define ECS_FIT_COMPONENT_H
 
 #include "Types.h"
+#include "Util.h"
+#include "EntityId.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -310,6 +312,16 @@ namespace ent
         ComponentBitset mMask;
     protected:
     };
+
+    // ComponentManager implementation.
+    template <typename UniverseT>
+    ComponentManager<UniverseT>::ComponentManager()
+    { }
+
+    template <typename UniverseT>
+    ComponentManager<UniverseT>::~ComponentManager()
+    { }
+    // ComponentManager implementation end.
 
     // ComponentHolder implementation.
     template <typename ComponentT>

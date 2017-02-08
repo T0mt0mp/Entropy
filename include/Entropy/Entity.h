@@ -22,7 +22,7 @@ namespace ent
         /**
          * Default holder contructor
          */
-        EntityHolder();
+        inline EntityHolder();
 
         /**
          * Create a new Entity and return its ID.

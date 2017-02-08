@@ -11,6 +11,8 @@
 
 #include "testing/Testing.h"
 
-#include "Entropy/Entropy.h"
+#include "TestUniverse.h"
+
+#include "SecondModule.h"
 
 #endif //Tests_H

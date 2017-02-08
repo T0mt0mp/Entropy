@@ -32,6 +32,12 @@ struct TestComponent2
     u32 x, y;
 };
 
+template <u64 N>
+struct TestComponent
+{
+    u32 v;
+};
+
 template <typename ComponentT,
           typename NUM>
 class TestComponentHolder : public ent::BaseComponentHolder<ComponentT>
@@ -131,12 +137,14 @@ TU_Begin(EntropyEntity)
     TU_Case(Universe0, "Testing the Universe class")
     {
         PROF_SCOPE("Universe0");
-        using Universe = ent::Universe<0>;
-        Universe &u{Universe::instance()};
+        using Universe = FirstUniverse;
         TC_Require(u.addSystem<TestSystem>(1).mNum == 1);
         TC_RequireNoException(u.removeSystem<TestSystem>());
-        u.registerComponent<TestComponentHolder<TestComponent1, int>>(1);
-        u.registerComponent<TestComponentHolder<TestComponent2, int>>(2);
+        u64 id1{(u.registerComponent<TestComponentHolder<TestComponent1, int>>(1))};
+        u64 id2{(u.registerComponent<TestComponentHolder<TestComponent2, int>>(2))};
+        std::cout << Universe::mCId<TestComponent1> << " " << Universe::mCId<TestComponent2> << std::endl;
+        TC_RequireEqual(id1, 2u);
+        TC_RequireEqual(id2, 3u);
         TC_RequireEqual((TestComponentHolder<TestComponent1, int>::mInstantiated), 1u);
         TC_RequireEqual((TestComponentHolder<TestComponent2, int>::mInstantiated), 1u);
     }

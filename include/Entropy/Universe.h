@@ -20,9 +20,9 @@ namespace ent
      * functionality of Entropy ECS.
      * It contains management classes for different
      * aspects of the system and methods to access them.
-     * @tparam N Used for distinguishing between Universes.
+     * @tparam T Used for distinguishing between Universes.
      */
-    template <u64 N>
+    template <typename T>
     class Universe : NonCopyable
     {
     private:
@@ -41,7 +41,7 @@ namespace ent
             using HolderT = HolderTT<ComponentTT, Other...>;
         };
     public:
-        using ThisType = Universe<N>;
+        using UniverseT = Universe<T>;
 
         /**
          * Singleton instance getter.
@@ -83,9 +83,12 @@ namespace ent
         template <typename HolderT,
                   typename ComponentT = typename ComponentTypeExtractor<HolderT>::ComponentT,
                   bool B = ComponentIdGenerator::template generated<ComponentT>(),
-                  u64 ID = ComponentIdGenerator::template getId<ComponentT>(),
+                  //u64 ID = ComponentIdGenerator::template getId<ComponentT>(),
                   typename... CArgTs>
-        void registerComponent(CArgTs... args);
+        u64 registerComponent(CArgTs... args);
+
+        template <typename ComponentT>
+        static constexpr u64 mCId{ComponentIdGenerator::template getId<ComponentT>()};
     private:
         /**
          * Universe default constructor.
@@ -93,26 +96,20 @@ namespace ent
         Universe();
 
         /// Used for managing Systems.
-        SystemManager<ThisType> mSM;
+        SystemManager<UniverseT> mSM;
         /// Used for managing EntityGroups.
-        GroupManager<ThisType> mGM;
+        GroupManager<UniverseT> mGM;
         /// Used for managing ComponentHolders.
-        ComponentManager<ThisType> mCM;
+        ComponentManager<UniverseT> mCM;
         /// Used for managing Entities.
-        EntityManager<ThisType> mEM;
+        EntityManager<UniverseT> mEM;
     protected:
     }; // Universe
 
-    std::ostream &operator<<(std::ostream &out, const EntityId &id)
-    {
-        out << "E(" << id.index() << ":" << id.generation() << ")";
-        return out;
-    }
-
-    template <u64 N>
+    template <typename T>
     template <typename SystemT,
               typename... CArgTs>
-    SystemT &Universe<N>::addSystem(CArgTs... args)
+    SystemT &Universe<T>::addSystem(CArgTs... args)
     {
         static_assert(std::is_base_of<System, SystemT>::value,
                       "The System has to inherit from ent::System!");
@@ -124,33 +121,35 @@ namespace ent
         return sys;
     }
 
-    template <u64 N>
+    template <typename T>
     template<typename SystemT>
-    void Universe<N>::removeSystem()
+    void Universe<T>::removeSystem()
     {
         static_assert(std::is_base_of<System, SystemT>::value, "The System has to inherit from ent::System!");
         ENT_WARNING("Called unfinished method!");
     }
 
-    template <u64 N>
+    template <typename T>
     template <typename HolderT,
               typename ComponentT,
               bool B,
-              u64 ID,
+              //u64 ID,
               typename... CArgTs>
-    void Universe<N>::registerComponent(CArgTs... args)
+    u64 Universe<T>::registerComponent(CArgTs... args)
     {
         static_assert(!B, "Each component type can have only one holder!");
         static_assert(std::is_base_of<ent::BaseComponentHolder<ComponentT>, HolderT>::value,
                       "Component holder has to inherit from ent::BaseComponentHolder!");
         static_assert(sizeof(HolderT(args...)), "Component holder has to be instantiable!");
-        constexpr u64 cId{ID};
+        //constexpr u64 cId{ID};
+        constexpr u64 cId{mCId<ComponentT>};
         ENT_UNUSED(cId);
         ENT_WARNING("Called unfinished method!");
+        return cId;
     }
 
-    template <u64 N>
-    Universe<N>::Universe()
+    template <typename T>
+    Universe<T>::Universe()
     {
 
     }

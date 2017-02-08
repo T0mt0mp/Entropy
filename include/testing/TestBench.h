@@ -95,7 +95,7 @@
                     tb::TestBed::instance().registerTest( \
                         &TEST_CONCAT(_Test_, NAME)::factory); \
                 } \
-            } TEST_EXP_CONCAT(_Registrator_, __LINE__);
+            } TEST_EXP_CONCAT(_Registrator_, NAME);
 
 #define TU_Setup \
             void setUp() override final

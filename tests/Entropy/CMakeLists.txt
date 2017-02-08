@@ -13,8 +13,12 @@ include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${ENGINE_INCLUDE_DIR})
 
 set(TESTS_SOURCES
+        ${PROJECT_SOURCE_DIR}/TestUniverse.cpp
+        ${PROJECT_SOURCE_DIR}/SecondModule.cpp
         ${PROJECT_SOURCE_DIR}/Tests.cpp)
 set(TESTS_HEADERS
+        ${PROJECT_INCLUDE_DIR}/TestUniverse.h
+        ${PROJECT_INCLUDE_DIR}/SecondModule.h
         ${PROJECT_INCLUDE_DIR}/Tests.h)
 
 add_executable(${PROJECT_NAME} ${TESTS_SOURCES} ${TESTS_HEADERS})
