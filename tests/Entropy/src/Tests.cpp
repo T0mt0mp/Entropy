@@ -269,9 +269,57 @@ TU_Begin(EntropyEntity)
         }
     }
 
-    TU_Case(ComponentHolder0, "Testing the ComponentHolder class")
+    TU_Case(ComponentManager0, "Testing the ComponentHolder class")
     {
-        TC_RequireMessage(false, "TODO");
+        PROF_SCOPE("ComponentManager0");
+        SecondUniverse::UniverseT &u{SecondUniverse::instance()};
+        TC_RequireEqual(u.registerComponent<TestComponent<0>>(), 0u);
+        TC_RequireEqual(u.registerComponent<TestComponent<1>>(), 1u);
+        TC_RequireEqual(u.registerComponent<TestComponent<2>>(), 2u);
+
+        for (u32 iii = 0; iii < 100; ++iii)
+        {
+            ent::EntityId id(iii);
+
+            TC_Require(!u.hasComponent<TestComponent<0>>(id));
+            TC_Require(!u.hasComponent<TestComponent<1>>(id));
+            TC_Require(!u.hasComponent<TestComponent<2>>(id));
+            auto a{u.getComponent<TestComponent<0>>(id)};
+            UNUSED(a);
+            TC_Require(!u.getComponent<TestComponent<0>>(id));
+            TC_Require(!u.getComponent<TestComponent<1>>(id));
+            TC_Require(!u.getComponent<TestComponent<2>>(id));
+            u.removeComponent<TestComponent<0>>(id);
+            u.removeComponent<TestComponent<1>>(id);
+            u.removeComponent<TestComponent<2>>(id);
+
+            auto ptr1{u.addComponent<TestComponent<1>>(id)};
+            TC_Require(ptr1);
+            TC_RequireEqual(ptr1, u.getComponent<TestComponent<1>>(id));
+            auto ptr2{u.addComponent<TestComponent<2>>(id)};
+            TC_Require(ptr2);
+            TC_RequireEqual(ptr2, u.addComponent<TestComponent<2>>(id));
+
+            ptr1->v = 42u;
+            TC_RequireEqual(u.getComponent<TestComponent<1>>(id)->v, 42u);
+
+            TC_Require(!u.hasComponent<TestComponent<0>>(id));
+            TC_Require(u.hasComponent<TestComponent<1>>(id));
+            TC_Require(u.hasComponent<TestComponent<2>>(id));
+            TC_Require(!u.getComponent<TestComponent<0>>(id));
+            TC_Require(u.getComponent<TestComponent<1>>(id));
+            TC_Require(u.getComponent<TestComponent<2>>(id));
+            u.removeComponent<TestComponent<0>>(id);
+            u.removeComponent<TestComponent<1>>(id);
+            u.removeComponent<TestComponent<2>>(id);
+
+            TC_Require(!u.hasComponent<TestComponent<0>>(id));
+            TC_Require(!u.hasComponent<TestComponent<1>>(id));
+            TC_Require(!u.hasComponent<TestComponent<2>>(id));
+            TC_Require(!u.getComponent<TestComponent<0>>(id));
+            TC_Require(!u.getComponent<TestComponent<1>>(id));
+            TC_Require(!u.getComponent<TestComponent<2>>(id));
+        }
     }
 
 TU_End(EntropyEntity)

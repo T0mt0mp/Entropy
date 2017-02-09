@@ -20,24 +20,20 @@ namespace ent
      * functionality of Entropy ECS.
      * It contains management classes for different
      * aspects of the system and methods to access them.
-     * @tparam T Used for distinguishing between Universes.
+     * @tparam T Used for distinguishing between Universes, CRTP.
      */
     template <typename T>
     class Universe : NonCopyable
     {
-    private:
     public:
+        // TODO - friend class Entity;
         using UniverseT = Universe<T>;
 
         /**
-         * Singleton instance getter.
-         * @return Instance of the Universe.
+         * Default constructor for Universe.
+         * !!Only one instantiation is allowed per Universe type!!
          */
-        static UniverseT &instance()
-        {
-            static UniverseT u;
-            return u;
-        }
+        Universe();
 
         /**
          * Register given System for this universe.
@@ -67,12 +63,53 @@ namespace ent
         template <typename ComponentT,
                   typename... CArgTs>
         u64 registerComponent(CArgTs... args);
-    private:
-        /**
-         * Universe default constructor.
-         */
-        Universe();
 
+        // System manager proxy methods.
+
+        // Group manager proxy methods.
+
+        // Component manager proxy methods.
+        /**
+         * Add Component to the given Entity.
+         * @tparam ComponentT Type of the Component
+         * @param id Id of the Component
+         * @return Returns pointer to the Component.
+         */
+        template <typename ComponentT>
+        inline ComponentT *addComponent(EntityId id);
+
+        /**
+         * Get Component associated with the given Entity.
+         * @tparam ComponentT Type of the Component
+         * @param id Id of the Component
+         * @return Returns pointer to the Component.
+         */
+        template <typename ComponentT>
+        inline ComponentT *getComponent(EntityId id);
+
+        /**
+         * Does the given Entity have Component associated with it?
+         * @tparam ComponentT Type of the Component
+         * @param id Id of the Component
+         * @return Returns true, if there is such Component.
+         */
+        template <typename ComponentT>
+        inline bool hasComponent(EntityId id);
+
+        /**
+         * Remove Component from given Entity.
+         * If there is no Component associated with the Entity, nothing happens.
+         * @tparam ComponentT Type of the Component
+         * @param id Id of the Component
+         */
+        template <typename ComponentT>
+        inline void removeComponent(EntityId id);
+
+        // Entity manager proxy methods.
+
+    private:
+        /// Flag for instantiation, only one is allowed.
+        static bool mInstantiated;
         /// Used for managing Systems.
         SystemManager<UniverseT> mSM;
         /// Used for managing EntityGroups.
@@ -83,6 +120,9 @@ namespace ent
         EntityManager<UniverseT> mEM;
     protected:
     }; // Universe
+
+    template <typename T>
+    bool Universe<T>::mInstantiated{false};
 
     template <typename T>
     template <typename SystemT,
@@ -129,8 +169,33 @@ namespace ent
     template <typename T>
     Universe<T>::Universe()
     {
+        if (mInstantiated)
+        {
+            ENT_WARNING("Universe instantiated multiple times, correct functionality is compromised!");
+        }
 
+        mInstantiated = true;
     }
+
+    template <typename T>
+    template <typename ComponentT>
+    ComponentT *Universe<T>::addComponent(EntityId id)
+    { return mCM.template add<ComponentT>(id); }
+
+    template <typename T>
+    template <typename ComponentT>
+    ComponentT *Universe<T>::getComponent(EntityId id)
+    { return mCM.template get<ComponentT>(id); }
+
+    template <typename T>
+    template <typename ComponentT>
+    bool Universe<T>::hasComponent(EntityId id)
+    { return mCM.template has<ComponentT>(id); }
+
+    template <typename T>
+    template <typename ComponentT>
+    void Universe<T>::removeComponent(EntityId id)
+    { mCM.template remove<ComponentT>(id); }
 
 } // namespace ent
 

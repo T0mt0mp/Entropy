@@ -133,22 +133,31 @@
 
 // Testing commands
 
+#ifdef DEBUGGER_PRESENT
+#   define TC_DEBUGGER_SUCC
+#   define TC_DEBUGGER_FAIL std::raise(SIGTRAP)
+#else
+#   define TC_DEBUGGER_SUCC
+#   define TC_DEBUGGER_FAIL
+#endif
+
+
 #define TC_Check(EXP) \
             do { \
                 decltype(EXP) temp{EXP}; \
                 if (temp) \
-                { BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
                 else \
-                { BTC_Record(#EXP, tb::TestResult::FAILED, "\"" << #EXP << "\" is not true"); } \
+                { TC_DEBUGGER_FAIL; BTC_Record(#EXP, tb::TestResult::FAILED, "\"" << #EXP << "\" is not true"); } \
             } while (false)
 
 #define TC_CheckMessage(EXP, MSG) \
             do { \
                 decltype(EXP) temp{EXP}; \
                 if (temp) \
-                { BTC_Record(#EXP, tb::TestResult::PASSED, MSG); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, MSG); } \
                 else \
-                { BTC_Record(#EXP, tb::TestResult::FAILED, MSG); } \
+                { TC_DEBUGGER_FAIL; BTC_Record(#EXP, tb::TestResult::FAILED, MSG); } \
             } while (false)
 
 #define TC_CheckEqual(EXP1, EXP2) \
@@ -156,9 +165,9 @@
                 decltype(EXP1) temp1{EXP1}; \
                 decltype(EXP2) temp2{EXP2}; \
                 if (temp1 == temp2) \
-                { BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
                 else \
-                { BTC_Record(#EXP1 " != " #EXP2, tb::TestResult::FAILED, temp1 << " != " << temp2); } \
+                { TC_DEBUGGER_FAIL; BTC_Record(#EXP1 " != " #EXP2, tb::TestResult::FAILED, temp1 << " != " << temp2); } \
             } while (false)
 
 #define TC_CheckException(EXP1, EXCEPTION_TYPE) \
@@ -173,11 +182,11 @@
                     caughtWrong = true; \
                 } \
                 if (caughtCorrect) \
-                { BTC_Record(#EXP1, tb::TestResult::PASSED, "Successfully produced exception : " << #EXCEPTION_TYPE); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP1, tb::TestResult::PASSED, "Successfully produced exception : " << #EXCEPTION_TYPE); } \
                 else if (caughtWrong)\
-                { BTC_Record(#EXP1, tb::TestResult::FAILED, "Code produced wrong exception"); } \
+                { TC_DEBUGGER_FAIL; BTC_Record(#EXP1, tb::TestResult::FAILED, "Code produced wrong exception"); } \
                 else \
-                { BTC_Record(#EXP1, tb::TestResult::FAILED, "Code failed to produce any exception"); } \
+                { TC_DEBUGGER_FAIL; BTC_Record(#EXP1, tb::TestResult::FAILED, "Code failed to produce any exception"); } \
             } while (false)
 
 #define TC_CheckNoException(EXP1) \
@@ -189,9 +198,9 @@
                     caughtWrong = true; \
                 } \
                 if (caughtWrong)\
-                { BTC_Record(#EXP1, tb::TestResult::FAILED, "Code produced exception"); } \
+                { TC_DEBUGGER_FAIL; BTC_Record(#EXP1, tb::TestResult::FAILED, "Code produced exception"); } \
                 else \
-                { BTC_Record(#EXP1, tb::TestResult::PASSED, "Code did not produce any exceptions"); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP1, tb::TestResult::PASSED, "Code did not produce any exceptions"); } \
             } while (false)
 
 #define TC_CheckConstexprEqual(EXP1, EXP2) \
@@ -199,7 +208,7 @@
                 constexpr decltype(EXP1) temp1{EXP1}; \
                 constexpr decltype(EXP2) temp2{EXP2}; \
                 if (temp1 == temp2) \
-                { BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
                 else \
                 { BTC_Record(#EXP1 " != " #EXP2, tb::TestResult::FAILED, temp1 << " != " << temp2); } \
             } while (false)
@@ -208,7 +217,7 @@
             do { \
                 constexpr decltype(EXP) temp{EXP}; \
                 if (temp) \
-                { BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
                 else \
                 { BTC_Record(#EXP, tb::TestResult::FAILED, "\"" << #EXP << "\" is not true"); } \
             } while (false)
@@ -217,18 +226,18 @@
             do { \
                 const decltype(EXP) temp{EXP}; \
                 if (temp) \
-                { BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
                 else \
-                { BTC_ThrowRecord(#EXP, tb::TestResult::CRIT_FAILED, "\"" << #EXP << "\" is not true, exiting case"); } \
+                { TC_DEBUGGER_FAIL; BTC_ThrowRecord(#EXP, tb::TestResult::CRIT_FAILED, "\"" << #EXP << "\" is not true, exiting case"); } \
             } while (false)
 
 #define TC_RequireMessage(EXP, MSG) \
             do { \
                 decltype(EXP) temp{EXP}; \
                 if (temp) \
-                { BTC_Record(#EXP, tb::TestResult::PASSED, MSG); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, MSG); } \
                 else \
-                { BTC_ThrowRecord(#EXP, tb::TestResult::CRIT_FAILED, MSG); } \
+                { TC_DEBUGGER_FAIL; BTC_ThrowRecord(#EXP, tb::TestResult::CRIT_FAILED, MSG); } \
             } while (false)
 
 #define TC_RequireEqual(EXP1, EXP2) \
@@ -236,9 +245,9 @@
                 decltype(EXP1) temp1{EXP1}; \
                 decltype(EXP2) temp2{EXP2}; \
                 if (temp1 == temp2) \
-                { BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
                 else \
-                { BTC_ThrowRecord(#EXP1 " != " #EXP2, tb::TestResult::CRIT_FAILED, temp1 << " != " << temp2); } \
+                { TC_DEBUGGER_FAIL; BTC_ThrowRecord(#EXP1 " != " #EXP2, tb::TestResult::CRIT_FAILED, temp1 << " != " << temp2); } \
             } while (false)
 
 #define TC_RequireConstexprEqual(EXP1, EXP2) \
@@ -246,18 +255,18 @@
                 constexpr decltype(EXP1) temp1{EXP1}; \
                 constexpr decltype(EXP2) temp2{EXP2}; \
                 if (temp1 == temp2) \
-                { BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
                 else \
-                { BTC_ThrowRecord(#EXP1 " != " #EXP2, tb::TestResult::CRIT_FAILED, temp1 << " != " << temp2); } \
+                { TC_DEBUGGER_FAIL; BTC_ThrowRecord(#EXP1 " != " #EXP2, tb::TestResult::CRIT_FAILED, temp1 << " != " << temp2); } \
             } while (false)
 
 #define TC_RequireConstexpr(EXP) \
             do { \
                 constexpr decltype(EXP) temp{EXP}; \
                 if (temp) \
-                { BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
                 else \
-                { BTC_ThrowRecord(#EXP, tb::TestResult::CRIT_FAILED, "\"" << #EXP << "\" is not true, exiting case"); } \
+                { TC_DEBUGGER_FAIL; BTC_ThrowRecord(#EXP, tb::TestResult::CRIT_FAILED, "\"" << #EXP << "\" is not true, exiting case"); } \
             } while (false)
 
 #define TC_RequireException(EXP1, EXCEPTION_TYPE) \
@@ -272,11 +281,11 @@
                     caughtWrong = true; \
                 } \
                 if (caughtCorrect) \
-                { BTC_Record(#EXP1, tb::TestResult::PASSED, "Successfully produced exception : " << #EXCEPTION_TYPE); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP1, tb::TestResult::PASSED, "Successfully produced exception : " << #EXCEPTION_TYPE); } \
                 else if (caughtWrong)\
-                { BTC_ThrowRecord(#EXP1, tb::TestResult::CRIT_FAILED, "Code produced wrong exception"); } \
+                { TC_DEBUGGER_FAIL; BTC_ThrowRecord(#EXP1, tb::TestResult::CRIT_FAILED, "Code produced wrong exception"); } \
                 else \
-                { BTC_ThrowRecord(#EXP1, tb::TestResult::CRIT_FAILED, "Code failed to produce any exception"); } \
+                { TC_DEBUGGER_FAIL; BTC_ThrowRecord(#EXP1, tb::TestResult::CRIT_FAILED, "Code failed to produce any exception"); } \
             } while (false)
 
 #define TC_RequireNoException(EXP1) \
@@ -288,9 +297,9 @@
                     caughtWrong = true; \
                 } \
                 if (caughtWrong)\
-                { BTC_ThrowRecord(#EXP1, tb::TestResult::CRIT_FAILED, "Code produced exception"); } \
+                { TC_DEBUGGER_FAIL; BTC_ThrowRecord(#EXP1, tb::TestResult::CRIT_FAILED, "Code produced exception"); } \
                 else \
-                { BTC_Record(#EXP1, tb::TestResult::PASSED, "Code did not produce any exceptions"); } \
+                { TC_DEBUGGER_SUCC; BTC_Record(#EXP1, tb::TestResult::PASSED, "Code did not produce any exceptions"); } \
             } while (false)
 
 #define TC_Error(MSG) \

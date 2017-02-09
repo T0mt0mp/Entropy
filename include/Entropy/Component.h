@@ -43,9 +43,9 @@ namespace ent
         virtual CompPtr get(EntityId id) noexcept = 0;
 
         /**
-         * Does given Entity have an Component associated with it?
+         * Does given Entity have a Component associated with it?
          * @param id Id of the Entity.
-         * @return Returns true, if there IS an Component associated.
+         * @return Returns true, if there IS a Component associated.
          */
         virtual bool has(EntityId id) const noexcept = 0;
 
@@ -176,7 +176,7 @@ namespace ent
         /**
          * Register given Component with its ComponentHolder.
          * @tparam ComponentT Type of the Component.
-         * @tparam HolderT Type of the Holder.
+         * @tparam HolderT Type of the Holder, deduced from Component type.
          * @tparam CArgTs Constructor argument types.
          * @param args Constructor arguments passed to the Holder constructor.
          */
@@ -184,6 +184,49 @@ namespace ent
                   typename HolderT = typename HolderExtractor<ComponentT>::type,
                   typename... CArgTs>
         inline u64 registerComponent(CArgTs... args);
+
+        /**
+         * Add Component for given Entity.
+         * @tparam ComponentT Component type.
+         * @tparam HolderT Type of the holder, deduced from Component type.
+         * @param id Id of the Entity.
+         * @return Returns pointer to the added Component.
+         */
+        template <typename ComponentT,
+                  typename HolderT = typename HolderExtractor<ComponentT>::type>
+        inline ComponentT *add(EntityId id);
+
+        /**
+         * Get Component of given Entity.
+         * @tparam ComponentT Component type.
+         * @tparam HolderT Type of the holder, deduced from Component type.
+         * @param id Id of the Entity.
+         * @return Returns pointer to the added Component.
+         */
+        template <typename ComponentT,
+                  typename HolderT = typename HolderExtractor<ComponentT>::type>
+        inline ComponentT *get(EntityId id);
+
+        /**
+         * Does given Entity have a Component?
+         * @tparam ComponentT Component type.
+         * @tparam HolderT Type of the holder, deduced from Component type.
+         * @param id Id of the Entity.
+         * @return Returns true, if the Component is present.
+         */
+        template <typename ComponentT,
+                  typename HolderT = typename HolderExtractor<ComponentT>::type>
+        inline bool has(EntityId id) const;
+
+        /**
+         * Remove Component of given Entity.
+         * @tparam ComponentT Component type.
+         * @tparam HolderT Type of the holder, deduced from Component type.
+         * @param id Id of the Entity.
+         */
+        template <typename ComponentT,
+                  typename HolderT = typename HolderExtractor<ComponentT>::type>
+        inline void remove(EntityId id);
 
         /**
          * Get ID for given Component type.
@@ -195,6 +238,16 @@ namespace ent
     private:
         /// Component ID generator.
         class ComponentIdGenerator : public StaticClassIdGenerator<ComponentIdGenerator> {};
+
+        /**
+         * Get ComponentHolder.
+         * @tparam HolderT Type of the holder.
+         * @return Returns reference to the holder.
+         */
+        template <typename HolderT>
+        inline HolderT &getHolder();
+        template <typename HolderT>
+        inline const HolderT &getHolder() const;
 
         /**
          * Construct Holder with given constructor parameters.
@@ -407,8 +460,54 @@ namespace ent
     }
 
     template <typename UniverseT>
+    template <typename ComponentT,
+              typename HolderT>
+    inline ComponentT *ComponentManager<UniverseT>::add(EntityId id)
+    {
+        return getHolder<HolderT>().add(id);
+    }
+
+    template <typename UniverseT>
+    template <typename ComponentT,
+        typename HolderT>
+    inline ComponentT *ComponentManager<UniverseT>::get(EntityId id)
+    {
+        return getHolder<HolderT>().get(id);
+    }
+
+    template <typename UniverseT>
+    template <typename ComponentT,
+        typename HolderT>
+    inline bool ComponentManager<UniverseT>::has(EntityId id) const
+    {
+        return getHolder<HolderT>().has(id);
+    }
+
+    template <typename UniverseT>
+    template <typename ComponentT,
+        typename HolderT>
+    inline void ComponentManager<UniverseT>::remove(EntityId id)
+    {
+        return getHolder<HolderT>().remove(id);
+    }
+
+    template <typename UniverseT>
+    template <typename HolderT>
+    inline HolderT &ComponentManager<UniverseT>::getHolder()
+    {
+        return mHolder<HolderT>();
+    }
+
+    template <typename UniverseT>
+    template <typename HolderT>
+    inline const HolderT &ComponentManager<UniverseT>::getHolder() const
+    {
+        return mHolder<HolderT>();
+    }
+
+    template <typename UniverseT>
     template <typename HolderT,
-        typename... CArgTs>
+              typename... CArgTs>
     void ComponentManager<UniverseT>::initHolder(CArgTs... args)
     {
         mHolder<HolderT>.construct(std::forward<CArgTs>(args)...);
@@ -431,7 +530,13 @@ namespace ent
     template <typename ComponentT>
     ComponentT* ComponentHolder<ComponentT>::add(EntityId id) noexcept
     {
-        return get(id);
+        ComponentT* result{nullptr};
+        try {
+            result = &mMap[id];
+        } catch(...) {
+            //ENT_WARNING("Get has thrown an exception!");
+        }
+        return result;
     }
 
     template <typename ComponentT>
@@ -439,9 +544,9 @@ namespace ent
     {
         ComponentT* result{nullptr};
         try {
-            result = &mMap[id];
+            result = &mMap.at(id);
         } catch(...) {
-            ENT_WARNING("Get has thrown an exception!");
+            //ENT_WARNING("Get has thrown an exception!");
         }
         return result;
     }
@@ -458,7 +563,7 @@ namespace ent
         try {
             mMap.erase(id);
         } catch(...) {
-            ENT_WARNING("Remove has thrown an exception!");
+            //ENT_WARNING("Remove has thrown an exception!");
         }
     }
     // ComponentHolder implementation end.

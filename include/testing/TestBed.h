@@ -11,6 +11,7 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <csignal>
 
 #include "testing/TestUnit.h"
 

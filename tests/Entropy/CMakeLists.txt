@@ -3,6 +3,8 @@ cmake_policy(VERSION 2.8)
 
 project(TestEntropy)
 
+#add_definitions(-DDEBUGGER_PRESENT)
+
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(PROJECT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)

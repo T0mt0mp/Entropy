@@ -11,10 +11,22 @@
 
 class FirstUniverse : public ent::Universe<FirstUniverse>
 {
+public:
+    static UniverseT &instance()
+    {
+        static UniverseT u;
+        return u;
+    }
 };
 
 class SecondUniverse : public ent::Universe<SecondUniverse>
 {
+public:
+    static UniverseT &instance()
+    {
+        static UniverseT u;
+        return u;
+    }
 };
 
 #endif //ECS_FIT_TESTUNIVERSE_H
