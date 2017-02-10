@@ -33,7 +33,7 @@
     else \
     { \
         fprintf(stderr, "Assertion \"" #COND_EXP "\"" \
-                        "%s: %d ( %s ) failed.\n", \
+                        "%s:%d ( %s ) failed.\n", \
                         FILE, LINE, FUNC); \
         fflush(stderr); \
         std::raise(SIGABRT); \

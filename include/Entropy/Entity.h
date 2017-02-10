@@ -136,6 +136,8 @@ namespace ent
     public:
     private:
     protected:
+        /// Container for the Entities.
+        EntityHolder mEntities;
     }; // EntityManagerBase
 
     /**
@@ -206,10 +208,10 @@ namespace ent
             return false;
         }
 
-        EntityRecord &rec{mRecords[id.index()]};
+        EntityRecord &rec(mRecords[id.index()]);
         rec.active = false;
         rec.components = 0;
-        // Not actually an error...
+        // TODO - Not actually an error?
         ENT_ASSERT_SLOW(rec.generation < EntityId::MAX_GEN);
         rec.generation++;
 

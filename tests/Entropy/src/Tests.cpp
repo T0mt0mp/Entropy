@@ -276,6 +276,9 @@ TU_Begin(EntropyEntity)
         TC_RequireEqual(u.registerComponent<TestComponent<0>>(), 0u);
         TC_RequireEqual(u.registerComponent<TestComponent<1>>(), 1u);
         TC_RequireEqual(u.registerComponent<TestComponent<2>>(), 2u);
+        TC_RequireEqual(u.componentMask<TestComponent<0>>(), ent::ComponentBitset().set(0));
+        TC_RequireEqual(u.componentMask<TestComponent<1>>(), ent::ComponentBitset().set(1));
+        TC_RequireEqual(u.componentMask<TestComponent<2>>(), ent::ComponentBitset().set(2));
 
         for (u32 iii = 0; iii < 100; ++iii)
         {
@@ -293,10 +296,10 @@ TU_Begin(EntropyEntity)
             u.removeComponent<TestComponent<1>>(id);
             u.removeComponent<TestComponent<2>>(id);
 
-            auto ptr1{u.addComponent<TestComponent<1>>(id)};
+            TestComponent<1> *ptr1{u.addComponent<TestComponent<1>>(id)};
             TC_Require(ptr1);
             TC_RequireEqual(ptr1, u.getComponent<TestComponent<1>>(id));
-            auto ptr2{u.addComponent<TestComponent<2>>(id)};
+            TestComponent<2> *ptr2{u.addComponent<TestComponent<2>>(id)};
             TC_Require(ptr2);
             TC_RequireEqual(ptr2, u.addComponent<TestComponent<2>>(id));
 

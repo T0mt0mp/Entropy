@@ -45,6 +45,33 @@ namespace ent
     }; // NonCopyable
 
     /**
+     * Used for making classes instantiable only once + same behavior as NonCopyable.
+     * @code
+     *  class MyClass : OnceInstantiable<MyClass>
+     *  {
+     *      ...
+     *  }
+     * @endcode
+     * @tparam T Curiously recurring template pattern.
+     */
+    template <typename T>
+    class OnceInstantiable : NonCopyable
+    {
+    public:
+        OnceInstantiable()
+        {
+            static bool instantiated{false};
+            if (instantiated)
+            {
+                ENT_WARNING("Class instantiated multiple times, correct functionality is compromised!");
+            }
+            instantiated = true;
+        }
+    private:
+    protected:
+    }; // OnceInstantiable
+
+    /**
      * Allows the allocation of memory for given type, without calling the constructor on it.
      * @tparam T Type which will be contained within.
      */
@@ -80,7 +107,7 @@ namespace ent
          * @return Returns true, if the inner object has been constructed.
          */
         bool constructed() const
-        { return mHandler.get() == nullptr; }
+        { return mHandler.get() != nullptr; }
 
         T &operator()()
         { return (*mHandler); }

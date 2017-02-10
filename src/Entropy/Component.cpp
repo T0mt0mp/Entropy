@@ -10,5 +10,10 @@
 /// Main Entropy namespace
 namespace ent
 {
+    std::ostream &operator<<(std::ostream &out, const ComponentBitset &rhs)
+    {
+        out << rhs.mBitset;
+        return out;
+    }
 } // namespace ent
 

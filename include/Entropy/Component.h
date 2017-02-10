@@ -16,6 +16,123 @@
 namespace ent
 {
     /**
+     * Bitset, where each bit represents a single Component type.
+     */
+    class ComponentBitset final
+    {
+    public:
+        /// Type of the inner bitset.
+        using CBitset = std::bitset<MAX_COMPONENTS>;
+
+        /// Default constructor.
+        constexpr ComponentBitset() = default;
+
+        /// Construct from a number.
+        constexpr ComponentBitset(u64 num) :
+            mBitset(num)
+        { }
+
+        // Copy/move operators.
+        constexpr ComponentBitset(const ComponentBitset &rhs) :
+            mBitset(rhs.mBitset) { }
+        constexpr ComponentBitset(ComponentBitset &&rhs) :
+            mBitset(std::move(rhs.mBitset)) { }
+        constexpr ComponentBitset(const CBitset &rhs) :
+            mBitset(rhs) { }
+        constexpr ComponentBitset(CBitset &&rhs) :
+            mBitset(std::move(rhs)) { }
+
+        // Copy-assignment operators.
+        constexpr ComponentBitset &operator=(const ComponentBitset &rhs)
+        { mBitset = rhs.mBitset; return *this; }
+        constexpr ComponentBitset &operator=(ComponentBitset &&rhs)
+        { mBitset = std::move(rhs.mBitset); return *this; }
+        constexpr ComponentBitset &operator=(const CBitset &rhs)
+        { mBitset = rhs; return *this; }
+        constexpr ComponentBitset &operator=(CBitset &&rhs)
+        { mBitset = std::move(rhs); return *this; }
+
+        ComponentBitset &operator=(u64 val)
+        { mBitset = val; return *this; }
+
+        /// Set all bits to true.
+        ComponentBitset &set()
+        { mBitset.set(); return *this; }
+
+        /**
+         * Set bit on given position to given value (true by default).
+         * @param pos Position of the bit.
+         * @param val Value to set.
+         */
+        ComponentBitset &set(std::size_t pos, bool val = true)
+        { mBitset.set(pos, val); return *this; }
+
+        /// Set all bits to false.
+        ComponentBitset &reset()
+        { mBitset.reset(); return *this; }
+
+        /**
+         * Reset bit on given position.
+         * @param pos Position of the bit.
+         */
+        ComponentBitset &reset(std::size_t pos)
+        { mBitset.reset(pos); return *this; }
+
+        /**
+         * Get the max number of component types.
+         * @return The max number of component types.
+         */
+        std::size_t size() const
+        { return mBitset.size(); }
+
+        /**
+         * Count the number of bits set to true.
+         * @return The number of bits set to true.
+         */
+        std::size_t count() const
+        { return mBitset.count(); }
+
+        /// Are any bits set to true?
+        bool any() const
+        { return mBitset.any(); }
+
+        /// Are none of the bits set to true?
+        bool none() const
+        { return mBitset.none(); }
+
+        /// Are all of the bits set to true?
+        bool all() const
+        { return mBitset.all(); }
+
+        /**
+         * Get the value of the bit on given position.
+         * @param pos Position of the bit.
+         * @return Value of the bit.
+         */
+        bool test(std::size_t pos) const
+        { return mBitset.test(pos); }
+
+        /// Binary AND operator.
+        ComponentBitset operator&(const ComponentBitset &rhs) const
+        { return ComponentBitset(mBitset & rhs.mBitset); }
+
+        /// Binary OR operator.
+        ComponentBitset operator|(const ComponentBitset &rhs) const
+        { return ComponentBitset(mBitset | rhs.mBitset); }
+
+        /// Comparison operator.
+        bool operator==(const ComponentBitset &rhs) const
+        { return mBitset == rhs.mBitset; }
+
+        /// Print operator.
+        friend std::ostream &operator<<(std::ostream &out, const ComponentBitset &rhs);
+    private:
+        /// Inner bitset.
+        CBitset mBitset;
+    protected:
+    }; // ComponentBitset
+
+    /**
      * Base Component holder.
      * @tparam ComponentT Type of the Component contained within.
      */
@@ -234,7 +351,17 @@ namespace ent
          * @return ID of the Component type.
          */
         template <typename ComponentT>
-        inline static u64 id();
+        inline u64 id();
+
+        /**
+         * Get bitset mask for given Component type.
+         * Mask contains at most one bit set to '1'.
+         * If there are no bits set to '1', then the Component has not been registered.
+         * @tparam ComponentT Type of the Component
+         * @return Bitset mask for given Component type.
+         */
+        template <typename ComponentT>
+        inline const ComponentBitset &mask() const;
     private:
         /// Component ID generator.
         class ComponentIdGenerator : public StaticClassIdGenerator<ComponentIdGenerator> {};
@@ -260,124 +387,29 @@ namespace ent
         inline void initHolder(CArgTs... args);
 
         /**
+         * Initialize bitset mask for given Component.
+         * @tparam ComponentT Type of the Component.
+         */
+        template <typename ComponentT>
+        inline void initMask();
+
+        /**
          * Holder instance.
          * @tparam HolderT Type of the Holder.
          */
         template <typename HolderT>
         static ConstructionHandler<HolderT> mHolder;
+
+        /**
+         * Mask for Component type.
+         * Only one bit is set.
+         * If there are no bits set, the Component is not registered.
+         * @tparam ComponentT Type of the Component.
+         */
+        template <typename ComponentT>
+        static ComponentBitset mMask;
     protected:
     }; // ComponentManager
-
-    /**
-     * Bitset, where each bit represents a single Component type.
-     */
-    class ComponentBitset final
-    {
-    public:
-        /// Type of the inner bitset.
-        using CBitset = std::bitset<MAX_COMPONENTS>;
-
-        /// Default constructor.
-        constexpr ComponentBitset() = default;
-
-        /// Construct from a number.
-        constexpr ComponentBitset(u64 num) :
-            mBitset(num)
-        { }
-
-        // Copy/move operators.
-        constexpr ComponentBitset(const ComponentBitset &rhs) :
-            mBitset(rhs.mBitset) { }
-        constexpr ComponentBitset(ComponentBitset &&rhs) :
-            mBitset(std::move(rhs.mBitset)) { }
-        constexpr ComponentBitset(const CBitset &rhs) :
-            mBitset(rhs) { }
-        constexpr ComponentBitset(CBitset &&rhs) :
-            mBitset(std::move(rhs)) { }
-
-        // Copy-assignment operators.
-        constexpr ComponentBitset &operator=(const ComponentBitset &rhs)
-        { mBitset = rhs.mBitset; return *this; }
-        constexpr ComponentBitset &operator=(ComponentBitset &&rhs)
-        { mBitset = std::move(rhs.mBitset); return *this; }
-        constexpr ComponentBitset &operator=(const CBitset &rhs)
-        { mBitset = rhs; return *this; }
-        constexpr ComponentBitset &operator=(CBitset &&rhs)
-        { mBitset = std::move(rhs); return *this; }
-
-        ComponentBitset &operator=(u64 val)
-        { mBitset = val; return *this; }
-
-        /// Set all bits to true.
-        void set()
-        { mBitset.set(); }
-
-        /**
-         * Set bit on given position to given value (true by default).
-         * @param pos Position of the bit.
-         * @param val Value to set.
-         */
-        void set(std::size_t pos, bool val = true)
-        { mBitset.set(pos, val); }
-
-        /// Set all bits to false.
-        void reset()
-        { mBitset.reset(); }
-
-        /**
-         * Reset bit on given position.
-         * @param pos Position of the bit.
-         */
-        void reset(std::size_t pos)
-        { mBitset.reset(pos); }
-
-        /**
-         * Get the max number of component types.
-         * @return The max number of component types.
-         */
-        std::size_t size() const
-        { return mBitset.size(); }
-
-        /**
-         * Count the number of bits set to true.
-         * @return The number of bits set to true.
-         */
-        std::size_t count() const
-        { return mBitset.count(); }
-
-        /// Are any bits set to true?
-        bool any() const
-        { return mBitset.any(); }
-
-        /// Are none of the bits set to true?
-        bool none() const
-        { return mBitset.none(); }
-
-        /// Are all of the bits set to true?
-        bool all() const
-        { return mBitset.all(); }
-
-        /**
-         * Get the value of the bit on given position.
-         * @param pos Position of the bit.
-         * @return Value of the bit.
-         */
-        bool test(std::size_t pos) const
-        { return mBitset.test(pos); }
-
-        ComponentBitset operator&(const ComponentBitset &rhs) const
-        { return ComponentBitset(mBitset & rhs.mBitset); }
-
-        ComponentBitset operator|(const ComponentBitset &rhs) const
-        { return ComponentBitset(mBitset | rhs.mBitset); }
-
-        bool operator==(const ComponentBitset &rhs) const
-        { return mBitset == rhs.mBitset; }
-    private:
-        /// Inner bitset.
-        CBitset mBitset;
-    protected:
-    };
 
     /**
      * ComponentFilter is used for filtering Entities by their present/missing Components.
@@ -427,8 +459,14 @@ namespace ent
 
     // ComponentManager implementation.
     template <typename UniverseT>
-    ComponentManager<UniverseT>::ComponentManager()
-    { }
+    ComponentManager<UniverseT>::ComponentManager() {
+        static bool instantiated{false};
+        if (instantiated)
+        {
+            ENT_WARNING("Class instantiated multiple times, correct functionality is compromised!");
+        }
+        instantiated = true;
+    }
 
     template <typename UniverseT>
     ComponentManager<UniverseT>::~ComponentManager()
@@ -440,6 +478,7 @@ namespace ent
               typename... CArgTs>
     u64 ComponentManager<UniverseT>::registerComponent(CArgTs... args)
     {
+        ENT_ASSERT_SLOW(!mHolder<HolderT>.constructed());
         const u64 cId{id<ComponentT>()};
 
         static_assert(std::is_base_of<ent::BaseComponentHolder<ComponentT>, HolderT>::value,
@@ -447,6 +486,7 @@ namespace ent
         static_assert(sizeof(HolderT(args...)), "Component holder has to be instantiable!");
 
         initHolder<HolderT>(std::forward<CArgTs>(args)...);
+        initMask<ComponentT>();
 
         return cId;
     }
@@ -457,6 +497,13 @@ namespace ent
     {
         static const u64 cId{ComponentIdGenerator::template getId<ComponentT>()};
         return cId;
+    }
+
+    template <typename UniverseT>
+    template <typename ComponentT>
+    const ComponentBitset &ComponentManager<UniverseT>::mask() const
+    {
+        return mMask<ComponentT>;
     }
 
     template <typename UniverseT>
@@ -514,8 +561,20 @@ namespace ent
     }
 
     template <typename UniverseT>
+    template <typename ComponentT>
+    inline void ComponentManager<UniverseT>::initMask()
+    {
+        ENT_ASSERT_FAST(mMask<ComponentT>.none());
+        mMask<ComponentT>.set(id<ComponentT>());
+    }
+
+    template <typename UniverseT>
     template <typename HolderT>
     ConstructionHandler<HolderT> ComponentManager<UniverseT>::mHolder;
+
+    template <typename UniverseT>
+    template <typename Component>
+    ComponentBitset ComponentManager<UniverseT>::mMask{0};
     // ComponentManager implementation end.
 
     // ComponentHolder implementation.

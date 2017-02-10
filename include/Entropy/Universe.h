@@ -23,7 +23,7 @@ namespace ent
      * @tparam T Used for distinguishing between Universes, CRTP.
      */
     template <typename T>
-    class Universe : NonCopyable
+    class Universe : OnceInstantiable<Universe<T>>
     {
     public:
         // TODO - friend class Entity;
@@ -105,6 +105,15 @@ namespace ent
         template <typename ComponentT>
         inline void removeComponent(EntityId id);
 
+        /**
+         * Get bitset mask for given Component type.
+         * @tparam ComponentT Type of the Component.
+         * @return Mask containing one set bit. If the Component has not been registered the mask will contain
+         *   zero set bits.
+         */
+        template <typename ComponentT>
+        inline const ComponentBitset &componentMask();
+
         // Entity manager proxy methods.
 
     private:
@@ -169,12 +178,6 @@ namespace ent
     template <typename T>
     Universe<T>::Universe()
     {
-        if (mInstantiated)
-        {
-            ENT_WARNING("Universe instantiated multiple times, correct functionality is compromised!");
-        }
-
-        mInstantiated = true;
     }
 
     template <typename T>
@@ -196,6 +199,11 @@ namespace ent
     template <typename ComponentT>
     void Universe<T>::removeComponent(EntityId id)
     { mCM.template remove<ComponentT>(id); }
+
+    template <typename T>
+    template <typename ComponentT>
+    const ComponentBitset &Universe<T>::componentMask()
+    { return mCM.template mask<ComponentT>(); }
 
 } // namespace ent
 
