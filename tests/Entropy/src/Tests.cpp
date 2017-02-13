@@ -219,6 +219,29 @@ TU_Begin(EntropyEntity)
         TC_CheckEqual(eid.generation(), gen);
     }
 
+    TU_Case(Entity0, "Testing the Entity class")
+    {
+        PROF_SCOPE("Entity0");
+        using EntityT1 = FirstUniverse::EntityT;
+        using EntityT2 = SecondUniverse::EntityT;
+        FirstUniverse::UniverseT *un1{reinterpret_cast<FirstUniverse::UniverseT*>(1u)};
+        SecondUniverse::UniverseT *un2{reinterpret_cast<SecondUniverse::UniverseT*>(2u)};
+        EntityT1 ent11(un1, 1);
+        EntityT2 ent21(un2, 2);
+        TC_Require(ent11.universe() == un1 && ent11.id() == 1);
+        TC_Require(ent21.universe() == un2 && ent21.id() == 2);
+        EntityT1 ent12(ent11);
+        EntityT2 ent22(ent21);
+        TC_Require(ent12.universe() == un1 && ent12.id() == 1);
+        TC_Require(ent22.universe() == un2 && ent22.id() == 2);
+        TC_Require(ent12 == ent11);
+        TC_Require(ent22 == ent21);
+        ent12 = ent21;
+        ent22 = ent11;
+        TC_Require(ent12.universe() == un1 && ent12.id() == 2);
+        TC_Require(ent22.universe() == un2 && ent22.id() == 1);
+    }
+
     TU_Case(EntityHolder0, "Testing the EntityHolder class")
     {
         PROF_SCOPE("EntityHolder0");
@@ -232,24 +255,24 @@ TU_Begin(EntropyEntity)
             TC_RequireEqual(h1.create(), EntityId(iii, 0));
         }
         TC_Require(!h1.destroy(EntityId()));
-        for (u64 iii = 1; iii <= ent::ENT_MIN_FREE + 1; ++iii)
+        for (u64 iii = 1; iii <= ent::ENT_MIN_FREE; ++iii)
         {
             TC_RequireEqual(h1.create(), EntityId(CREATE_NUM + iii, 0));
             TC_Require(h1.destroy(EntityId(iii, 0)));
         }
         TC_RequireEqual(h1.create(), EntityId(1, 1));
-        TC_RequireEqual(h1.create(), EntityId(CREATE_NUM + ent::ENT_MIN_FREE + 2, 0));
+        TC_RequireEqual(h1.create(), EntityId(CREATE_NUM + ent::ENT_MIN_FREE + 1, 0));
         TC_Require(h1.valid(EntityId(1, 1)));
-        for (u64 iii = 2; iii <= ent::ENT_MIN_FREE + 1; ++iii)
+        for (u64 iii = 2; iii <= ent::ENT_MIN_FREE; ++iii)
         {
             TC_Require(!h1.valid(EntityId(iii, 0)));
         }
-        for (u64 iii = ent::ENT_MIN_FREE + 2; iii <= CREATE_NUM + ent::ENT_MIN_FREE + 2; ++iii)
+        for (u64 iii = ent::ENT_MIN_FREE + 1; iii <= CREATE_NUM + ent::ENT_MIN_FREE + 1; ++iii)
         {
             TC_Require(h1.valid(EntityId(iii, 0)));
             TC_Require(h1.active(EntityId(iii, 0)));
         }
-        TC_Require(!h1.valid(EntityId(CREATE_NUM + ent::ENT_MIN_FREE + 3)));
+        TC_Require(!h1.valid(EntityId(CREATE_NUM + ent::ENT_MIN_FREE + 2)));
 
         EntityHolder h2;
         for (u64 iii = 1; iii <= 10; ++iii)
@@ -266,6 +289,37 @@ TU_Begin(EntropyEntity)
             h2.activate(EntityId(iii, 0));
             TC_Require(h2.valid(EntityId(iii, 0)));
             TC_Require(h2.active(EntityId(iii, 0)));
+        }
+    }
+
+    TU_Case(EntityManager0, "Testing the EntityManager class")
+    {
+        PROF_SCOPE("EntityManager0");
+        FirstUniverse::UniverseT  &u{FirstUniverse::instance()};
+        using Entity = FirstUniverse::EntityT;
+
+        for (u64 iii = 1u; iii <= ent::ENT_MIN_FREE + 1; ++iii)
+        {
+            Entity ent = u.createEntity();
+            TC_Require(ent.created());
+            TC_Require(ent.active());
+            TC_Require(ent.valid());
+            if (iii == ent::ENT_MIN_FREE + 1)
+            { TC_RequireEqual(ent.id(), ent::EntityId(1u, 1u)); }
+            else
+            { TC_RequireEqual(ent.id(), ent::EntityId(iii, 0u)); }
+
+            ent.deactivate();
+            TC_Require(!ent.active());
+            TC_Require(ent.valid());
+
+            ent.activate();
+            TC_Require(ent.active());
+            TC_Require(ent.valid());
+
+            TC_Require(ent.destroy());
+            TC_Require(!ent.valid());
+            TC_Require(!ent.created());
         }
     }
 
@@ -322,6 +376,61 @@ TU_Begin(EntropyEntity)
             TC_Require(!u.getComponent<TestComponent<0>>(id));
             TC_Require(!u.getComponent<TestComponent<1>>(id));
             TC_Require(!u.getComponent<TestComponent<2>>(id));
+        }
+    }
+
+    TU_Case(ComponentManager1, "Testing the ComponentHolder class")
+    {
+        PROF_SCOPE("ComponentManager1");
+        SecondUniverse::UniverseT &u{SecondUniverse::instance()};
+        using Entity = SecondUniverse::EntityT;
+        TC_RequireEqual(u.componentMask<TestComponent<0>>(), ent::ComponentBitset().set(0));
+        TC_RequireEqual(u.componentMask<TestComponent<1>>(), ent::ComponentBitset().set(1));
+        TC_RequireEqual(u.componentMask<TestComponent<2>>(), ent::ComponentBitset().set(2));
+
+        for (u32 iii = 0; iii < 100; ++iii)
+        {
+            //Entity ent(&u, iii);
+            Entity ent = u.createEntity();
+
+            TC_Require(!ent.has<TestComponent<0>>());
+            TC_Require(!ent.has<TestComponent<1>>());
+            TC_Require(!ent.has<TestComponent<2>>());
+            auto a{ent.get<TestComponent<0>>()};
+            UNUSED(a);
+            TC_Require(!ent.get<TestComponent<0>>());
+            TC_Require(!ent.get<TestComponent<1>>());
+            TC_Require(!ent.get<TestComponent<2>>());
+            ent.remove<TestComponent<0>>();
+            ent.remove<TestComponent<1>>();
+            ent.remove<TestComponent<2>>();
+
+            TestComponent<1> *ptr1{ent.add<TestComponent<1>>()};
+            TC_Require(ptr1);
+            TC_RequireEqual(ptr1, ent.get<TestComponent<1>>());
+            TestComponent<2> *ptr2{ent.add<TestComponent<2>>()};
+            TC_Require(ptr2);
+            TC_RequireEqual(ptr2, ent.get<TestComponent<2>>());
+
+            ptr1->v = 42u;
+            TC_RequireEqual(ent.get<TestComponent<1>>()->v, 42u);
+
+            TC_Require(!ent.has<TestComponent<0>>());
+            TC_Require(ent.has<TestComponent<1>>());
+            TC_Require(ent.has<TestComponent<2>>());
+            TC_Require(!ent.get<TestComponent<0>>());
+            TC_Require(ent.get<TestComponent<1>>());
+            TC_Require(ent.get<TestComponent<2>>());
+            ent.remove<TestComponent<0>>();
+            ent.remove<TestComponent<1>>();
+            ent.remove<TestComponent<2>>();
+
+            TC_Require(!ent.has<TestComponent<0>>());
+            TC_Require(!ent.has<TestComponent<1>>());
+            TC_Require(!ent.has<TestComponent<2>>());
+            TC_Require(!ent.get<TestComponent<0>>());
+            TC_Require(!ent.get<TestComponent<1>>());
+            TC_Require(!ent.get<TestComponent<2>>());
         }
     }
 

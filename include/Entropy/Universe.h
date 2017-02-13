@@ -10,6 +10,7 @@
 #include "System.h"
 #include "Component.h"
 #include "Entity.h"
+#include "EntityManager.h"
 #include "Group.h"
 
 /// Main Entropy namespace
@@ -26,8 +27,9 @@ namespace ent
     class Universe : OnceInstantiable<Universe<T>>
     {
     public:
-        // TODO - friend class Entity;
         using UniverseT = Universe<T>;
+        using EntityT = Entity<UniverseT>;
+        friend class Entity<UniverseT>;
 
         /**
          * Default constructor for Universe.
@@ -65,10 +67,15 @@ namespace ent
         u64 registerComponent(CArgTs... args);
 
         // System manager proxy methods.
+    public:
+    private:
 
         // Group manager proxy methods.
+    public:
+    private:
 
         // Component manager proxy methods.
+    public:
         /**
          * Add Component to the given Entity.
          * @tparam ComponentT Type of the Component
@@ -113,10 +120,102 @@ namespace ent
          */
         template <typename ComponentT>
         inline const ComponentBitset &componentMask();
+    private:
 
         // Entity manager proxy methods.
+    public:
+        /**
+         * Create a new Entity and return a handle to it.
+         * @return Handle to newly created Entity.
+         */
+        inline EntityT createEntity();
+
+        /**
+         * Try to create Entity with given ID (without generation), if
+         * the ID is free, the Entity will be created and the same Entity ID
+         * will be returned. If the requested ID is invalid or unavailable, invalid
+         * Entity ID will be returned instead.
+         * @param id Requested ID.
+         * @return Returns Entity with the same ID, or if the operation fails, returns
+         *   Entity with "entity.created == false".
+         */
+        inline EntityT createEntity(EIdType id);
+
+        /**
+         * Create Entity sequence of given size. Sequence is always a contiguous block of Entities.
+         * Minimal sequence size is 1.
+         * If the operation fails the returned sequence record will contain size equal to 0.
+         * @param size Number of Entities in the sequence.
+         * @return Information about created sequence.
+         */
+        inline EntityHolder::SequenceRecord createSequentialEntities(u64 size);
+
+        /**
+         * Create Entity sequence of given size. Sequence is always a contiguous block of Entities.
+         * Minimal sequence size is 1.
+         * Attempts to create sequence starting with startId, if that fails, returned sequence record
+         * will contain size equal to 0.
+         * @param size Number of Entities in the sequence.
+         * @return Information about created sequence.
+         */
+        inline EntityHolder::SequenceRecord createSequentialEntities(EIdType startId, u64 size);
 
     private:
+        /**
+         * Activate given Entity.
+         * !! Does NOT check index bounds !!
+         * @param id ID of the Entity.
+         */
+        inline void activateEntity(EntityId id);
+
+        /**
+         * Deactivate given Entity.
+         * !! Does NOT check index bounds !!
+         * @param id ID of the Entity.
+         */
+        inline void deactivateEntity(EntityId id);
+
+        /**
+         * Destroy given Entity.
+         * TODO - Should we actually check validity of Entity?
+         * @param id ID of the Entity.
+         * @return Returns false, if the Entity does not exist.
+         */
+        inline bool destroyEntity(EntityId id);
+
+        /**
+         * Checks validity of given Entity.
+         * @param id ID of the Entity.
+         * @return Returns true, if the Entity exists.
+         */
+        inline bool entityValid(EntityId id) const;
+
+        /**
+         * Checks if the given Entity is active.
+         * !! Does NOT check index bounds !!
+         * @param id ID of the Entity.
+         * @return Returns true, if the Entity is active.
+         */
+        inline bool entityActive(EntityId id) const;
+    private:
+#ifndef NDEBUG
+        /**
+         * Statistics about Universe.
+         */
+        struct UniverseStats
+        {
+            //friend std::ostream &operator<<(std::ostream &out, const UniverseStats &stats);
+            bool working() const
+            { return IS_DEBUG_BOOL; }
+            u64 entActive;
+            u64 entTotal;
+            u64 entCreated;
+            u64 entDestroyed;
+        };
+        /// Statistics instance.
+        UniverseStats mStats;
+#endif
+
         /// Flag for instantiation, only one is allowed.
         static bool mInstantiated;
         /// Used for managing Systems.
@@ -204,6 +303,30 @@ namespace ent
     template <typename ComponentT>
     const ComponentBitset &Universe<T>::componentMask()
     { return mCM.template mask<ComponentT>(); }
+
+    template <typename T>
+    auto Universe<T>::createEntity() -> EntityT
+    { return EntityT(this, mEM.create()); }
+
+    template <typename T>
+    void Universe<T>::activateEntity(EntityId id)
+    { mEM.activate(id); }
+
+    template <typename T>
+    void Universe<T>::deactivateEntity(EntityId id)
+    { mEM.deactivate(id); }
+
+    template <typename T>
+    bool Universe<T>::destroyEntity(EntityId id)
+    { return mEM.destroy(id); }
+
+    template <typename T>
+    bool Universe<T>::entityValid(EntityId id) const
+    { return mEM.valid(id); }
+
+    template <typename T>
+    bool Universe<T>::entityActive(EntityId id) const
+    { return mEM.active(id); }
 
 } // namespace ent
 

@@ -42,6 +42,18 @@
 #   define ENT_ASSERT_BASE(COND_EXP, LINE, FILE, FUNC)
 #endif
 
+#ifndef NDEBUG
+/// Equals true, if NDEBUG is NOT set.
+#   define IS_DEBUG_BOOL true
+/// If NDEBUG is not defined, the command in brackets will be present.
+#   define DO_IF_DEBUG(cmd) cmd
+#else
+/// Equals true, if NDEBUG is NOT set.
+#   define IS_DEBUG_BOOL false
+/// If NDEBUG is not defined, the command in brackets will be present.
+#   define DO_IF_DEBUG(_)
+#endif
+
 // Assert used in places, where the performance hit is not too big.
 #ifndef NDEBUG_FAST
 #   define ENT_ASSERT_FAST(COND_EXP) ENT_ASSERT_BASE((COND_EXP), \

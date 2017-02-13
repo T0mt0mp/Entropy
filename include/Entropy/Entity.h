@@ -1,7 +1,7 @@
 /**
  * @file Entropy/Entity.h
  * @author Tomas Polasek
- * @brief Entity is a object within the Entropy ECS Universe.
+ * @brief Entity is an object within the Entropy ECS Universe.
  */
 
 #ifndef ECS_FIT_ENTITY_H
@@ -9,231 +9,241 @@
 
 #include "Types.h"
 #include "Component.h"
+#include "EntityId.h"
 
 /// Main Entropy namespace
 namespace ent
 {
     /**
-     * Wrapper around Entity management implementation.
-     */
-    class EntityHolder final : NonCopyable
-    {
-    public:
-        /**
-         * Default holder contructor
-         */
-        inline EntityHolder();
-
-        /**
-         * Create a new Entity and return its ID.
-         * @return Returns ID of the new Entity.
-         */
-        inline EntityId create();
-
-        /**
-         * Activate given Entity.
-         * !! Does NOT check index bounds !!
-         * @param id ID of the Entity.
-         */
-        inline void activate(EntityId id);
-
-        /**
-         * Deactivate given Entity.
-         * !! Does NOT check index bounds !!
-         * @param id ID of the Entity.
-         */
-        inline void deactivate(EntityId id);
-
-        /**
-         * Destroy given Entity.
-         * TODO - Should we actually check validity of Entity?
-         * @param id ID of the Entity.
-         * @return Returns false, if the Entity does not exist.
-         */
-        inline bool destroy(EntityId id);
-
-        /**
-         * Checks validity of given Entity.
-         * @param id ID of the Entity.
-         * @return Returns true, if the Entity exists.
-         */
-        inline bool valid(EntityId id) const;
-
-        /**
-         * Checks if the given Entity is active.
-         * !! Does NOT check index bounds !!
-         * @param id ID of the Entity.
-         * @return Returns true, if the Entity is active.
-         */
-        inline bool active(EntityId id) const;
-    private:
-        /// Record about state of a single Entity
-        struct EntityRecord
-        {
-            EntityRecord() :
-                components{0}, generation{0}, active{false}
-            { }
-            EntityRecord(bool a, ComponentBitset b, EIdType g) :
-                components{b}, generation{g}, active{a}
-            { }
-            /// Present Components bitset.
-            ComponentBitset components;
-            /// Current generation number.
-            EIdType generation;
-            /// Is the Entity active?
-            bool active;
-        };
-        /// Record about an Entity Pool.
-        struct PoolRecord
-        {
-            /// Entity ID of the first Entity from this pool.
-            EIdType poolStartId;
-            /// Entity ID of the last (inclusive) Entity from this pool.
-            EIdType poolEndId;
-        };
-
-        /**
-         * Check for validity of given index and generation number.
-         * @param index Index of the Entity.
-         * @param gen Generation of the Entity.
-         * @return Returns true, if the Entity is valid.
-         */
-        bool validImpl(EIdType index, EIdType gen) const
-        { return indexValid(index) && genValid(index, gen); }
-
-        /**
-         * Check if given index is valid.
-         * @param index Index of the Entity.
-         * @return Returns true, if the index is valid.
-         */
-        bool indexValid(EIdType index) const
-        { return index && index < mRecords.size(); }
-
-        /**
-         * Check if given generation corresponds to the index.
-         * !! Does NOT check index bounds !!
-         * @param index Index of the Entity.
-         * @param gen Generation of the Entity.
-         * @return Returns true, if the generation number is current.
-         */
-        bool genValid(EIdType index, EIdType gen) const
-        { return mRecords[index].generation == gen; }
-
-        /// Records of Entities.
-        std::vector<EntityRecord> mRecords;
-        /// TODO - Records of Entity pools.
-        std::vector<PoolRecord> mPools;
-        /// Freed Entity indices.
-        std::deque<EIdType> mFree;
-    protected:
-    };
-
-    /**
-     * EntityManager base class containing code which does not need to be templated.
-     */
-    class EntityManagerBase : NonCopyable
-    {
-    public:
-    private:
-    protected:
-        /// Container for the Entities.
-        EntityHolder mEntities;
-    }; // EntityManagerBase
-
-    /**
-     * EntityManager is a part of Entropy ECS Universe.
-     * Contains lists of Entities, their status and
-     * currently used generation for given index.
-     * Contains methods for adding/removing entities and
-     * their refresh.
-     * @tparam UniverseT Type of the Universe, where this class is being used.
+     * @brief Entity is composed of ID and Universe ptr, where it resides.
+     * Entity class should not be used as the primary way to access
+     * Components. EntityGroup + System combination should be used.
+     * @tparam UniverseT Type of the Universe.
      */
     template <typename UniverseT>
-    class EntityManager final : public EntityManagerBase
+    class Entity
     {
     public:
+        template <typename UT>
+        friend class Entity;
+
         /**
-         * Default EntityManger constructor.
+         * Create Entity which resides in given Universe and
+         * has specified ID.
+         * @param uni Universe pointer.
+         * @param id ID of the Entity.
          */
-        EntityManager();
+        Entity(UniverseT *uni, EntityId id = {});
+
+        /**
+         * Copy constructor.
+         * @param rhs Entity to copy.
+         */
+        Entity(const Entity &rhs);
+
+        /**
+         * Move constructor.
+         * @param rhs Entity to move.
+         */
+        Entity(Entity &&rhs);
+
+        /**
+         * Copy-assignment operator.
+         * @tparam UT If the UniverseT of the copied Entity is the same the
+         *   Universe pointer is copied too, else only ID is copied.
+         * @param rhs Entity to copy.
+         */
+        template <typename UT>
+        Entity &operator=(const Entity<UT> &rhs);
+
+        /**
+         * Move-assignment operator.
+         * @tparam UT If the UniverseT of the moved Entity is the same the
+         *   Universe pointer is moved too, else only ID is moved.
+         * @param rhs Entity to move.
+         */
+        template <typename UT>
+        Entity &operator=(Entity<UT> &&rhs);
+
+        /**
+         * Copy helper method. Copy Given Entity ID, if the
+         * Entity is from the same Universe, copy the Universe ptr too.
+         * @tparam UT Universe type.
+         * @param rhs Copy this Entity.
+         */
+        template <typename UT>
+        void copy(const Entity<UT> &rhs);
+        void copy(const Entity &rhs);
+
+        /**
+         * Comparison operator, compares only ID!
+         * @param rhs Second operand.
+         * @return Returns true, if the IDs are the same.
+         */
+        bool operator==(const Entity &rhs) const;
+
+        /**
+         * Does this Entity have Component of given type
+         * associated with it?
+         * @tparam ComponentT Type of Component.
+         * @return Returns true, if such Component is associated.
+         */
+        template <typename ComponentT>
+        bool has() const
+        { return mUniverse->template hasComponent<ComponentT>(mId); }
+
+        /**
+         * Get the Component of given type associated with
+         * this Entity.
+         * @tparam ComponentT Type of the Component.
+         * @return Returns ptr to the Component, or nullptr if this
+         *   Entity does not have such Component.
+         */
+        template <typename ComponentT>
+        const ComponentT *get() const
+        { return mUniverse->template getComponent<ComponentT>(mId); }
+        template <typename ComponentT>
+        ComponentT *get()
+        { return mUniverse->template getComponent<ComponentT>(mId); }
+
+        /**
+         * Add Component of given type to this Entity. If there already
+         * is Component of this type associated with this Entity, nothing
+         * happens.
+         * @tparam ComponentT Type of the Component.
+         * @return Returns ptr to new Component, or already existing one.
+         */
+        template <typename ComponentT>
+        const ComponentT *add() const
+        { return mUniverse->template addComponent<ComponentT>(mId); }
+        template <typename ComponentT>
+        ComponentT *add()
+        { return mUniverse->template addComponent<ComponentT>(mId); }
+
+        /**
+         * Remove Component of given type from this Entity.
+         * If there is no Component of this type associated with
+         * the Entity, nothing happens.
+         * @tparam ComponentT Type of the Component.
+         */
+        template <typename ComponentT>
+        void remove()
+        { return mUniverse->template removeComponent<ComponentT>(mId); }
+
+        /**
+         * Check if this Entity contains valid EntityId.
+         * !!Does not check for validity withing the Universe - use valid() method for that!!
+         * @return Returns true, if the EntityId has been set to valid (not null) value.
+         */
+        bool created() const
+        { return mId.index() != 0; }
+
+        /**
+         * Check if this Entity is valid within its Universe.
+         * @return Returns true, if it exists within its universe.
+         */
+        bool valid() const
+        { return mUniverse->entityValid(mId); }
+
+        /**
+         * Activate this Entity, if it's already active, nothing happens.
+         */
+        void activate()
+        { mUniverse->activateEntity(mId); }
+
+        /**
+         * Deactivate this Entity, if it's already inactive, nothing happens.
+         */
+        void deactivate()
+        { mUniverse->deactivateEntity(mId); }
+
+        /**
+         * Is this Entity active?
+         * @return Returns true, if this Entity is active.
+         */
+        bool active() const
+        { return mUniverse->entityActive(mId); }
+
+        /**
+         * Destroy this Entity. Resets ID of the Entity to 0.
+         * @return Returns false, if this Entity did not exist.
+         */
+        bool destroy()
+        {
+            bool result{mUniverse->destroyEntity(mId)};
+            mId = 0;
+            return result;
+        }
+
+        /// Universe ptr getter.
+        const UniverseT *universe() const
+        { return mUniverse; }
+
+        /// EntityId getter.
+        const EntityId &id() const
+        { return mId; }
     private:
+        /// Universe this Entity lives in.
+        UniverseT *mUniverse;
+        /// ID this Entity represents.
+        EntityId mId;
     protected:
-    };// EntityManager
+    }; // Entity
 
-    // EntityHolder implementation.
-    EntityHolder::EntityHolder()
+    // Entity implementation.
+    template <typename UniverseT>
+    Entity<UniverseT>::Entity(UniverseT *uni, EntityId id) :
+        mUniverse{uni}, mId{id}
+    { }
+
+    template <typename UniverseT>
+    Entity<UniverseT>::Entity(const Entity &rhs)
     {
-        // Create the 0th record, valid Entity indexes start at 1!.
-        mRecords.emplace_back();
+        copy(rhs);
     }
 
-    EntityId EntityHolder::create()
+    template <typename UniverseT>
+    Entity<UniverseT>::Entity(Entity &&rhs)
     {
-        EIdType index{0};
-        EIdType gen{0};
-
-        if (mFree.size() > ENT_MIN_FREE)
-        {
-            index = mFree.front();
-            ENT_ASSERT_SLOW(index < mRecords.size());
-            mFree.pop_front();
-            // Generation is incremented in Entity destroy.
-            gen = mRecords[index].generation;
-        } else
-        {
-            u64 numEntities{mRecords.size()};
-            ENT_ASSERT_SLOW(numEntities < EntityId::MAX_ENTITIES)
-            index = static_cast<EIdType>(mRecords.size());
-            gen = EntityId::START_GEN;
-            mRecords.emplace_back(EntityRecord{true, 0, EntityId::START_GEN});
-        }
-
-        return EntityId(index, gen);
+        copy(rhs);
     }
 
-    void EntityHolder::activate(EntityId id)
+    template <typename UniverseT>
+    template <typename UniverseT2>
+    Entity<UniverseT> &Entity<UniverseT>::operator=(const Entity<UniverseT2> &rhs)
     {
-        mRecords[id.index()].active = true;
+        copy(rhs);
+        return *this;
     }
 
-    void EntityHolder::deactivate(EntityId id)
+    template <typename UniverseT>
+    template <typename UniverseT2>
+    Entity<UniverseT> &Entity<UniverseT>::operator=(Entity<UniverseT2> &&rhs)
     {
-        mRecords[id.index()].active = false;
+        copy(rhs);
+        return *this;
     }
 
-    bool EntityHolder::destroy(EntityId id)
+    template <typename UniverseT>
+    template <typename UniverseT2>
+    void Entity<UniverseT>::copy(const Entity<UniverseT2> &rhs)
     {
-        if (!valid(id))
-        { // Entity does not exist!
-            return false;
-        }
-
-        EntityRecord &rec(mRecords[id.index()]);
-        rec.active = false;
-        rec.components = 0;
-        // TODO - Not actually an error?
-        ENT_ASSERT_SLOW(rec.generation < EntityId::MAX_GEN);
-        rec.generation++;
-
-        mFree.push_back(id.index());
-
-        return true;
+        mId = rhs.mId;
     }
 
-    bool EntityHolder::valid(EntityId id) const
-    { return validImpl(id.index(), id.generation()); }
-
-    bool EntityHolder::active(EntityId id) const
-    { return mRecords[id.index()].active; }
-    // EntityHolder implementation end.
-
-    // EntityManager implementation.
-    template <typename U>
-    EntityManager<U>::EntityManager()
+    template <typename UniverseT>
+    void Entity<UniverseT>::copy(const Entity<UniverseT> &rhs)
     {
-
+        mId = rhs.mId;
+        mUniverse = rhs.mUniverse;
     }
-    // EntityManager implementation end.
+
+    template <typename UniverseT>
+    bool Entity<UniverseT>::operator==(const Entity &rhs) const
+    {
+        return mId == rhs.mId;
+    }
+    // Entity implementation end.
 } // namespace ent
 
 #endif //ECS_FIT_ENTITY_H

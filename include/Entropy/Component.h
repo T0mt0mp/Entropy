@@ -478,9 +478,10 @@ namespace ent
               typename... CArgTs>
     u64 ComponentManager<UniverseT>::registerComponent(CArgTs... args)
     {
-        ENT_ASSERT_SLOW(!mHolder<HolderT>.constructed());
+        ENT_ASSERT_FAST(!mHolder<HolderT>.constructed());
         const u64 cId{id<ComponentT>()};
 
+        ENT_ASSERT_FAST(cId < MAX_COMPONENTS); // Unable to register more Component types
         static_assert(std::is_base_of<ent::BaseComponentHolder<ComponentT>, HolderT>::value,
                       "Component holder has to inherit from ent::BaseComponentHolder!");
         static_assert(sizeof(HolderT(args...)), "Component holder has to be instantiable!");
