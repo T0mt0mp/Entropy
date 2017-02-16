@@ -9,6 +9,7 @@
 
 #include "Types.h"
 #include "Util.h"
+#include "Group.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -34,7 +35,35 @@ namespace ent
     class SystemManager final : public SystemManagerBase
     {
     public:
+        /**
+         * Add System of given type to the manager. System is constructed
+         * with provided constructor parameters.
+         * If there already exists System of given type, the old one
+         * is destructed and new one constructed in its place.
+         * @tparam SystemT Type of the System.
+         * @tparam CArgTs Constructor argument types.
+         * @param cArgs Construct arguments.
+         * @return Returns reference to the constructed System.
+         */
+        template <typename SystemT,
+                  typename... CArgTs>
+        SystemT &addSystem(CArgTs... cArgs);
+
+        /**
+         * Get System with given type.
+         * !!System has to be added first!!
+         * @tparam SystemT Type of the System.
+         * @return Returns reference to the System object.
+         */
+        template <typename SystemT>
+        SystemT &getSystem() const;
     private:
+        /**
+         * Container for the System.
+         * @tparam SystemT Type of the System.
+         */
+        template <typename SystemT>
+        static ConstructionHandler<SystemT> mSystem;
     protected:
     }; // SystemManager
 
@@ -50,6 +79,25 @@ namespace ent
     private:
     protected:
     }; // System
+
+    // SystemManager implementation.
+    template <typename UT>
+    template <typename SystemT,
+              typename... CArgTs>
+    SystemT &SystemManager<UT>::addSystem(CArgTs... cArgs)
+    {
+        static_assert(std::is_base_of<System, SystemT>::value,
+                      "System has to inherit from ent::System !");
+        static_assert(sizeof(SystemT(cArgs...)), "System has to be instantiable!");
+    }
+
+    template <typename UT>
+    template <typename SystemT>
+    SystemT &SystemManager<UT>::getSystem() const
+    {
+        return mSystem<SystemT>;
+    }
+    // SystemManager implementation end.
 } // namespace ent
 
 #endif //ECS_FIT_SYSTEM_H

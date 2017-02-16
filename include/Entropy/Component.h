@@ -459,7 +459,8 @@ namespace ent
 
     // ComponentManager implementation.
     template <typename UniverseT>
-    ComponentManager<UniverseT>::ComponentManager() {
+    ComponentManager<UniverseT>::ComponentManager()
+    {
         static bool instantiated{false};
         if (instantiated)
         {

@@ -86,7 +86,8 @@ namespace ent
         ~ConstructionHandler() {}
 
         /**
-         * Construct the inner object.
+         * Construct the inner object. If there is constructed object inside,
+         * it will be destructed before constructing the new one.
          * @tparam CArgTs Constructor argument types.
          * @param args Constructor arguments
          */
@@ -110,7 +111,7 @@ namespace ent
         { return mHandler.get() != nullptr; }
 
         T &operator()()
-        { return (*mHandler); }
+        { ENT_ASSERT_FAST(constructed()); return (*mHandler); }
     private:
         /// Functor acting as a deletion function called by unique_ptr
         struct Destructor
@@ -373,7 +374,7 @@ namespace ent
         template <typename ClassT>
         static constexpr u64 mId{ClassIdHolder::template next<ClassT>()};
     protected:
-    };
+    }; // ClassIdGenerator
 } // namespace ent
 
 #endif //ECS_FIT_UTIL_H
