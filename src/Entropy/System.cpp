@@ -9,5 +9,11 @@
 /// Main Entropy namespace
 namespace ent
 {
-
+    // System implementation.
+    void System::setGroup(EntityGroup *grp)
+    {
+        mGroup = grp;
+        mInitialized = true;
+    }
+    // System implementation end.
 } // namespace ent

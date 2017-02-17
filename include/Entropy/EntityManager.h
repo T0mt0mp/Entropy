@@ -273,9 +273,17 @@ namespace ent
     public:
         /**
          * Default EntityManger constructor.
+         * @param uni Universe, which this manager belongs to.
          */
-        EntityManager();
+        EntityManager(UniverseT *uni);
+
+        /**
+         * TODO - EntityManager refresh.
+         */
+        void refresh();
     private:
+        /// Universe, which this manager belongs to.
+        UniverseT *mUniverse;
     protected:
     };// EntityManager
 
@@ -323,10 +331,15 @@ namespace ent
     // EntityHolder implementation end.
 
     // EntityManager implementation.
-    template <typename U>
-    EntityManager<U>::EntityManager()
-    {
+    template <typename UT>
+    EntityManager<UT>::EntityManager(UT *uni) :
+        mUniverse{uni}
+    { }
 
+    template <typename UT>
+    void EntityManager<UT>::refresh()
+    {
+        ENT_WARNING("EntityManager::refresh() is not finished yet!");
     }
     // EntityManager implementation end.
 } // namespace ent

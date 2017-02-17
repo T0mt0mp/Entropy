@@ -29,6 +29,7 @@ namespace ent
     public:
         using UniverseT = Universe<T>;
         using EntityT = Entity<UniverseT>;
+
         friend class Entity<UniverseT>;
 
         /**
@@ -38,15 +39,47 @@ namespace ent
         Universe();
 
         /**
+         * Initialize all required structures AFTER adding all the
+         * required Components.
+         * @code
+         * Universe<T> u;
+         * // Register Components
+         * // Optionally add Systems - only after Components!
+         * u.init();
+         * @endcode
+         */
+        void init();
+
+        /**
+         * Refresh inner structures and prepare for next run.
+         * Actions that will be taken:
+         *   Add/remove Entities.
+         *   Add/remove Components.
+         *   Refresh EntityGroups.
+         */
+        void refresh();
+
+        // System manager proxy methods.
+    public:
+        /**
          * Register given System for this universe.
          * @tparam SystemT Type of the system, has to inherit from base ent::System.
          * @tparam CArgTs System constructor argument types.
          * @param args System constructor arguments, passed to the System on construction.
-         * @return Returns reference to the newly registered System.
+         * @return Returns ptr to the newly registered System.
          */
         template <typename SystemT,
                   typename... CArgTs>
-        SystemT& addSystem(CArgTs... args);
+        SystemT* addSystem(CArgTs... args);
+
+        /**
+         * Get already added System.
+         * @tparam SystemT Type of the System.
+         * @return Returns ptr to the System, if the System has not
+         *   been added yet, nullptr is returned instead.
+         */
+        template <typename SystemT>
+        SystemT* getSystem();
 
         /**
          * Remove a registered System.
@@ -54,7 +87,41 @@ namespace ent
          */
         template <typename SystemT>
         void removeSystem();
+    private:
 
+        // Group manager proxy methods.
+    public:
+        /**
+         * Add or get already created Entity group.
+         * The pointer is guaranteed to be valid as long as the
+         * Universe is instantiated - the Group will not be
+         * moved around.
+         * If Require and Reject have one or more same types,
+         * the Require list has higher priority.
+         * Order DOES matter, if there already is a group with
+         * same filter, but the order of types inside Require/Reject
+         * is different a new Group WILL be created. If debug is
+         * enabled a warning message will be displayed, informing
+         * about this.
+         * @code
+         * struct Comp1 {};
+         * struct Comp2 {};
+         * ...
+         * using Require = ent::Require<Comp1>;
+         * using Reject = ent::Reject<Comp2>;
+         * EntityGroup *myGroup = addGetGroup<Require, Reject>();
+         * @endcode
+         * @tparam RequireT List of required Component types.
+         * @tparam RejectT List of rejected Component types.
+         * @return Returns ptr to the requested Entity Group.
+         */
+        template <typename RequireT,
+                  typename RejectT>
+        EntityGroup *addGetGroup();
+    private:
+
+        // Component manager proxy methods.
+    public:
         /**
          * Register given Component and its ComponentHolder.
          * @tparam ComponentT Type of the Component.
@@ -63,19 +130,9 @@ namespace ent
          * @return Returns ID of the Component.
          */
         template <typename ComponentT,
-                  typename... CArgTs>
+            typename... CArgTs>
         u64 registerComponent(CArgTs... args);
 
-        // System manager proxy methods.
-    public:
-    private:
-
-        // Group manager proxy methods.
-    public:
-    private:
-
-        // Component manager proxy methods.
-    public:
         /**
          * Add Component to the given Entity.
          * @tparam ComponentT Type of the Component
@@ -218,14 +275,16 @@ namespace ent
 
         /// Flag for instantiation, only one is allowed.
         static bool mInstantiated;
-        /// Used for managing Systems.
-        SystemManager<UniverseT> mSM;
-        /// Used for managing EntityGroups.
-        GroupManager<UniverseT> mGM;
+        /// Flag representing the state of this Universe.
+        static bool mInitialized;
         /// Used for managing ComponentHolders.
         ComponentManager<UniverseT> mCM;
         /// Used for managing Entities.
         EntityManager<UniverseT> mEM;
+        /// Used for managing EntityGroups.
+        GroupManager<UniverseT> mGM;
+        /// Used for managing Systems.
+        SystemManager<UniverseT> mSM;
     protected:
     }; // Universe
 
@@ -233,18 +292,29 @@ namespace ent
     bool Universe<T>::mInstantiated{false};
 
     template <typename T>
+    bool Universe<T>::mInitialized{false};
+
+    template <typename T>
     template <typename SystemT,
               typename... CArgTs>
-    SystemT &Universe<T>::addSystem(CArgTs... args)
+    SystemT *Universe<T>::addSystem(CArgTs... args)
     {
         static_assert(std::is_base_of<System, SystemT>::value,
                       "The System has to inherit from ent::System!");
         static_assert(std::is_constructible<SystemT, CArgTs...>::value,
                       "Unable to construct System with given constructor parameters!");
-        ENT_WARNING("Called unfinished method!");
 
-        static SystemT sys(args...);
-        return sys;
+        //ENT_WARNING("Called unfinished method!");
+        //static SystemT sys(args...);
+
+        return mSM.addSystem<SystemT>(std::forward<CArgTs>(args)...);
+    }
+
+    template <typename T>
+    template <typename SystemT>
+    SystemT *Universe<T>::getSystem()
+    {
+        return mSM.getSystem<SystemT>();
     }
 
     template <typename T>
@@ -256,10 +326,21 @@ namespace ent
     }
 
     template <typename T>
+    template <typename RequireT,
+              typename RejectT>
+    EntityGroup *Universe<T>::addGetGroup()
+    {
+        return mGM.addGetGroup<RequireT, RejectT>();
+    }
+
+    template <typename T>
     template <typename ComponentT,
               typename... CArgTs>
     u64 Universe<T>::registerComponent(CArgTs... args)
     {
+        // Adding Component types is only allowed before initialization.
+        ENT_ASSERT_FAST(!mInitialized);
+
         static bool registered{false};
         // Check for multiple calls for single Component.
         if (registered)
@@ -275,8 +356,32 @@ namespace ent
     }
 
     template <typename T>
-    Universe<T>::Universe()
+    Universe<T>::Universe() :
+        mCM(this),
+        mEM(this),
+        mGM(this),
+        mSM(this)
     {
+    }
+
+    template <typename T>
+    void Universe<T>::init()
+    {
+        ENT_ASSERT_FAST(!mInitialized);
+
+
+
+        refresh();
+        mInitialized = true;
+    }
+
+    template <typename T>
+    void Universe<T>::refresh()
+    {
+        mEM.refresh();
+        mCM.refresh();
+        mGM.refresh();
+        mSM.refresh();
     }
 
     template <typename T>

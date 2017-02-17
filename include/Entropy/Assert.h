@@ -47,6 +47,8 @@
 #   define IS_DEBUG_BOOL true
 /// If NDEBUG is not defined, the command in brackets will be present.
 #   define DO_IF_DEBUG(cmd) cmd
+/// Flag for Entropy debugging.
+#   define ENT_DEBUG
 #else
 /// Equals true, if NDEBUG is NOT set.
 #   define IS_DEBUG_BOOL false

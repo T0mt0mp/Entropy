@@ -284,11 +284,17 @@ namespace ent
     public:
         /**
          * Default constructor.
+         * @param uni Universe, which this manager belongs to.
          */
-        ComponentManager();
+        ComponentManager(UniverseT *uni);
 
         /// Destructor.
         ~ComponentManager();
+
+        /**
+         * TODO - ComponentManager refresh
+         */
+        void refresh();
 
         /**
          * Register given Component with its ComponentHolder.
@@ -393,6 +399,9 @@ namespace ent
         template <typename ComponentT>
         inline void initMask();
 
+        /// Universe which this manager belongs to.
+        UniverseT *mUniverse;
+
         /**
          * Holder instance.
          * @tparam HolderT Type of the Holder.
@@ -442,6 +451,16 @@ namespace ent
                         ComponentBitset&& reject) :
             mRequire(require), mMask(require | reject) { }
 
+        ComponentFilter(const ComponentFilter &rhs) :
+            mRequire{rhs.mRequire}, mMask{rhs.mMask} { }
+
+        ComponentFilter &operator=(const ComponentFilter &rhs)
+        {
+            mRequire = rhs.mRequire;
+            mMask = rhs.mMask;
+            return *this;
+        }
+
         /**
          * Check if the given bitset passes this filter.
          * @param bitset Bitset to check.
@@ -449,6 +468,13 @@ namespace ent
          */
         bool match(const ComponentBitset &bitset) const
         { return (bitset & mMask) == mRequire; }
+
+        /// Comparison operator.
+        bool operator==(const ComponentFilter &rhs) const
+        { return (mRequire == rhs.mRequire) && (mMask == rhs.mMask); }
+
+        /// Print operator.
+        friend std::ostream &operator<<(std::ostream &out, const ComponentFilter &rhs);
     private:
         /// Bitset signifying which Component types need to be present.
         ComponentBitset mRequire;
@@ -458,8 +484,9 @@ namespace ent
     };
 
     // ComponentManager implementation.
-    template <typename UniverseT>
-    ComponentManager<UniverseT>::ComponentManager()
+    template <typename UT>
+    ComponentManager<UT>::ComponentManager(UT *uni) :
+        mUniverse{uni}
     {
         static bool instantiated{false};
         if (instantiated)
@@ -469,15 +496,21 @@ namespace ent
         instantiated = true;
     }
 
-    template <typename UniverseT>
-    ComponentManager<UniverseT>::~ComponentManager()
+    template <typename UT>
+    ComponentManager<UT>::~ComponentManager()
     { }
 
-    template <typename UniverseT>
+    template <typename UT>
+    void ComponentManager<UT>::refresh()
+    {
+        ENT_WARNING("ComponentManager::refresh() is not finished yet!");
+    }
+
+    template <typename UT>
     template <typename ComponentT,
               typename HolderT,
               typename... CArgTs>
-    u64 ComponentManager<UniverseT>::registerComponent(CArgTs... args)
+    u64 ComponentManager<UT>::registerComponent(CArgTs... args)
     {
         ENT_ASSERT_FAST(!mHolder<HolderT>.constructed());
         const u64 cId{id<ComponentT>()};
@@ -493,90 +526,90 @@ namespace ent
         return cId;
     }
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename ComponentT>
-    u64 ComponentManager<UniverseT>::id()
+    u64 ComponentManager<UT>::id()
     {
         static const u64 cId{ComponentIdGenerator::template getId<ComponentT>()};
         return cId;
     }
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename ComponentT>
-    const ComponentBitset &ComponentManager<UniverseT>::mask() const
+    const ComponentBitset &ComponentManager<UT>::mask() const
     {
         return mMask<ComponentT>;
     }
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename ComponentT,
               typename HolderT>
-    inline ComponentT *ComponentManager<UniverseT>::add(EntityId id)
+    inline ComponentT *ComponentManager<UT>::add(EntityId id)
     {
         return getHolder<HolderT>().add(id);
     }
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename ComponentT,
         typename HolderT>
-    inline ComponentT *ComponentManager<UniverseT>::get(EntityId id)
+    inline ComponentT *ComponentManager<UT>::get(EntityId id)
     {
         return getHolder<HolderT>().get(id);
     }
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename ComponentT,
         typename HolderT>
-    inline bool ComponentManager<UniverseT>::has(EntityId id) const
+    inline bool ComponentManager<UT>::has(EntityId id) const
     {
         return getHolder<HolderT>().has(id);
     }
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename ComponentT,
         typename HolderT>
-    inline void ComponentManager<UniverseT>::remove(EntityId id)
+    inline void ComponentManager<UT>::remove(EntityId id)
     {
         return getHolder<HolderT>().remove(id);
     }
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename HolderT>
-    inline HolderT &ComponentManager<UniverseT>::getHolder()
+    inline HolderT &ComponentManager<UT>::getHolder()
     {
         return mHolder<HolderT>();
     }
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename HolderT>
-    inline const HolderT &ComponentManager<UniverseT>::getHolder() const
+    inline const HolderT &ComponentManager<UT>::getHolder() const
     {
         return mHolder<HolderT>();
     }
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename HolderT,
               typename... CArgTs>
-    void ComponentManager<UniverseT>::initHolder(CArgTs... args)
+    void ComponentManager<UT>::initHolder(CArgTs... args)
     {
         mHolder<HolderT>.construct(std::forward<CArgTs>(args)...);
     }
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename ComponentT>
-    inline void ComponentManager<UniverseT>::initMask()
+    inline void ComponentManager<UT>::initMask()
     {
         ENT_ASSERT_FAST(mMask<ComponentT>.none());
         mMask<ComponentT>.set(id<ComponentT>());
     }
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename HolderT>
-    ConstructionHandler<HolderT> ComponentManager<UniverseT>::mHolder;
+    ConstructionHandler<HolderT> ComponentManager<UT>::mHolder;
 
-    template <typename UniverseT>
+    template <typename UT>
     template <typename Component>
-    ComponentBitset ComponentManager<UniverseT>::mMask{0};
+    ComponentBitset ComponentManager<UT>::mMask{0};
     // ComponentManager implementation end.
 
     // ComponentHolder implementation.

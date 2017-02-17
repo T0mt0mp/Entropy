@@ -42,6 +42,13 @@ class TestSystem: public ent::System
 public:
     TestSystem(u32 num) :
         mNum{num} {}
+
+    const auto &getFilter() const
+    { return filter(); }
+
+    auto getGroupId() const
+    { return groupId(); }
+
     u32 mNum;
 };
 
@@ -71,6 +78,25 @@ template <u64 N>
 struct TestComponent
 {
     u32 v;
+};
+
+template <u64 N>
+class TestSystem2: public ent::System
+{
+public:
+    using Require = ent::Require<TestComponent<0>>;
+    using Reject = ent::Reject<TestComponent<1>>;
+
+    TestSystem2(u32 num) :
+        mNum{num} {}
+
+    const auto &getFilter() const
+    { return filter(); }
+
+    auto getGroupId() const
+    { return groupId(); }
+
+    u32 mNum;
 };
 
 TU_Begin(EntropyEntity)
@@ -145,7 +171,7 @@ TU_Begin(EntropyEntity)
         PROF_SCOPE("Universe0");
         using Universe = FirstUniverse;
         Universe::UniverseT &u{Universe::instance()};
-        TC_Require(u.addSystem<TestSystem>(1).mNum == 1);
+        TC_Require(u.addSystem<TestSystem>(1)->mNum == 1);
         TC_RequireNoException(u.removeSystem<TestSystem>());
         u64 id1{(u.registerComponent<TestComponent1>(1))};
         u64 id2{(u.registerComponent<TestComponent2>(2))};
@@ -432,6 +458,57 @@ TU_Begin(EntropyEntity)
             TC_Require(!ent.get<TestComponent<1>>());
             TC_Require(!ent.get<TestComponent<2>>());
         }
+    }
+
+    TU_Case(SystemManager0, "Testing the SystemManager class")
+    {
+        PROF_SCOPE("SystemManager0");
+        SecondUniverse::UniverseT &u{SecondUniverse::instance()};
+
+        TestSystem *sys1 = u.addSystem<TestSystem>(1u);
+        TestSystem2<0> *sys2 = u.addSystem<TestSystem2<0>>(2u);
+        TestSystem2<1> *sys3 = u.addSystem<TestSystem2<1>>(3u);
+
+        TC_Require(sys1);
+        TC_Require(sys2);
+        TC_Require(sys3);
+
+        TC_Require(sys1->mNum == 1u);
+        TC_Require(sys2->mNum == 2u);
+        TC_Require(sys3->mNum == 3u);
+
+        TC_RequireEqual(sys1->getFilter(), ent::ComponentFilter({}, {}));
+        TC_RequireEqual(sys2->getFilter(), ent::ComponentFilter(1u, 2u));
+        TC_RequireEqual(sys3->getFilter(), ent::ComponentFilter(1u, 2u));
+
+        TC_RequireEqual(sys1->getGroupId(), 0u);
+        TC_RequireEqual(sys2->getGroupId(), 1u);
+        TC_RequireEqual(sys3->getGroupId(), 1u);
+    }
+
+    TU_Case(ComplexTest0, "Testing Universe initialization")
+    {
+        RealUniverse1::UniverseT &u{RealUniverse1::instance()};
+
+        TC_RequireEqual(u.registerComponent<TestComponent<0>>(), 0u);
+        TC_RequireEqual(u.registerComponent<TestComponent<1>>(), 1u);
+        TC_RequireEqual(u.registerComponent<TestComponent<2>>(), 2u);
+
+        TC_RequireEqual(u.componentMask<TestComponent<0>>(), ent::ComponentBitset().set(0));
+        TC_RequireEqual(u.componentMask<TestComponent<1>>(), ent::ComponentBitset().set(1));
+        TC_RequireEqual(u.componentMask<TestComponent<2>>(), ent::ComponentBitset().set(2));
+
+        TestSystem *sys1 = u.addSystem<TestSystem>(1u);
+        TestSystem2<0> *sys2 = u.addSystem<TestSystem2<0>>(2u);
+        TestSystem2<1> *sys3 = u.addSystem<TestSystem2<1>>(3u);
+
+        TC_Require(sys1);
+        TC_Require(sys2);
+        TC_Require(sys3);
+
+        u.init();
+
+        u.refresh();
     }
 
 TU_End(EntropyEntity)

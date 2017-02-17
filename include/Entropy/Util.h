@@ -110,8 +110,22 @@ namespace ent
         bool constructed() const
         { return mHandler.get() != nullptr; }
 
+        /**
+         * Reference getter. The inner object should be
+         * constructed first!
+         * @return Returns reference to the inner object.
+         */
         T &operator()()
         { ENT_ASSERT_FAST(constructed()); return (*mHandler); }
+
+        /**
+         * Pointer getter, if the inner object is not
+         * constructed, nullptr is returned.
+         * @return Returns ptr to the inner object, or nullptr
+         *   if the inner object is not constructed.
+         */
+        T *ptr()
+        { return mHandler.get(); }
     private:
         /// Functor acting as a deletion function called by unique_ptr
         struct Destructor

@@ -36,6 +36,17 @@ namespace ent
     {
     public:
         /**
+         * Construct the System manager for given Universe.
+         * @param uni Universe, this manager is part of.
+         */
+        SystemManager(UniverseT *uni);
+
+        /**
+         * TODO - Refresh the Systems.
+         */
+        void refresh();
+
+        /**
          * Add System of given type to the manager. System is constructed
          * with provided constructor parameters.
          * If there already exists System of given type, the old one
@@ -43,20 +54,21 @@ namespace ent
          * @tparam SystemT Type of the System.
          * @tparam CArgTs Constructor argument types.
          * @param cArgs Construct arguments.
-         * @return Returns reference to the constructed System.
+         * @return Returns ptr to the constructed System.
          */
         template <typename SystemT,
                   typename... CArgTs>
-        SystemT &addSystem(CArgTs... cArgs);
+        SystemT *addSystem(CArgTs... cArgs);
 
         /**
          * Get System with given type.
          * !!System has to be added first!!
          * @tparam SystemT Type of the System.
-         * @return Returns reference to the System object.
+         * @return Returns ptr to the System object, or nullptr
+         *   if the System has not been added.
          */
         template <typename SystemT>
-        SystemT &getSystem() const;
+        SystemT *getSystem() const;
     private:
         /**
          * Container for the System.
@@ -64,6 +76,9 @@ namespace ent
          */
         template <typename SystemT>
         static ConstructionHandler<SystemT> mSystem;
+
+        /// Universe, this manager is part of.
+        UniverseT *mUniverse;
     protected:
     }; // SystemManager
 
@@ -76,26 +91,74 @@ namespace ent
     class System : NonCopyable
     {
     public:
+        template <typename UniverseT>
+        friend class SystemManager;
     private:
+        /**
+         * Set Entity Group containing Entities which are
+         * of interest to this System.
+         * @param grp Pointer to the Group.
+         */
+        void setGroup(EntityGroup *grp);
+
+        /// Flag used for signifying, that this System is ready for use.
+        bool mInitialized;
+        /// Entity group containing Entities, which are of interest to this System.
+        EntityGroup *mGroup;
     protected:
+        /// Check, if the System is ready for use.
+        bool isInitialized() const
+        { return mInitialized; }
+
+        /// Filter getter.
+        const ComponentFilter &filter() const
+        { ENT_ASSERT_FAST(isInitialized()); return mGroup->filter(); }
+
+        u64 groupId() const
+        { ENT_ASSERT_FAST(isInitialized()); return mGroup->id(); }
     }; // System
 
     // SystemManager implementation.
     template <typename UT>
+    template <typename SystemT>
+    ConstructionHandler<SystemT> SystemManager<UT>::mSystem;
+
+    template <typename UT>
+    SystemManager<UT>::SystemManager(UT *uni) :
+        mUniverse{uni}
+    { }
+
+    template <typename UT>
+    void SystemManager<UT>::refresh()
+    {
+        ENT_WARNING("SystemManager::refresh() is not finished yet!");
+    }
+
+    template <typename UT>
     template <typename SystemT,
               typename... CArgTs>
-    SystemT &SystemManager<UT>::addSystem(CArgTs... cArgs)
+    SystemT *SystemManager<UT>::addSystem(CArgTs... cArgs)
     {
         static_assert(std::is_base_of<System, SystemT>::value,
                       "System has to inherit from ent::System !");
         static_assert(sizeof(SystemT(cArgs...)), "System has to be instantiable!");
+
+        mSystem<SystemT>.construct(std::forward<CArgTs>(cArgs)...);
+        using Extract = RequireRejectExtractor<SystemT>;
+        mSystem<SystemT>().setGroup(
+            mUniverse->template addGetGroup<
+                typename Extract::RequireT,
+                typename Extract::RejectT
+            >());
+
+        return mSystem<SystemT>.ptr();
     }
 
     template <typename UT>
     template <typename SystemT>
-    SystemT &SystemManager<UT>::getSystem() const
+    SystemT *SystemManager<UT>::getSystem() const
     {
-        return mSystem<SystemT>;
+        return mSystem<SystemT>.ptr();
     }
     // SystemManager implementation end.
 } // namespace ent

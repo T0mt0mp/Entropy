@@ -29,4 +29,14 @@ public:
     }
 };
 
+class RealUniverse1 : public ent::Universe<RealUniverse1>
+{
+public:
+    static UniverseT &instance()
+    {
+        static UniverseT u;
+        return u;
+    }
+};
+
 #endif //ECS_FIT_TESTUNIVERSE_H

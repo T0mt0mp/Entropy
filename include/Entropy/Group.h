@@ -40,9 +40,59 @@ namespace ent
     class EntityGroup final : NonCopyable
     {
     public:
+        /**
+         * Construct a EntityGroup, specifying which
+         * Entities belong into it, using the filter.
+         * @param filter Specifies which Entities belong
+         *   into this Group.
+         * @param groupId ID of the group, starting at 0.
+         */
+        EntityGroup(const ComponentFilter &filter, u64 groupId);
+
+        /// Filter getter.
+        const ComponentFilter &filter() const
+        { return mFilter; }
+
+        /// Group ID getter.
+        u64 id() const
+        { return mId; }
     private:
+        /// Filter specifying which Entities belong into this group.
+        ComponentFilter mFilter;
+        /// ID of this Group.
+        u64 mId;
     protected:
     }; // EntityGroup
+
+    /**
+     * Extract Require and Reject type lists from given System type.
+     * Default value (if either list is not present) is empty type list.
+     * @tparam SystemT Type of the System.
+     */
+    template <typename SystemT>
+    struct RequireRejectExtractor
+    {
+        struct RequireGetter
+        {
+            template <typename ST>
+            static typename ST::Require getRequire(void *unused);
+            template <typename ST>
+            static Require<> getRequire(...);
+            using RequireT = decltype(getRequire<SystemT>(nullptr));
+        };
+
+        struct RejectGetter
+        {
+            template <typename ST>
+            static typename ST::Reject getReject(void *unused);
+            template <typename ST>
+            static Reject<> getReject(...);
+            using RejectT = decltype(getReject<SystemT>(nullptr));
+        };
+
+        using RequireT = typename RequireGetter::RequireT;
+        using RejectT = typename RejectGetter::RejectT;
+    };
 
     /**
      * GroupManager base class containing code which does not need to be templated.
@@ -70,14 +120,21 @@ namespace ent
          * Basic constructor.
          * @param universe Universe containing this manager.
          */
-        GroupManager(UniverseT *universe) :
-            mUniverse{universe}
-        { }
+        GroupManager(UniverseT *uni);
+
+        /**
+         * TODO - refresh GroupManager.
+         */
+        void refresh();
 
         /**
          * Add or get already created Entity group.
+         * The pointer is guaranteed to be valid as long as the
+         * GroupManager is instantiated - the Group will not be
+         * moved around.
          * @tparam RequireT List of required Component types.
          * @tparam RejectT List of rejected Component types.
+         * @return Returns ptr to the requested Entity Group.
          */
         template <typename RequireT,
                   typename RejectT>
@@ -98,6 +155,15 @@ namespace ent
         /// Group ID generator.
         class GroupIdGenerator : public StaticClassIdGenerator<GroupIdGenerator> {};
 
+        /**
+         * Build a filter bitset using template magic.
+         * Takes a type list of Component types - ContainerT
+         * can be any type. Each of the Component types is
+         * used as template parameter to get the componentMask.
+         * Final result is all masks ORed.
+         * @tparam ContainerT Container containing type list
+         *   of Component types.
+         */
         template <typename ContainerT>
         struct FilterBuilder;
 
@@ -123,6 +189,15 @@ namespace ent
             }
         };
 
+        template <template <typename...> typename ContainerT>
+        struct FilterBuilder<ContainerT<>>
+        {
+            static auto value(UniverseT *uni)
+            {
+                return ComponentBitset();
+            }
+        };
+
         /**
          * Initialize group.
          * @tparam RequireT List of required Component types.
@@ -131,6 +206,18 @@ namespace ent
         template <typename RequireT,
                   typename RejectT>
         void initGroup();
+
+        /**
+         * Check, if there is no EntityGroup already using this
+         * filter.
+         * This method is used for checking EntityGroup
+         * redundancy, when the Component type list is in
+         * different order.
+         * @param filter Filter to search for.
+         * @return Returns true, if there already is a EntityGroup
+         *   with same filter.
+         */
+        bool checkRedundancy(const ComponentFilter &filter);
 
         /// Mapping of Entity groups to IDs.
         std::vector<EntityGroup*> mGroupId;
@@ -150,6 +237,22 @@ namespace ent
     }; // GroupManager
 
     // GroupManager implementation.
+    template <typename UT>
+    template <typename RequireT,
+              typename RejectT>
+    ConstructionHandler<EntityGroup> GroupManager<UT>::mGroup;
+
+    template <typename UT>
+    GroupManager<UT>::GroupManager(UT *uni) :
+        mUniverse{uni}
+    { }
+
+    template <typename UT>
+    void GroupManager<UT>::refresh()
+    {
+        ENT_WARNING("GroupManager::refresh() is not finished yet!");
+    }
+
     template <typename UT>
     template <typename RequireT,
               typename RejectT>
@@ -178,11 +281,34 @@ namespace ent
               typename RejectT>
     void GroupManager<UT>::initGroup()
     {
-        ComponentFilter groupFilter{buildFilter<RequireT, RejectT>()};
+        static ComponentFilter groupFilter{buildFilter<RequireT, RejectT>()};
 
-        mGroup<RequireT, RejectT>.construct(groupFilter);
+#ifdef ENT_DEBUG
+        if (checkRedundancy(groupFilter))
+        {
+            ENT_WARNING("Multiple EntityGroups with the same filter, are you sure you want to do this?"
+                        "(This can happen, when you specify the same Component types in require and "
+                        "reject, but in different order)");
+        }
+#endif
 
-        mGroupId.push_back(&mGroup<RequireT, RejectT>());
+        mGroup<RequireT, RejectT>.construct(groupFilter, mGroupId.size());
+
+        mGroupId.push_back(mGroup<RequireT, RejectT>.ptr());
+    }
+
+    template <typename UT>
+    bool GroupManager<UT>::checkRedundancy(const ComponentFilter &filter)
+    {
+        for (const EntityGroup *grp : mGroupId)
+        {
+            if (grp->filter() == filter)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
     // GroupManager implementation end.
 } // namespace ent

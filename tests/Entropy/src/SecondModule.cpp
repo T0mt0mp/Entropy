@@ -82,7 +82,7 @@ TU_Begin(EntropyEntityModule)
         using Universe = FirstUniverse;
         Universe::UniverseT &u{Universe::instance()};
 
-        TC_Require(u.addSystem<TestSystem>(1).mNum == 1);
+        TC_Require(u.addSystem<TestSystem>(1)->mNum == 1);
         TC_RequireNoException(u.removeSystem<TestSystem>());
 
         u64 id1{(u.registerComponent<TestComponent3>())};
