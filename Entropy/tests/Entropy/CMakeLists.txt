@@ -24,4 +24,4 @@ set(TESTS_HEADERS
         ${PROJECT_INCLUDE_DIR}/Tests.h)
 
 add_executable(${PROJECT_NAME} ${TESTS_SOURCES} ${TESTS_HEADERS})
-target_link_libraries(${PROJECT_NAME} ECS-FIT pthread)
+target_link_libraries(${PROJECT_NAME} ECS-FIT ENTROPY pthread)

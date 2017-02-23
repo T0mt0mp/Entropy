@@ -7,8 +7,9 @@
 #ifndef ECS_FIT_ENTITYMANAGER_H
 #define ECS_FIT_ENTITYMANAGER_H
 
+#include "Util.h"
 #include "Types.h"
-#include "Component.h"
+#include "EntityId.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -76,6 +77,28 @@ namespace ent
         SequenceRecord createSequential(EIdType startId, u64 size);
 
         /**
+         * Mark component as present for given Entity.
+         * @param id ID of the Entity.
+         * @param index Index of the Component.
+         */
+        inline void addComponent(EntityId id, u64 index);
+
+        /**
+         * Mark component as not present for given Entity.
+         * @param id ID of the Entity.
+         * @param index Index of the Component.
+         */
+        inline void removeComponent(EntityId id, u64 index);
+
+        /**
+         * Does given Entity have the Component?
+         * @param id ID of the Entity.
+         * @param index Index of the Component.
+         * @return Returns true, if the Component is present.
+         */
+        inline bool hasComponent(EntityId id, u64 index) const;
+
+        /**
          * Activate given Entity.
          * !! Does NOT check index bounds !!
          * @param id ID of the Entity.
@@ -95,7 +118,7 @@ namespace ent
          * @param id ID of the Entity.
          * @return Returns false, if the Entity does not exist.
          */
-        inline bool destroy(EntityId id);
+        bool destroy(EntityId id);
 
         /**
          * Checks validity of given Entity.
@@ -111,18 +134,40 @@ namespace ent
          * @return Returns true, if the Entity is active.
          */
         inline bool active(EntityId id) const;
+
+        /**
+         * Get Component bitset for given Entity.
+         * @param id ID of the Entity.
+         * @return Returns reference to the bitset.
+         */
+        inline const ComponentBitset &components(EntityId id) const ;
     private:
         /// Record about state of a single Entity
         struct EntityRecord
         {
             EntityRecord() :
-                components{0}, generation{0}, active{false}
+                components{0}, /*groups{0},*/ generation{0}, active{false}
             { }
-            EntityRecord(bool a, ComponentBitset b, EIdType g) :
-                components{b}, generation{g}, active{a}
+            EntityRecord(bool isActive) :
+                components{0}, /*groups{0},*/ generation{EntityId::START_GEN}, active{isActive}
             { }
-            /// Present Components bitset.
-            ComponentBitset components;
+            EntityRecord(const EntityRecord &rhs) :
+                components{rhs.components},
+                //groups{rhs.groups},
+                generation{rhs.generation},
+                active{rhs.active}
+            { }
+
+            union {
+                /// Present Components bitset.
+                ComponentBitset components;
+                /// Next ID in the chain of free IDs.
+                EIdType nextFree;
+            };
+
+            /// Presence in EntityGroups.
+            //GroupBitset groups;
+
             /// Current generation number.
             EIdType generation;
             /// Is the Entity active?
@@ -156,10 +201,26 @@ namespace ent
         bool genValid(EIdType index, EIdType gen) const
         { return mRecords[index].generation == gen; }
 
+        /**
+         * Free Entity on given ID, no checks are performed!
+         * @param index Index of the Entity.
+         */
+        inline void pushFreeId(EIdType index);
+
+        /**
+         * Pop ID from the free list. No checks are performed!
+         * @return Returns free Entity ID.
+         */
+        inline EIdType popFreeId();
+
         /// Records of Entities.
         std::vector<EntityRecord> mRecords;
-        /// Freed Entity indices.
-        std::deque<EIdType> mFree;
+        /// Start of the chain of free Entity IDs.
+        EIdType mFirstFree;
+        /// Last free Entity ID.
+        EIdType mLastFree;
+        /// Length of the free chain.
+        u64 mNumFree;
     protected:
     };
 
@@ -213,6 +274,31 @@ namespace ent
         { return mEntities.createSequential(startId, size); }
 
         /**
+         * Mark component as present for given Entity.
+         * @param id ID of the Entity.
+         * @param index Index of the Component.
+         */
+        void addComponent(EntityId id, u64 index)
+        { mEntities.addComponent(id, index); }
+
+        /**
+         * Mark component as not present for given Entity.
+         * @param id ID of the Entity.
+         * @param index Index of the Component.
+         */
+        void removeComponent(EntityId id, u64 index)
+        { mEntities.removeComponent(id, index); }
+
+        /**
+         * Does given Entity have the Component?
+         * @param id ID of the Entity.
+         * @param index Index of the Component.
+         * @return Returns true, if the Component is present.
+         */
+        bool hasComponent(EntityId id, u64 index) const
+        { return mEntities.hasComponent(id, index); }
+
+        /**
          * Activate given Entity.
          * !! Does NOT check index bounds !!
          * @param id ID of the Entity.
@@ -253,6 +339,14 @@ namespace ent
          */
         bool active(EntityId id) const
         { return mEntities.active(id); }
+
+        /**
+         * Get Component bitset for given Entity.
+         * @param id ID of the Entity.
+         * @return Returns reference to the bitset.
+         */
+        const ComponentBitset &components(EntityId id) const
+        { return mEntities.components(id); }
     private:
     protected:
         /// Container for the Entities.
@@ -273,67 +367,85 @@ namespace ent
     public:
         /**
          * Default EntityManger constructor.
-         * @param uni Universe, which this manager belongs to.
          */
-        EntityManager(UniverseT *uni);
+        EntityManager();
 
         /**
          * TODO - EntityManager refresh.
          */
         void refresh();
     private:
-        /// Universe, which this manager belongs to.
-        UniverseT *mUniverse;
     protected:
     };// EntityManager
 
     // EntityHolder implementation.
-    EntityHolder::EntityHolder()
+    EntityHolder::EntityHolder() :
+        mFirstFree{0},
+        mNumFree{0}
     {
         // Create the 0th record, valid Entity indexes start at 1!.
         mRecords.emplace_back();
     }
 
+    void EntityHolder::addComponent(EntityId id, u64 index)
+    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].components.set(index); }
+
+    void EntityHolder::removeComponent(EntityId id, u64 index)
+    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].components.reset(index); }
+
+    bool EntityHolder::hasComponent(EntityId id, u64 index) const
+    { return valid(id) && mRecords[id.index()].components.test(index); }
+
     void EntityHolder::activate(EntityId id)
-    {
-        mRecords[id.index()].active = true;
-    }
+    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].active = true; }
 
     void EntityHolder::deactivate(EntityId id)
-    {
-        mRecords[id.index()].active = false;
-    }
+    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].active = false; }
 
-    bool EntityHolder::destroy(EntityId id)
-    {
-        if (!valid(id))
-        { // Entity does not exist!
-            return false;
-        }
-
-        EntityRecord &rec(mRecords[id.index()]);
-        rec.active = false;
-        rec.components = 0;
-        // TODO - Not actually an error?
-        ENT_ASSERT_SLOW(rec.generation < EntityId::MAX_GEN);
-        rec.generation++;
-
-        mFree.push_back(id.index());
-
-        return true;
-    }
+    bool EntityHolder::active(EntityId id) const
+    { return valid(id) && mRecords[id.index()].active; }
 
     bool EntityHolder::valid(EntityId id) const
     { return validImpl(id.index(), id.generation()); }
 
-    bool EntityHolder::active(EntityId id) const
-    { return mRecords[id.index()].active; }
+    const ComponentBitset &EntityHolder::components(EntityId id) const
+    { ENT_ASSERT_SLOW(valid(id)); return mRecords[id.index()].components; }
+
+    void EntityHolder::pushFreeId(EIdType index)
+    {
+        EntityRecord &recNew = mRecords[index];
+        EntityRecord &recOld = mRecords[mLastFree];
+
+        if (mLastFree)
+        { // If there is at least one element in the list, add the new one.
+            recOld.nextFree = index;
+        }
+        else
+        { // Else, we need to init the list.
+            mFirstFree = index;
+        }
+
+        recNew.nextFree = 0;
+        mLastFree = index;
+
+        mNumFree++;
+    }
+
+    inline EIdType EntityHolder::popFreeId()
+    {
+        EIdType result{mFirstFree};
+
+        mFirstFree = mRecords[result].nextFree;
+
+        mNumFree = result ? 0 : mNumFree - 1;
+
+        return result;
+    }
     // EntityHolder implementation end.
 
     // EntityManager implementation.
     template <typename UT>
-    EntityManager<UT>::EntityManager(UT *uni) :
-        mUniverse{uni}
+    EntityManager<UT>::EntityManager()
     { }
 
     template <typename UT>

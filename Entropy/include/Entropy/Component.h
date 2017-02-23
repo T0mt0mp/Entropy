@@ -11,127 +11,11 @@
 #include "Types.h"
 #include "Util.h"
 #include "EntityId.h"
+#include "EntityManager.h"
 
 /// Main Entropy namespace
 namespace ent
 {
-    /**
-     * Bitset, where each bit represents a single Component type.
-     */
-    class ComponentBitset final
-    {
-    public:
-        /// Type of the inner bitset.
-        using CBitset = std::bitset<MAX_COMPONENTS>;
-
-        /// Default constructor.
-        constexpr ComponentBitset() = default;
-
-        /// Construct from a number.
-        constexpr ComponentBitset(u64 num) :
-            mBitset(num)
-        { }
-
-        // Copy/move operators.
-        constexpr ComponentBitset(const ComponentBitset &rhs) :
-            mBitset(rhs.mBitset) { }
-        constexpr ComponentBitset(ComponentBitset &&rhs) :
-            mBitset(std::move(rhs.mBitset)) { }
-        constexpr ComponentBitset(const CBitset &rhs) :
-            mBitset(rhs) { }
-        constexpr ComponentBitset(CBitset &&rhs) :
-            mBitset(std::move(rhs)) { }
-
-        // Copy-assignment operators.
-        constexpr ComponentBitset &operator=(const ComponentBitset &rhs)
-        { mBitset = rhs.mBitset; return *this; }
-        constexpr ComponentBitset &operator=(ComponentBitset &&rhs)
-        { mBitset = std::move(rhs.mBitset); return *this; }
-        constexpr ComponentBitset &operator=(const CBitset &rhs)
-        { mBitset = rhs; return *this; }
-        constexpr ComponentBitset &operator=(CBitset &&rhs)
-        { mBitset = std::move(rhs); return *this; }
-
-        ComponentBitset &operator=(u64 val)
-        { mBitset = val; return *this; }
-
-        /// Set all bits to true.
-        ComponentBitset &set()
-        { mBitset.set(); return *this; }
-
-        /**
-         * Set bit on given position to given value (true by default).
-         * @param pos Position of the bit.
-         * @param val Value to set.
-         */
-        ComponentBitset &set(std::size_t pos, bool val = true)
-        { mBitset.set(pos, val); return *this; }
-
-        /// Set all bits to false.
-        ComponentBitset &reset()
-        { mBitset.reset(); return *this; }
-
-        /**
-         * Reset bit on given position.
-         * @param pos Position of the bit.
-         */
-        ComponentBitset &reset(std::size_t pos)
-        { mBitset.reset(pos); return *this; }
-
-        /**
-         * Get the max number of component types.
-         * @return The max number of component types.
-         */
-        std::size_t size() const
-        { return mBitset.size(); }
-
-        /**
-         * Count the number of bits set to true.
-         * @return The number of bits set to true.
-         */
-        std::size_t count() const
-        { return mBitset.count(); }
-
-        /// Are any bits set to true?
-        bool any() const
-        { return mBitset.any(); }
-
-        /// Are none of the bits set to true?
-        bool none() const
-        { return mBitset.none(); }
-
-        /// Are all of the bits set to true?
-        bool all() const
-        { return mBitset.all(); }
-
-        /**
-         * Get the value of the bit on given position.
-         * @param pos Position of the bit.
-         * @return Value of the bit.
-         */
-        bool test(std::size_t pos) const
-        { return mBitset.test(pos); }
-
-        /// Binary AND operator.
-        ComponentBitset operator&(const ComponentBitset &rhs) const
-        { return ComponentBitset(mBitset & rhs.mBitset); }
-
-        /// Binary OR operator.
-        ComponentBitset operator|(const ComponentBitset &rhs) const
-        { return ComponentBitset(mBitset | rhs.mBitset); }
-
-        /// Comparison operator.
-        bool operator==(const ComponentBitset &rhs) const
-        { return mBitset == rhs.mBitset; }
-
-        /// Print operator.
-        friend std::ostream &operator<<(std::ostream &out, const ComponentBitset &rhs);
-    private:
-        /// Inner bitset.
-        CBitset mBitset;
-    protected:
-    }; // ComponentBitset
-
     /**
      * Base Component holder.
      * @tparam ComponentT Type of the Component contained within.
@@ -284,9 +168,9 @@ namespace ent
     public:
         /**
          * Default constructor.
-         * @param uni Universe, which this manager belongs to.
+         * @param entityMgr Entity manager withing the same Universe.
          */
-        ComponentManager(UniverseT *uni);
+        ComponentManager(EntityManager<UniverseT> &entityMgr);
 
         /// Destructor.
         ~ComponentManager();
@@ -339,7 +223,7 @@ namespace ent
          */
         template <typename ComponentT,
                   typename HolderT = typename HolderExtractor<ComponentT>::type>
-        inline bool has(EntityId id) const;
+        inline bool has(EntityId id);
 
         /**
          * Remove Component of given Entity.
@@ -399,8 +283,8 @@ namespace ent
         template <typename ComponentT>
         inline void initMask();
 
-        /// Universe which this manager belongs to.
-        UniverseT *mUniverse;
+        /// Entity manager from the same Universe.
+        EntityManager<UniverseT> &mEM;
 
         /**
          * Holder instance.
@@ -485,8 +369,8 @@ namespace ent
 
     // ComponentManager implementation.
     template <typename UT>
-    ComponentManager<UT>::ComponentManager(UT *uni) :
-        mUniverse{uni}
+    ComponentManager<UT>::ComponentManager(EntityManager<UT> &entityMgr) :
+        mEM(entityMgr)
     {
         static bool instantiated{false};
         if (instantiated)
@@ -546,7 +430,14 @@ namespace ent
               typename HolderT>
     inline ComponentT *ComponentManager<UT>::add(EntityId id)
     {
-        return getHolder<HolderT>().add(id);
+        ComponentT *result{getHolder<HolderT>().add(id)};
+
+        if (result)
+        {
+            mEM.template addComponent(id, ComponentManager<UT>::id<ComponentT>());
+        }
+
+        return result;
     }
 
     template <typename UT>
@@ -560,9 +451,9 @@ namespace ent
     template <typename UT>
     template <typename ComponentT,
         typename HolderT>
-    inline bool ComponentManager<UT>::has(EntityId id) const
+    inline bool ComponentManager<UT>::has(EntityId id)
     {
-        return getHolder<HolderT>().has(id);
+        return mEM.template hasComponent(id, ComponentManager<UT>::id<ComponentT>());
     }
 
     template <typename UT>
@@ -570,6 +461,8 @@ namespace ent
         typename HolderT>
     inline void ComponentManager<UT>::remove(EntityId id)
     {
+        mEM.template removeComponent(id, ComponentManager<UT>::id<ComponentT>());
+
         return getHolder<HolderT>().remove(id);
     }
 

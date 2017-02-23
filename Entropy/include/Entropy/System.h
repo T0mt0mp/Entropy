@@ -37,9 +37,9 @@ namespace ent
     public:
         /**
          * Construct the System manager for given Universe.
-         * @param uni Universe, this manager is part of.
+         * @param groupMgr Group manager from the same Universe.
          */
-        SystemManager(UniverseT *uni);
+        SystemManager(GroupManager<UniverseT> &groupMgr);
 
         /**
          * TODO - Refresh the Systems.
@@ -53,12 +53,13 @@ namespace ent
          * is destructed and new one constructed in its place.
          * @tparam SystemT Type of the System.
          * @tparam CArgTs Constructor argument types.
+         * @param uni Universe ptr.
          * @param cArgs Construct arguments.
          * @return Returns ptr to the constructed System.
          */
         template <typename SystemT,
                   typename... CArgTs>
-        SystemT *addSystem(CArgTs... cArgs);
+        SystemT *addSystem(UniverseT *uni, CArgTs... cArgs);
 
         /**
          * Get System with given type.
@@ -77,8 +78,8 @@ namespace ent
         template <typename SystemT>
         static ConstructionHandler<SystemT> mSystem;
 
-        /// Universe, this manager is part of.
-        UniverseT *mUniverse;
+        /// Group manager from the same Universe.
+        GroupManager<UniverseT> &mGM;
     protected:
     }; // SystemManager
 
@@ -87,33 +88,70 @@ namespace ent
      * over its EntityGroup and other utility methods.
      * It is meant to be inherited by the System implementation
      * which can contain the logic.
+     * @tparam UniverseT Type of the Universe.
      */
+    template <typename UniverseT>
     class System : NonCopyable
     {
     public:
-        template <typename UniverseT>
-        friend class SystemManager;
+        friend class SystemManager<UniverseT>;
     private:
         /**
          * Set Entity Group containing Entities which are
          * of interest to this System.
          * @param grp Pointer to the Group.
          */
-        void setGroup(EntityGroup *grp);
+        void setGroup(EntityGroup *grp)
+        { mGroup = grp; }
+
+        /**
+         * Set Universe, for this System.
+         * @param uni Universe ptr.
+         */
+        void setUniverse(UniverseT *uni)
+        {
+            mInitialized = true;
+            mUniverse = uni;
+        }
 
         /// Flag used for signifying, that this System is ready for use.
         bool mInitialized;
         /// Entity group containing Entities, which are of interest to this System.
         EntityGroup *mGroup;
+        /// Universe this System works for.
+        UniverseT *mUniverse;
     protected:
         /// Check, if the System is ready for use.
         bool isInitialized() const
         { return mInitialized; }
 
+        /**
+         * Iterator for iterating trough Entities within the group.
+         * @return Returns iterator for iterating through Entities withing the group.
+         */
+        EntityList<UniverseT, EntityGroup::EntityListT> foreach()
+        { return mGroup->foreach(mUniverse); }
+
+        /**
+         * Iterator for iterating trough Entities which were added since the last refresh.
+         * @return Returns iterator for iterating through Entities which were added since the last refresh.
+         */
+        EntityList<UniverseT, EntityGroup::AddedListT> foreachAdded()
+        { return mGroup->foreachAdded(mUniverse); }
+
+        /**
+         * Iterator for iterating trough Entities which were removed since the last refresh.
+         * !!Warning: The Entities withing this Group may not exist anymore!!
+         * @return Returns iterator for iterating through Entities which were removed since the last refresh.
+         */
+        EntityList<UniverseT, EntityGroup::RemovedListT> foreachRemoved()
+        { return mGroup->foreachRemoved(mUniverse); }
+
         /// Filter getter.
         const ComponentFilter &filter() const
         { ENT_ASSERT_FAST(isInitialized()); return mGroup->filter(); }
 
+        /// Group ID getter.
         u64 groupId() const
         { ENT_ASSERT_FAST(isInitialized()); return mGroup->id(); }
     }; // System
@@ -124,8 +162,8 @@ namespace ent
     ConstructionHandler<SystemT> SystemManager<UT>::mSystem;
 
     template <typename UT>
-    SystemManager<UT>::SystemManager(UT *uni) :
-        mUniverse{uni}
+    SystemManager<UT>::SystemManager(GroupManager<UT> &groupMgr) :
+        mGM{groupMgr}
     { }
 
     template <typename UT>
@@ -137,21 +175,24 @@ namespace ent
     template <typename UT>
     template <typename SystemT,
               typename... CArgTs>
-    SystemT *SystemManager<UT>::addSystem(CArgTs... cArgs)
+    SystemT *SystemManager<UT>::addSystem(UT *uni, CArgTs... cArgs)
     {
-        static_assert(std::is_base_of<System, SystemT>::value,
+        static_assert(std::is_base_of<System<UT>, SystemT>::value,
                       "System has to inherit from ent::System !");
         static_assert(sizeof(SystemT(cArgs...)), "System has to be instantiable!");
 
         mSystem<SystemT>.construct(std::forward<CArgTs>(cArgs)...);
         using Extract = RequireRejectExtractor<SystemT>;
         mSystem<SystemT>().setGroup(
-            mUniverse->template addGetGroup<
+            mGM.template addGetGroup<
                 typename Extract::RequireT,
                 typename Extract::RejectT
             >());
 
-        return mSystem<SystemT>.ptr();
+        SystemT *sys{mSystem<SystemT>.ptr()};
+
+        sys->setUniverse(uni);
+        return sys;
     }
 
     template <typename UT>

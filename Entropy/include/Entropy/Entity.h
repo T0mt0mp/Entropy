@@ -8,7 +8,6 @@
 #define ECS_FIT_ENTITY_H
 
 #include "Types.h"
-#include "Component.h"
 #include "EntityId.h"
 
 /// Main Entropy namespace
@@ -182,6 +181,10 @@ namespace ent
         /// EntityId getter.
         const EntityId &id() const
         { return mId; }
+
+        /// EntityId setter.
+        void setId(EntityId id)
+        { mId = id; }
     private:
         /// Universe this Entity lives in.
         UniverseT *mUniverse;

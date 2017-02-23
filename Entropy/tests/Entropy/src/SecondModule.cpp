@@ -35,7 +35,7 @@ template <typename ComponentT,
     typename NUM>
 u64 TestComponentHolder<ComponentT, NUM>::mInstantiated{0};
 
-class TestSystem: public ent::System
+class TestSystem: public FirstUniverse::SystemT
 {
 public:
     TestSystem(u32 num) :

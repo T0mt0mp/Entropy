@@ -14,24 +14,45 @@ namespace ent
         EIdType index{0};
         EIdType gen{0};
 
-        if (mFree.size() >= ENT_MIN_FREE)
+        if (mNumFree >= ENT_MIN_FREE)
         {
-            index = mFree.front();
-            ENT_ASSERT_SLOW(index < mRecords.size());
-            mFree.pop_front();
+            index = popFreeId();
+            ENT_ASSERT_SLOW(index);
             // Generation is incremented in Entity destroy.
             gen = mRecords[index].generation;
             mRecords[index].active = true;
+            mRecords[index].components = 0;
+            //mRecords[index].groups = 0;
         } else
         {
             u64 numEntities{mRecords.size()};
-            ENT_ASSERT_SLOW(numEntities < EntityId::MAX_ENTITIES)
+            ENT_ASSERT_SLOW(numEntities < EntityId::MAX_ENTITIES);
             index = static_cast<EIdType>(mRecords.size());
             gen = EntityId::START_GEN;
-            mRecords.emplace_back(EntityRecord{true, 0, EntityId::START_GEN});
+            //mRecords.emplace_back(EntityRecord{true, 0, EntityId::START_GEN});
+            // Create new active Entity
+            mRecords.emplace_back(true);
         }
 
         return EntityId(index, gen);
+    }
+
+    bool EntityHolder::destroy(EntityId id)
+    {
+        if (!valid(id))
+        { // Entity does not exist!
+            return false;
+        }
+
+        EntityRecord &rec(mRecords[id.index()]);
+        rec.active = false;
+        // TODO - Not actually an error?
+        ENT_ASSERT_SLOW(rec.generation < EntityId::MAX_GEN);
+        rec.generation++;
+
+        pushFreeId(id.index());
+
+        return true;
     }
 
     EntityId EntityHolder::create(EIdType id)

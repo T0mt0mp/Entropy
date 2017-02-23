@@ -7,6 +7,7 @@
 #ifndef ECS_FIT_UNIVERSE_H
 #define ECS_FIT_UNIVERSE_H
 
+#include "ActionCache.h"
 #include "System.h"
 #include "Component.h"
 #include "Entity.h"
@@ -29,6 +30,7 @@ namespace ent
     public:
         using UniverseT = Universe<T>;
         using EntityT = Entity<UniverseT>;
+        using SystemT = System<UniverseT>;
 
         friend class Entity<UniverseT>;
 
@@ -63,29 +65,29 @@ namespace ent
     public:
         /**
          * Register given System for this universe.
-         * @tparam SystemT Type of the system, has to inherit from base ent::System.
+         * @tparam ASystemT Type of the system, has to inherit from base ent::System.
          * @tparam CArgTs System constructor argument types.
          * @param args System constructor arguments, passed to the System on construction.
          * @return Returns ptr to the newly registered System.
          */
-        template <typename SystemT,
+        template <typename ASystemT,
                   typename... CArgTs>
-        SystemT* addSystem(CArgTs... args);
+        ASystemT* addSystem(CArgTs... args);
 
         /**
          * Get already added System.
-         * @tparam SystemT Type of the System.
+         * @tparam ASystemT Type of the System.
          * @return Returns ptr to the System, if the System has not
          *   been added yet, nullptr is returned instead.
          */
-        template <typename SystemT>
-        SystemT* getSystem();
+        template <typename ASystemT>
+        ASystemT* getSystem();
 
         /**
          * Remove a registered System.
-         * @tparam SystemT Type of the System.
+         * @tparam ASystemT Type of the System.
          */
-        template <typename SystemT>
+        template <typename ASystemT>
         void removeSystem();
     private:
 
@@ -277,14 +279,16 @@ namespace ent
         static bool mInstantiated;
         /// Flag representing the state of this Universe.
         static bool mInitialized;
-        /// Used for managing ComponentHolders.
-        ComponentManager<UniverseT> mCM;
         /// Used for managing Entities.
         EntityManager<UniverseT> mEM;
+        /// Used for managing ComponentHolders.
+        ComponentManager<UniverseT> mCM;
         /// Used for managing EntityGroups.
         GroupManager<UniverseT> mGM;
         /// Used for managing Systems.
         SystemManager<UniverseT> mSM;
+        /// Used for managing actions.
+        ActionCache<UniverseT> mAC;
     protected:
     }; // Universe
 
@@ -295,33 +299,32 @@ namespace ent
     bool Universe<T>::mInitialized{false};
 
     template <typename T>
-    template <typename SystemT,
+    template <typename ASystemT,
               typename... CArgTs>
-    SystemT *Universe<T>::addSystem(CArgTs... args)
+    ASystemT *Universe<T>::addSystem(CArgTs... args)
     {
-        static_assert(std::is_base_of<System, SystemT>::value,
+        static_assert(std::is_base_of<SystemT, ASystemT>::value,
                       "The System has to inherit from ent::System!");
-        static_assert(std::is_constructible<SystemT, CArgTs...>::value,
+        static_assert(std::is_constructible<ASystemT, CArgTs...>::value,
                       "Unable to construct System with given constructor parameters!");
 
-        //ENT_WARNING("Called unfinished method!");
-        //static SystemT sys(args...);
+        ASystemT *system{mSM.addSystem<ASystemT>(this, std::forward<CArgTs>(args)...)};
 
-        return mSM.addSystem<SystemT>(std::forward<CArgTs>(args)...);
+        return system;
     }
 
     template <typename T>
-    template <typename SystemT>
-    SystemT *Universe<T>::getSystem()
+    template <typename ASystemT>
+    ASystemT *Universe<T>::getSystem()
     {
-        return mSM.getSystem<SystemT>();
+        return mSM.getSystem<ASystemT>();
     }
 
     template <typename T>
-    template<typename SystemT>
+    template<typename ASystemT>
     void Universe<T>::removeSystem()
     {
-        static_assert(std::is_base_of<System, SystemT>::value, "The System has to inherit from ent::System!");
+        static_assert(std::is_base_of<SystemT, ASystemT>::value, "The System has to inherit from ent::System!");
         ENT_WARNING("Called unfinished method!");
     }
 
@@ -357,10 +360,11 @@ namespace ent
 
     template <typename T>
     Universe<T>::Universe() :
-        mCM(this),
-        mEM(this),
-        mGM(this),
-        mSM(this)
+        mEM(),
+        mCM(mEM),
+        mGM(mEM, mCM),
+        mSM(mGM),
+        mAC(mEM, mCM, mGM, mSM)
     {
     }
 
@@ -378,6 +382,8 @@ namespace ent
     template <typename T>
     void Universe<T>::refresh()
     {
+        // TODO - order?
+        mAC.refresh();
         mEM.refresh();
         mCM.refresh();
         mGM.refresh();
@@ -387,7 +393,7 @@ namespace ent
     template <typename T>
     template <typename ComponentT>
     ComponentT *Universe<T>::addComponent(EntityId id)
-    { return mCM.template add<ComponentT>(id); }
+    { return mAC.template addComponent<ComponentT>(id); }
 
     template <typename T>
     template <typename ComponentT>
@@ -402,7 +408,7 @@ namespace ent
     template <typename T>
     template <typename ComponentT>
     void Universe<T>::removeComponent(EntityId id)
-    { mCM.template remove<ComponentT>(id); }
+    { mAC.template removeComponent<ComponentT>(id); }
 
     template <typename T>
     template <typename ComponentT>

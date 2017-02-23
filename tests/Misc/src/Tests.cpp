@@ -220,22 +220,8 @@ TU_Begin(MiscUnit)
 
     TU_Case(Misc0, "Miscellaneous tests")
     {
-        using Gen1 = ClassIdGenerator<int>;
-        using Gen2 = ClassIdGenerator<double>;
-
-        // Generator 1
-        TC_RequireConstexpr(Gen1::getId<int>() == 0);
-        TC_RequireConstexpr(Gen1::getId<double>() == 1);
-        TC_RequireConstexpr(Gen1::getId<float>() == 2);
-        TC_RequireConstexpr(Gen1::getId<long>() == 3);
-        TC_RequireConstexpr(Gen1::getId<int>() == 0);
-
-        // Generator 2
-        TC_RequireConstexpr(Gen2::getId<double>() == 0);
-        TC_RequireConstexpr(Gen2::getId<int>() == 1);
-        TC_RequireConstexpr(Gen2::getId<float>() == 2);
-        TC_RequireConstexpr(Gen2::getId<long>() == 3);
-        TC_RequireConstexpr(Gen2::getId<double>() == 0);
+        PROF_SCOPE("Misc0");
+        std::cout << std::thread::hardware_concurrency() << std::endl;
     }
 
 TU_End(MiscUnit)

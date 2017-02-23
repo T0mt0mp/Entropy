@@ -37,10 +37,40 @@ template <typename ComponentT,
     typename NUM>
 u32 TestComponentHolder<ComponentT, NUM>::mNum{0};
 
-class TestSystem: public ent::System
+class FirstTestSystem: public FirstUniverse::SystemT
+{
+public:
+    FirstTestSystem(u32 num) :
+        mNum{num} {}
+
+    const auto &getFilter() const
+    { return filter(); }
+
+    auto getGroupId() const
+    { return groupId(); }
+
+    u32 mNum;
+};
+
+class TestSystem: public SecondUniverse::SystemT
 {
 public:
     TestSystem(u32 num) :
+        mNum{num} {}
+
+    const auto &getFilter() const
+    { return filter(); }
+
+    auto getGroupId() const
+    { return groupId(); }
+
+    u32 mNum;
+};
+
+class RealTestSystem: public RealUniverse1::SystemT
+{
+public:
+    RealTestSystem(u32 num) :
         mNum{num} {}
 
     const auto &getFilter() const
@@ -81,7 +111,7 @@ struct TestComponent
 };
 
 template <u64 N>
-class TestSystem2: public ent::System
+class TestSystem2: public SecondUniverse::SystemT
 {
 public:
     using Require = ent::Require<TestComponent<0>>;
@@ -97,6 +127,84 @@ public:
     { return groupId(); }
 
     u32 mNum;
+};
+
+template <u64 N>
+class RealTestSystem2: public RealUniverse1::SystemT
+{
+public:
+    using Require = ent::Require<TestComponent<0>>;
+    using Reject = ent::Reject<TestComponent<1>>;
+
+    RealTestSystem2(u32 num) :
+        mNum{num} {}
+
+    const auto &getFilter() const
+    { return filter(); }
+
+    auto getGroupId() const
+    { return groupId(); }
+
+    u32 mNum;
+};
+
+struct Velocity
+{
+    float x;
+    float y;
+
+    friend std::ostream &operator<<(std::ostream &out, const Velocity &vel)
+    {
+        out << "Vel: " << vel.x << ", " << vel.y;
+        return out;
+    }
+};
+
+struct Position
+{
+    float x;
+    float y;
+
+    friend std::ostream &operator<<(std::ostream &out, const Position &pos)
+    {
+        out << "Pos: " << pos.x << ", " << pos.y;
+        return out;
+    }
+};
+
+class MovementSystem : public RealUniverse2::SystemT
+{
+public:
+    using Require = ent::Require<Velocity, Position>;
+
+    void run()
+    {
+        std::cout << "Running movement system!" << std::endl;
+
+        if (isInitialized())
+        {
+            std::cout << "System IS initialized!" << std::endl;
+
+            for (auto &e : foreachAdded())
+            {
+                std::cout << "Added Entity : " << *e.get<Position>() << " " << *e.get<Velocity>() << std::endl;
+            }
+
+            for (auto &e : foreachRemoved())
+            {
+                std::cout << "Removed Entity : " << *e.get<Position>() << " " << *e.get<Velocity>() << std::endl;
+            }
+
+            for (auto &e : foreach())
+            {
+                std::cout << "Entity : " << *e.get<Position>() << " " << *e.get<Velocity>() << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "System is NOT initialized yet!" << std::endl;
+        }
+    }
 };
 
 TU_Begin(EntropyEntity)
@@ -171,8 +279,8 @@ TU_Begin(EntropyEntity)
         PROF_SCOPE("Universe0");
         using Universe = FirstUniverse;
         Universe::UniverseT &u{Universe::instance()};
-        TC_Require(u.addSystem<TestSystem>(1)->mNum == 1);
-        TC_RequireNoException(u.removeSystem<TestSystem>());
+        TC_Require(u.addSystem<FirstTestSystem>(1)->mNum == 1);
+        TC_RequireNoException(u.removeSystem<FirstTestSystem>());
         u64 id1{(u.registerComponent<TestComponent1>(1))};
         u64 id2{(u.registerComponent<TestComponent2>(2))};
         TC_RequireEqual(id1, 2u);
@@ -353,63 +461,10 @@ TU_Begin(EntropyEntity)
     {
         PROF_SCOPE("ComponentManager0");
         SecondUniverse::UniverseT &u{SecondUniverse::instance()};
+        using Entity = SecondUniverse::EntityT;
         TC_RequireEqual(u.registerComponent<TestComponent<0>>(), 0u);
         TC_RequireEqual(u.registerComponent<TestComponent<1>>(), 1u);
         TC_RequireEqual(u.registerComponent<TestComponent<2>>(), 2u);
-        TC_RequireEqual(u.componentMask<TestComponent<0>>(), ent::ComponentBitset().set(0));
-        TC_RequireEqual(u.componentMask<TestComponent<1>>(), ent::ComponentBitset().set(1));
-        TC_RequireEqual(u.componentMask<TestComponent<2>>(), ent::ComponentBitset().set(2));
-
-        for (u32 iii = 0; iii < 100; ++iii)
-        {
-            ent::EntityId id(iii);
-
-            TC_Require(!u.hasComponent<TestComponent<0>>(id));
-            TC_Require(!u.hasComponent<TestComponent<1>>(id));
-            TC_Require(!u.hasComponent<TestComponent<2>>(id));
-            auto a{u.getComponent<TestComponent<0>>(id)};
-            UNUSED(a);
-            TC_Require(!u.getComponent<TestComponent<0>>(id));
-            TC_Require(!u.getComponent<TestComponent<1>>(id));
-            TC_Require(!u.getComponent<TestComponent<2>>(id));
-            u.removeComponent<TestComponent<0>>(id);
-            u.removeComponent<TestComponent<1>>(id);
-            u.removeComponent<TestComponent<2>>(id);
-
-            TestComponent<1> *ptr1{u.addComponent<TestComponent<1>>(id)};
-            TC_Require(ptr1);
-            TC_RequireEqual(ptr1, u.getComponent<TestComponent<1>>(id));
-            TestComponent<2> *ptr2{u.addComponent<TestComponent<2>>(id)};
-            TC_Require(ptr2);
-            TC_RequireEqual(ptr2, u.addComponent<TestComponent<2>>(id));
-
-            ptr1->v = 42u;
-            TC_RequireEqual(u.getComponent<TestComponent<1>>(id)->v, 42u);
-
-            TC_Require(!u.hasComponent<TestComponent<0>>(id));
-            TC_Require(u.hasComponent<TestComponent<1>>(id));
-            TC_Require(u.hasComponent<TestComponent<2>>(id));
-            TC_Require(!u.getComponent<TestComponent<0>>(id));
-            TC_Require(u.getComponent<TestComponent<1>>(id));
-            TC_Require(u.getComponent<TestComponent<2>>(id));
-            u.removeComponent<TestComponent<0>>(id);
-            u.removeComponent<TestComponent<1>>(id);
-            u.removeComponent<TestComponent<2>>(id);
-
-            TC_Require(!u.hasComponent<TestComponent<0>>(id));
-            TC_Require(!u.hasComponent<TestComponent<1>>(id));
-            TC_Require(!u.hasComponent<TestComponent<2>>(id));
-            TC_Require(!u.getComponent<TestComponent<0>>(id));
-            TC_Require(!u.getComponent<TestComponent<1>>(id));
-            TC_Require(!u.getComponent<TestComponent<2>>(id));
-        }
-    }
-
-    TU_Case(ComponentManager1, "Testing the ComponentHolder class")
-    {
-        PROF_SCOPE("ComponentManager1");
-        SecondUniverse::UniverseT &u{SecondUniverse::instance()};
-        using Entity = SecondUniverse::EntityT;
         TC_RequireEqual(u.componentMask<TestComponent<0>>(), ent::ComponentBitset().set(0));
         TC_RequireEqual(u.componentMask<TestComponent<1>>(), ent::ComponentBitset().set(1));
         TC_RequireEqual(u.componentMask<TestComponent<2>>(), ent::ComponentBitset().set(2));
@@ -488,6 +543,7 @@ TU_Begin(EntropyEntity)
 
     TU_Case(ComplexTest0, "Testing Universe initialization")
     {
+        PROF_SCOPE("ComplexTest0");
         RealUniverse1::UniverseT &u{RealUniverse1::instance()};
 
         TC_RequireEqual(u.registerComponent<TestComponent<0>>(), 0u);
@@ -498,9 +554,9 @@ TU_Begin(EntropyEntity)
         TC_RequireEqual(u.componentMask<TestComponent<1>>(), ent::ComponentBitset().set(1));
         TC_RequireEqual(u.componentMask<TestComponent<2>>(), ent::ComponentBitset().set(2));
 
-        TestSystem *sys1 = u.addSystem<TestSystem>(1u);
-        TestSystem2<0> *sys2 = u.addSystem<TestSystem2<0>>(2u);
-        TestSystem2<1> *sys3 = u.addSystem<TestSystem2<1>>(3u);
+        RealTestSystem *sys1 = u.addSystem<RealTestSystem>(1u);
+        RealTestSystem2<0> *sys2 = u.addSystem<RealTestSystem2<0>>(2u);
+        RealTestSystem2<1> *sys3 = u.addSystem<RealTestSystem2<1>>(3u);
 
         TC_Require(sys1);
         TC_Require(sys2);
@@ -509,6 +565,33 @@ TU_Begin(EntropyEntity)
         u.init();
 
         u.refresh();
+    }
+
+    TU_Case(ComplexTest1, "Testing System iteration")
+    {
+        PROF_SCOPE("ComplexTest0");
+
+        RealUniverse2::UniverseT &u{RealUniverse2::instance()};
+
+        u.registerComponent<Position>();
+        u.registerComponent<Velocity>();
+
+        MovementSystem *sys{u.addSystem<MovementSystem>()};
+
+        sys->run();
+
+        u.init();
+
+        RealUniverse2::EntityT e = u.createEntity();
+        TC_Require(e.id().index());
+        e.add<Position>();
+        e.add<Velocity>();
+
+        sys->run();
+
+        u.refresh();
+
+        sys->run();
     }
 
 TU_End(EntropyEntity)

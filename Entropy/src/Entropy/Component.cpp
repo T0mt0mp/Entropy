@@ -10,12 +10,6 @@
 /// Main Entropy namespace
 namespace ent
 {
-    std::ostream &operator<<(std::ostream &out, const ComponentBitset &rhs)
-    {
-        out << rhs.mBitset;
-        return out;
-    }
-
     std::ostream &operator<<(std::ostream &out, const ComponentFilter &rhs)
     {
         out << "rq: " << rhs.mRequire << "; msk: " << rhs.mMask;

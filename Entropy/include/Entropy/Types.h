@@ -12,6 +12,7 @@
 #include <deque>
 #include <map>
 #include <vector>
+#include <set>
 
 #include "Assert.h"
 
@@ -53,6 +54,9 @@ namespace ent
 
     /// Maximum number of component types per Universe.
     static constexpr std::size_t MAX_COMPONENTS{64};
+
+    /// Maximum number of EntityGroups per Universe.
+    static constexpr std::size_t MAX_GROUPS{64};
 
 } // namespace ent
 

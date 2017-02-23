@@ -13,7 +13,10 @@ set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++1z -pedantic -Wall -Werror")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++1z -pedantic -Wall -Winline -Werror")
 
+set(ENGINE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 add_subdirectory(external)
+add_subdirectory(Entropy)
 
 # Engine library
 
@@ -25,19 +28,6 @@ include_directories(${ECS_INCLUDE_DIR})
 set(ECS_HEADERS
         # Math
         ${ECS_INCLUDE_DIR}/math/Math.h
-
-        # Entity Component System
-        ${ECS_INCLUDE_DIR}/Entropy/Component.h
-        ${ECS_INCLUDE_DIR}/Entropy/Entity.h
-        ${ECS_INCLUDE_DIR}/Entropy/EntityId.h
-        ${ECS_INCLUDE_DIR}/Entropy/EntityManager.h
-        ${ECS_INCLUDE_DIR}/Entropy/System.h
-        ${ECS_INCLUDE_DIR}/Entropy/Universe.h
-        ${ECS_INCLUDE_DIR}/Entropy/Types.h
-        ${ECS_INCLUDE_DIR}/Entropy/Entropy.h
-        ${ECS_INCLUDE_DIR}/Entropy/Assert.h
-        ${ECS_INCLUDE_DIR}/Entropy/Group.h
-        ${ECS_INCLUDE_DIR}/Entropy/Util.h
 
         # Memory structures
         ${ECS_INCLUDE_DIR}/mem/List.h
@@ -63,16 +53,6 @@ set(ECS_SOURCES
         # Math
         ${ECS_SOURCE_DIR}/math/Math.cpp
 
-        # Entity Component System
-        ${ECS_SOURCE_DIR}/Entropy/Component.cpp
-        ${ECS_SOURCE_DIR}/Entropy/Entity.cpp
-        ${ECS_SOURCE_DIR}/Entropy/EntityId.cpp
-        ${ECS_SOURCE_DIR}/Entropy/EntityManager.cpp
-        ${ECS_SOURCE_DIR}/Entropy/System.cpp
-        ${ECS_SOURCE_DIR}/Entropy/Universe.cpp
-        ${ECS_SOURCE_DIR}/Entropy/Group.cpp
-        ${ECS_SOURCE_DIR}/Entropy/Util.cpp
-
         # Memory structures
 
         # Testing utilities
@@ -86,11 +66,6 @@ set(ECS_SOURCES
         )
 
 add_library(ECS-FIT ${ECS_SOURCES} ${ECS_HEADERS})
-target_link_libraries(ECS-FIT)
-
-
-
-
 
 # Testing
 

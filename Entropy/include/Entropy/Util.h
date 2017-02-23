@@ -389,6 +389,137 @@ namespace ent
         static constexpr u64 mId{ClassIdHolder::template next<ClassT>()};
     protected:
     }; // ClassIdGenerator
+
+    /**
+     * Bitset, where each bit represents information about presence of something.
+     * @tparam N Number of bits in this bitset.
+     */
+    template <u64 N>
+    class InfoBitset final
+    {
+    public:
+        // TODO - rewrite bitset, trivial constructor.
+        /// Type of the inner bitset.
+        using CBitset = std::bitset<N>;
+
+        /// Default constructor.
+        constexpr InfoBitset() {};
+
+        /// Construct from a number.
+        constexpr InfoBitset(u64 num) :
+            mBitset(num)
+        { }
+
+        // Copy/move operators.
+        constexpr InfoBitset(const InfoBitset &rhs) :
+            mBitset(rhs.mBitset) { }
+        constexpr InfoBitset(InfoBitset &&rhs) :
+            mBitset(std::move(rhs.mBitset)) { }
+        constexpr InfoBitset(const CBitset &rhs) :
+            mBitset(rhs) { }
+        constexpr InfoBitset(CBitset &&rhs) :
+            mBitset(std::move(rhs)) { }
+
+        // Copy-assignment operators.
+        constexpr InfoBitset &operator=(const InfoBitset &rhs)
+        { mBitset = rhs.mBitset; return *this; }
+        constexpr InfoBitset &operator=(InfoBitset &&rhs)
+        { mBitset = std::move(rhs.mBitset); return *this; }
+        constexpr InfoBitset &operator=(const CBitset &rhs)
+        { mBitset = rhs; return *this; }
+        constexpr InfoBitset &operator=(CBitset &&rhs)
+        { mBitset = std::move(rhs); return *this; }
+
+        InfoBitset &operator=(u64 val)
+        { mBitset = val; return *this; }
+
+        /// Set all bits to true.
+        InfoBitset &set()
+        { mBitset.set(); return *this; }
+
+        /**
+         * Set bit on given position to given value (true by default).
+         * @param pos Position of the bit.
+         * @param val Value to set.
+         */
+        InfoBitset &set(std::size_t pos, bool val = true)
+        { mBitset.set(pos, val); return *this; }
+
+        /// Set all bits to false.
+        InfoBitset &reset()
+        { mBitset.reset(); return *this; }
+
+        /**
+         * Reset bit on given position.
+         * @param pos Position of the bit.
+         */
+        InfoBitset &reset(std::size_t pos)
+        { mBitset.reset(pos); return *this; }
+
+        /**
+         * Get the max number of component types.
+         * @return The max number of component types.
+         */
+        std::size_t size() const
+        { return mBitset.size(); }
+
+        /**
+         * Count the number of bits set to true.
+         * @return The number of bits set to true.
+         */
+        std::size_t count() const
+        { return mBitset.count(); }
+
+        /// Are any bits set to true?
+        bool any() const
+        { return mBitset.any(); }
+
+        /// Are none of the bits set to true?
+        bool none() const
+        { return mBitset.none(); }
+
+        /// Are all of the bits set to true?
+        bool all() const
+        { return mBitset.all(); }
+
+        /**
+         * Get the value of the bit on given position.
+         * @param pos Position of the bit.
+         * @return Value of the bit.
+         */
+        bool test(std::size_t pos) const
+        { return mBitset.test(pos); }
+
+        /// Binary AND operator.
+        InfoBitset operator&(const InfoBitset &rhs) const
+        { return InfoBitset(mBitset & rhs.mBitset); }
+
+        /// Binary OR operator.
+        InfoBitset operator|(const InfoBitset &rhs) const
+        { return InfoBitset(mBitset | rhs.mBitset); }
+
+        /// Comparison operator.
+        bool operator==(const InfoBitset &rhs) const
+        { return mBitset == rhs.mBitset; }
+
+        /// Print operator.
+        template <u64 M>
+        friend std::ostream &operator<<(std::ostream &out, const InfoBitset<M> &rhs)
+        {
+            out << rhs.mBitset;
+            return out;
+        }
+    private:
+        /// Inner bitset.
+        CBitset mBitset;
+    protected:
+    }; // InfoBitset
+
+    /// Bitset, where each bit represents either a present, or absent Component.
+    using ComponentBitset = InfoBitset<MAX_COMPONENTS>;
+
+    /// Bitset, where each bit represents Entity presence in a group.
+    using GroupBitset = InfoBitset<MAX_GROUPS>;
 } // namespace ent
 
 #endif //ECS_FIT_UTIL_H
