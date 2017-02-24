@@ -6,6 +6,14 @@
 
 #include "App.h"
 
+const GLfloat Triangle::VERTEX_BUFFER_DATA[] =
+    {
+        // x      y     z
+        -1.0f, -1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,
+        0.0f,  1.0f, 0.0f
+    };
+
 App::App()
 {
     glfwSetErrorCallback(App::glfwErrorCallback);
@@ -39,6 +47,10 @@ App::App()
         throw std::runtime_error("glewInit failed!");
     }
 
+    glfwSetInputMode(mWindow, GLFW_STICKY_KEYS, GL_TRUE);
+
+    glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
+
     mRunning = true;
 }
 
@@ -50,19 +62,76 @@ App::~App()
 
 void App::run()
 {
-    mFpsCounter.start();
+    Timer updateTimer;
+    Timer printTimer;
+
+    // In ms.
+    f64 lag{0.0};
+    // Counter for frames rendered.
+    u64 frameCounter{0};
+    // Counter for updates.
+    u64 updateCounter{0};
+
+    GLSLProgram program{
+        {GL_VERTEX_SHADER,
+            "#version 330 core\n"
+            "layout(location = 0) in vec3 vertexPosition_modelspace;\n"
+            "void main()\n"
+            "{\n"
+            "   gl_Position.xyz = vertexPosition_modelspace;\n"
+            "   gl_Position.w = 1.0;\n"
+            "}"
+        },
+        {GL_FRAGMENT_SHADER,
+            "#version 330 core\n"
+            "out vec3 color;\n"
+            "void main()\n"
+            "{\n"
+            "   color = vec3(1, 0, 0);\n"
+            "}"
+        }
+    };
+
+    Triangle triangle;
 
     while (mRunning)
     {
-        glfwSwapBuffers(mWindow);
+        lag += updateTimer.elapsedReset<Timer::microseconds>() / US_IN_MS;
+
+        u64 sincePrint{printTimer.elapsed<Timer::milliseconds>()};
+        if (sincePrint >= MS_PER_INFO)
+        {
+            printTimer.reset();
+
+            std::cout << "FrameTime[ms] : " << static_cast<f64>(sincePrint) / frameCounter
+                      << "\nFrames : " << frameCounter << "; Updates : " << updateCounter << std::endl;
+
+            frameCounter = 0;
+            updateCounter = 0;
+        }
 
         glfwPollEvents();
 
+        while (lag >= MS_PER_UPDATE)
+        {
+            updateCounter++;
+
+            // Update...
+
+            lag -= MS_PER_UPDATE;
+        }
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Render...
+        program.use();
+        triangle.render();
+
+        glfwSwapBuffers(mWindow);
+
+        frameCounter++;
+
         mRunning = (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) != GLFW_PRESS) && !glfwWindowShouldClose(mWindow);
-
-        mFpsCounter.frame();
-
-        glfwSetWindowTitle(mWindow, std::to_string(mFpsCounter.fps()).c_str());
     }
 }
 
@@ -88,4 +157,3 @@ int main(int argc, char* argv[])
     prof::PrintCrawler pc;
     PROF_DUMP(pc);
 }
-
