@@ -90,9 +90,11 @@ namespace ent
     template <typename ComponentT>
     inline ComponentT *ActionCache<UT>::addComponent(EntityId id)
     {
+        ComponentT *res{mCM.template add<ComponentT>(id)};
+
         mChanged.insert(id);
 
-        return mCM.template add<ComponentT>(id);
+        return res;
     }
 
     template <typename UT>

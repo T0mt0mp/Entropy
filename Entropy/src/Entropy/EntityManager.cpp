@@ -9,6 +9,16 @@
 /// Main Entropy namespace
 namespace ent
 {
+    // EntityHolder implementation.
+    EntityHolder::EntityHolder() :
+        mFirstFree{0},
+        mLastFree{0},
+        mNumFree{0}
+    {
+        // Create the 0th record, valid Entity indexes start at 1!.
+        mRecords.emplace_back();
+    }
+
     EntityId EntityHolder::create()
     {
         EIdType index{0};
@@ -72,4 +82,5 @@ namespace ent
         ENT_WARNING("Create sequence (id request) is not implemented yet!");
         return {};
     }
+    // EntityHolder implementation end.
 } // namespace ent

@@ -35,7 +35,7 @@ namespace ent
         /**
          * Default holder constructor.
          */
-        inline EntityHolder();
+        EntityHolder();
 
         /**
          * Create a new Entity and return its ID.
@@ -379,14 +379,6 @@ namespace ent
     };// EntityManager
 
     // EntityHolder implementation.
-    EntityHolder::EntityHolder() :
-        mFirstFree{0},
-        mNumFree{0}
-    {
-        // Create the 0th record, valid Entity indexes start at 1!.
-        mRecords.emplace_back();
-    }
-
     void EntityHolder::addComponent(EntityId id, u64 index)
     { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].components.set(index); }
 

@@ -428,7 +428,7 @@ namespace ent
     template <typename UT>
     template <typename ComponentT,
               typename HolderT>
-    inline ComponentT *ComponentManager<UT>::add(EntityId id)
+    ComponentT *ComponentManager<UT>::add(EntityId id)
     {
         ComponentT *result{getHolder<HolderT>().add(id)};
 

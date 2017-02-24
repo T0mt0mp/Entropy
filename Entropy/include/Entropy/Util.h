@@ -403,7 +403,9 @@ namespace ent
         using CBitset = std::bitset<N>;
 
         /// Default constructor.
-        constexpr InfoBitset() {};
+        constexpr InfoBitset() :
+            InfoBitset(0u)
+        { }
 
         /// Construct from a number.
         constexpr InfoBitset(u64 num) :

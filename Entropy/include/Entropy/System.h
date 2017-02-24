@@ -95,32 +95,7 @@ namespace ent
     {
     public:
         friend class SystemManager<UniverseT>;
-    private:
-        /**
-         * Set Entity Group containing Entities which are
-         * of interest to this System.
-         * @param grp Pointer to the Group.
-         */
-        void setGroup(EntityGroup *grp)
-        { mGroup = grp; }
 
-        /**
-         * Set Universe, for this System.
-         * @param uni Universe ptr.
-         */
-        void setUniverse(UniverseT *uni)
-        {
-            mInitialized = true;
-            mUniverse = uni;
-        }
-
-        /// Flag used for signifying, that this System is ready for use.
-        bool mInitialized;
-        /// Entity group containing Entities, which are of interest to this System.
-        EntityGroup *mGroup;
-        /// Universe this System works for.
-        UniverseT *mUniverse;
-    protected:
         /// Check, if the System is ready for use.
         bool isInitialized() const
         { return mInitialized; }
@@ -154,6 +129,32 @@ namespace ent
         /// Group ID getter.
         u64 groupId() const
         { ENT_ASSERT_FAST(isInitialized()); return mGroup->id(); }
+    private:
+        /**
+         * Set Entity Group containing Entities which are
+         * of interest to this System.
+         * @param grp Pointer to the Group.
+         */
+        void setGroup(EntityGroup *grp)
+        { mGroup = grp; }
+
+        /**
+         * Set Universe, for this System.
+         * @param uni Universe ptr.
+         */
+        void setUniverse(UniverseT *uni)
+        {
+            mInitialized = true;
+            mUniverse = uni;
+        }
+
+        /// Flag used for signifying, that this System is ready for use.
+        bool mInitialized;
+        /// Entity group containing Entities, which are of interest to this System.
+        EntityGroup *mGroup;
+        /// Universe this System works for.
+        UniverseT *mUniverse;
+    protected:
     }; // System
 
     // SystemManager implementation.

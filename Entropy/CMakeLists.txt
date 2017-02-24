@@ -10,11 +10,15 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++1z -pedantic -Wall -Werror")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++1z -pedantic -Wall -Winline -Werror")
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -std=c++1z -pedantic -Wall -Winline -Werror")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g -std=c++1z -pedantic -Wall -Winline -Werror")
 
 set(ENTROPY_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(ENTROPY_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+set(ENTROPY_INCLUDE ${ENTROPY_INCLUDE_DIR} PARENT_SCOPE)
 
 include_directories(${ENTROPY_INCLUDE_DIR})
 

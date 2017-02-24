@@ -118,13 +118,21 @@ namespace ent {
             mUniverse{uni}, mIt{it}
         { }
 
+        typename std::enable_if<true, decltype(std::declval<IteratedT>().size())>::type
+        size() const
+        { return mIt.size(); }
+
+        /// Get begin iterator.
         IteratorT begin()
         { return IteratorT(mUniverse, mIt.begin()); }
+        /// Get begin iterator.
         IteratorT begin() const
         { return IteratorT(mUniverse, mIt.begin()); }
 
+        /// Get end iterator.
         IteratorT end()
         { return IteratorT(mUniverse, mIt.end()); }
+        /// Get end iterator.
         IteratorT end() const
         { return IteratorT(mUniverse, mIt.end()); }
     private:
@@ -176,6 +184,11 @@ namespace ent {
          * @param id ID of the Entity.
          */
         inline void remove(EntityId id);
+
+        /**
+         * Refresh this Group - clear added/removed lists.
+         */
+        inline void refresh();
 
         /**
          * Get foreach iterator object, iterating over Entities.
@@ -414,6 +427,12 @@ namespace ent {
             mRemoved.push_back(id);
         }
     }
+
+    void EntityGroup::refresh()
+    {
+        mAdded.clear();
+        mRemoved.clear();
+    }
     // EntityGroup implementation end.
 
     // GroupManager implementation.
@@ -430,7 +449,10 @@ namespace ent {
     template <typename UT>
     void GroupManager<UT>::refresh()
     {
-        ENT_WARNING("GroupManager::refresh() is not finished yet!");
+        for (auto *grp : mGroupId)
+        {
+            grp->refresh();
+        }
     }
 
     template <typename UT>

@@ -185,16 +185,19 @@ public:
         {
             std::cout << "System IS initialized!" << std::endl;
 
+            std::cout << "Added " << foreachAdded().size() << " Entities." << std::endl;
             for (auto &e : foreachAdded())
             {
                 std::cout << "Added Entity : " << *e.get<Position>() << " " << *e.get<Velocity>() << std::endl;
             }
 
+            std::cout << "Removed " << foreachRemoved().size() << " Entities." << std::endl;
             for (auto &e : foreachRemoved())
             {
                 std::cout << "Removed Entity : " << *e.get<Position>() << " " << *e.get<Velocity>() << std::endl;
             }
 
+            std::cout << "Iterating over " << foreach().size() << " Entities." << std::endl;
             for (auto &e : foreach())
             {
                 std::cout << "Entity : " << *e.get<Position>() << " " << *e.get<Velocity>() << std::endl;
@@ -221,7 +224,6 @@ TU_Begin(EntropyEntity)
 
     TU_Case(ClassIdGenerator0, "Testing the ClassIdGenerator class")
     {
-        PROF_SCOPE("IdGenerator0");
         class GenA : public ent::ClassIdGenerator<GenA> {};
         TC_RequireConstexpr(!GenA::generated<u32>());
         TC_RequireConstexprEqual(GenA::getId<u32>(), 0);
@@ -276,7 +278,6 @@ TU_Begin(EntropyEntity)
 
     TU_Case(Universe0, "Testing the Universe class")
     {
-        PROF_SCOPE("Universe0");
         using Universe = FirstUniverse;
         Universe::UniverseT &u{Universe::instance()};
         TC_Require(u.addSystem<FirstTestSystem>(1)->mNum == 1);
@@ -293,7 +294,6 @@ TU_Begin(EntropyEntity)
 
     TU_Case(ComponentBitset0, "Testing the ComponentBitset class")
     {
-        PROF_SCOPE("ComponentBitset0");
         ent::ComponentBitset cbs;
         TC_Require(!cbs.any());
         TC_Require(cbs.none());
@@ -310,7 +310,6 @@ TU_Begin(EntropyEntity)
 
     TU_Case(ComponentFilter0, "Testing the ComponentFilter class")
     {
-        PROF_SCOPE("ComponentFilter0");
         ent::ComponentFilter filter(0b1010, 0b1100);
         TC_Require(filter.match(0b1011));
         TC_Require(filter.match(0b1010));
@@ -322,7 +321,6 @@ TU_Begin(EntropyEntity)
 
     TU_Case(EntityId0, "Testing the EntityId class")
     {
-        PROF_SCOPE("EntityId0");
         ent::EntityId eid;
         TC_Check(eid.id() == 0);
         TC_Check(eid.index() == 0);
@@ -331,7 +329,6 @@ TU_Begin(EntropyEntity)
 
     TU_Case(EntityId1, "Testing the EntityId class")
     {
-        PROF_SCOPE("EntityId1");
         TC_Require(ent::EID_GEN_BITS == 8 && ent::EID_INDEX_BITS == 24);
         ent::EIdType gen{123};
         ent::EIdType index{123};
@@ -343,7 +340,6 @@ TU_Begin(EntropyEntity)
 
     TU_Case(EntityId2, "Testing the EntityId class")
     {
-        PROF_SCOPE("EntityId2");
         TC_Require(ent::EID_GEN_BITS == 8 && ent::EID_INDEX_BITS == 24);
         ent::EIdType gen{(ent::EIdType(1) << ent::EID_GEN_BITS) - 1};
         ent::EIdType index{(ent::EIdType(1) << ent::EID_INDEX_BITS) - 1};
@@ -355,7 +351,6 @@ TU_Begin(EntropyEntity)
 
     TU_Case(Entity0, "Testing the Entity class")
     {
-        PROF_SCOPE("Entity0");
         using EntityT1 = FirstUniverse::EntityT;
         using EntityT2 = SecondUniverse::EntityT;
         FirstUniverse::UniverseT *un1{reinterpret_cast<FirstUniverse::UniverseT*>(1u)};
@@ -378,7 +373,6 @@ TU_Begin(EntropyEntity)
 
     TU_Case(EntityHolder0, "Testing the EntityHolder class")
     {
-        PROF_SCOPE("EntityHolder0");
         using ent::EntityHolder;
         using ent::EntityId;
         static constexpr u64 CREATE_NUM{100};
@@ -428,7 +422,6 @@ TU_Begin(EntropyEntity)
 
     TU_Case(EntityManager0, "Testing the EntityManager class")
     {
-        PROF_SCOPE("EntityManager0");
         FirstUniverse::UniverseT  &u{FirstUniverse::instance()};
         using Entity = FirstUniverse::EntityT;
 
@@ -459,15 +452,14 @@ TU_Begin(EntropyEntity)
 
     TU_Case(ComponentManager0, "Testing the ComponentHolder class")
     {
-        PROF_SCOPE("ComponentManager0");
         SecondUniverse::UniverseT &u{SecondUniverse::instance()};
         using Entity = SecondUniverse::EntityT;
         TC_RequireEqual(u.registerComponent<TestComponent<0>>(), 0u);
         TC_RequireEqual(u.registerComponent<TestComponent<1>>(), 1u);
         TC_RequireEqual(u.registerComponent<TestComponent<2>>(), 2u);
-        TC_RequireEqual(u.componentMask<TestComponent<0>>(), ent::ComponentBitset().set(0));
-        TC_RequireEqual(u.componentMask<TestComponent<1>>(), ent::ComponentBitset().set(1));
-        TC_RequireEqual(u.componentMask<TestComponent<2>>(), ent::ComponentBitset().set(2));
+        TC_RequireEqual(u.componentMask<TestComponent<0>>(), 1u);
+        TC_RequireEqual(u.componentMask<TestComponent<1>>(), 2u);
+        TC_RequireEqual(u.componentMask<TestComponent<2>>(), 4u);
 
         for (u32 iii = 0; iii < 100; ++iii)
         {
@@ -517,7 +509,6 @@ TU_Begin(EntropyEntity)
 
     TU_Case(SystemManager0, "Testing the SystemManager class")
     {
-        PROF_SCOPE("SystemManager0");
         SecondUniverse::UniverseT &u{SecondUniverse::instance()};
 
         TestSystem *sys1 = u.addSystem<TestSystem>(1u);
@@ -543,16 +534,15 @@ TU_Begin(EntropyEntity)
 
     TU_Case(ComplexTest0, "Testing Universe initialization")
     {
-        PROF_SCOPE("ComplexTest0");
         RealUniverse1::UniverseT &u{RealUniverse1::instance()};
 
         TC_RequireEqual(u.registerComponent<TestComponent<0>>(), 0u);
         TC_RequireEqual(u.registerComponent<TestComponent<1>>(), 1u);
         TC_RequireEqual(u.registerComponent<TestComponent<2>>(), 2u);
 
-        TC_RequireEqual(u.componentMask<TestComponent<0>>(), ent::ComponentBitset().set(0));
-        TC_RequireEqual(u.componentMask<TestComponent<1>>(), ent::ComponentBitset().set(1));
-        TC_RequireEqual(u.componentMask<TestComponent<2>>(), ent::ComponentBitset().set(2));
+        TC_RequireEqual(u.componentMask<TestComponent<0>>(), 1u);
+        TC_RequireEqual(u.componentMask<TestComponent<1>>(), 2u);
+        TC_RequireEqual(u.componentMask<TestComponent<2>>(), 4u);
 
         RealTestSystem *sys1 = u.addSystem<RealTestSystem>(1u);
         RealTestSystem2<0> *sys2 = u.addSystem<RealTestSystem2<0>>(2u);
@@ -569,29 +559,62 @@ TU_Begin(EntropyEntity)
 
     TU_Case(ComplexTest1, "Testing System iteration")
     {
-        PROF_SCOPE("ComplexTest0");
+        static constexpr u64 NUM_ENTITIES{1000u};
+        static constexpr u64 NUM_ITERATIONS{10u};
+        using Universe = RealUniverse2::UniverseT;
+        using Entity = RealUniverse2::EntityT;
 
-        RealUniverse2::UniverseT &u{RealUniverse2::instance()};
+        Universe &u{RealUniverse2::instance()};
 
-        u.registerComponent<Position>();
-        u.registerComponent<Velocity>();
+        TC_RequireEqual(u.registerComponent<Position>(), 0u);
+        TC_RequireEqual(u.registerComponent<Velocity>(), 1u);
 
         MovementSystem *sys{u.addSystem<MovementSystem>()};
-
-        sys->run();
+        TC_Require(sys);
+        TC_Require(sys->isInitialized());
 
         u.init();
 
-        RealUniverse2::EntityT e = u.createEntity();
-        TC_Require(e.id().index());
-        e.add<Position>();
-        e.add<Velocity>();
+        TC_Require(sys->foreach().size() == 0);
 
-        sys->run();
+        for (u64 it = 1; it <= NUM_ITERATIONS; ++it)
+        {
+            for (u64 iii = 0; iii < NUM_ENTITIES; ++iii)
+            {
+                PROF_BLOCK("Creating Entities");
+                Entity e = u.createEntity();
+                PROF_BLOCK_END();
+                TC_Require(e.id().index());
+                PROF_BLOCK("Adding Components");
+                e.add<Position>();
+                e.add<Velocity>();
+                PROF_BLOCK_END();
+            }
 
-        u.refresh();
+            TC_Require(sys->foreach().size() == NUM_ENTITIES * (it - 1u));
 
-        sys->run();
+            PROF_BLOCK("Refresh after adding Entities");
+            u.refresh();
+            PROF_BLOCK_END();
+
+            TC_RequireEqual(sys->foreachAdded().size(), NUM_ENTITIES);
+            TC_RequireEqual(sys->foreachRemoved().size(), 0u);
+            TC_RequireEqual(sys->foreach().size(), NUM_ENTITIES * it);
+
+            PROF_BLOCK("Iteration over Entities");
+            for (auto &e : sys->foreach())
+            {
+                UNUSED(e.get<Position>());
+                UNUSED(e.get<Velocity>());
+            }
+            PROF_BLOCK_END();
+
+            u.refresh();
+
+            TC_RequireEqual(sys->foreachAdded().size(), 0u);
+            TC_RequireEqual(sys->foreachRemoved().size(), 0u);
+            TC_RequireEqual(sys->foreach().size(), NUM_ENTITIES * it);
+        }
     }
 
 TU_End(EntropyEntity)

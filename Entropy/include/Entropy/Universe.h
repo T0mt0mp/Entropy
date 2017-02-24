@@ -382,11 +382,18 @@ namespace ent
     template <typename T>
     void Universe<T>::refresh()
     {
-        // TODO - order?
+        /*
+         * GroupManager:
+         *  Empty added/removed lists.
+         * ActionCache:
+         *  Execute operations.
+         *  Notify Groups with changed Entity IDs.
+         * TODO - Order, refresh?
+         */
+        mGM.refresh();
         mAC.refresh();
         mEM.refresh();
         mCM.refresh();
-        mGM.refresh();
         mSM.refresh();
     }
 

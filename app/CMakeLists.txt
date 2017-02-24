@@ -10,7 +10,9 @@ set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 include_directories(${PROJECT_INCLUDE_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
-include_directories(${ENGINE_INCLUDE_DIR})
+
+include_directories(${ENGINE_INCLUDE})
+include_directories(${ENTROPY_INCLUDE})
 
 set(APP_SOURCES
         ${PROJECT_SOURCE_DIR}/App.cpp)
@@ -18,4 +20,4 @@ set(APP_HEADERS
         ${PROJECT_INCLUDE_DIR}/App.h)
 
 add_executable(${PROJECT_NAME} ${APP_SOURCES} ${APP_HEADERS})
-target_link_libraries(${PROJECT_NAME} ENTROPY)
+target_link_libraries(${PROJECT_NAME} GL GLEW glfw ECS-FIT)
