@@ -14,6 +14,9 @@ const GLfloat Triangle::VERTEX_BUFFER_DATA[] =
         0.0f,  1.0f, 0.0f
     };
 
+Keyboard Keyboard::sEmptyKeyboard;
+Keyboard *Keyboard::sSelected{&Keyboard::sEmptyKeyboard};
+
 App::App()
 {
     glfwSetErrorCallback(App::glfwErrorCallback);
@@ -62,8 +65,19 @@ App::~App()
 
 void App::run()
 {
-    Timer updateTimer;
-    Timer printTimer;
+    Keyboard kb;
+    kb.setDefaultAction([] (GLFWwindow *window, int key, int scancode, int action, int mods) {
+        std::cout << "Received key event from : " << window << " ;\n key= "
+                  << key << "; scancode= " << scancode << "; action= " << action
+                  << "; mods= " << mods << std::endl;
+    });
+    kb.setAction(GLFW_KEY_ESCAPE, 0, GLFW_PRESS, [&] () {
+        mRunning = false;
+    });
+
+    kb.select();
+
+    glfwSetKeyCallback(mWindow, kb.callback());
 
     // In ms.
     f64 lag{0.0};
@@ -87,14 +101,17 @@ void App::run()
             "out vec3 color;\n"
             "void main()\n"
             "{\n"
-            "   color = vec3(1, 0, 0);\n"
+            "   color = vec3(0.0, 0.4, 0.0);\n"
             "}"
         }
     };
 
     Triangle triangle;
 
-    while (mRunning)
+    Timer updateTimer;
+    Timer printTimer;
+
+    while (mRunning && !glfwWindowShouldClose(mWindow))
     {
         lag += updateTimer.elapsedReset<Timer::microseconds>() / US_IN_MS;
 
@@ -130,8 +147,6 @@ void App::run()
         glfwSwapBuffers(mWindow);
 
         frameCounter++;
-
-        mRunning = (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) != GLFW_PRESS) && !glfwWindowShouldClose(mWindow);
     }
 }
 
