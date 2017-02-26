@@ -21,3 +21,13 @@ set(APP_HEADERS
 
 add_executable(${PROJECT_NAME} ${APP_SOURCES} ${APP_HEADERS})
 target_link_libraries(${PROJECT_NAME} GL GLEW glfw ECS-FIT)
+
+add_custom_target(
+        copyShaders
+        ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        #"${PROJECT_SOURCE_DIR}/shaders" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
+        "${PROJECT_SOURCE_DIR}/shaders" "${EXECUTABLE_OUTPUT_PATH}/shaders"
+)
+
+add_dependencies(${PROJECT_NAME} copyShaders)

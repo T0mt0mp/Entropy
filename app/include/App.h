@@ -67,7 +67,7 @@ private:
     /// Time, when the timer started.
     time_point mStart;
 protected:
-};
+}; // class Timer
 
 /// Information about a shader to be loaded.
 class GLSLShaderInfo
@@ -79,12 +79,13 @@ public:
      * @param filename File, where the shader source is located.
      */
     GLSLShaderInfo(GLenum shaderType, const std::string &filename) :
-        mShaderType{shaderType}
+        mShaderType{shaderType},
+        mFilename{filename}
     {
-        std::ifstream file(filename);
+        std::ifstream file(mFilename);
         if (!file.is_open())
         {
-            throw std::runtime_error(std::string("Error, unable to open shader file \"") + filename + "\"");
+            throw std::runtime_error(std::string("Error, unable to open shader file \"") + mFilename + "\"");
         }
 
         // Reserve the string size upfront.
@@ -102,7 +103,7 @@ public:
      * @param src Source of the shader.
      */
     GLSLShaderInfo(GLenum shaderType, const char *src) :
-        mShaderType{shaderType}, mSource{src} { }
+        mShaderType{shaderType}, mFilename{"SourceShader"}, mSource{src} { }
 
     /**
      * Shader type getter.
@@ -117,13 +118,22 @@ public:
      */
     const std::string &source() const
     { return mSource; }
+
+    /**
+     * Filename getter.
+     * @return Returns filename, from which the shader has benn loaded.
+     */
+    const std::string &filename() const
+    { return mFilename; }
 private:
     /// Type of the shader (e.g. GL_VERTEX_SHADER).
     GLenum mShaderType;
+    /// Shader filename, if it exists.
+    std::string mFilename;
     /// Source for the shader.
     std::string mSource;
 protected:
-};
+}; // class GLSLShaderInfo
 
 /// OpenGL shader compilation.
 class GLSLShader
@@ -159,7 +169,7 @@ public:
             std::vector<char> errorMessage(logLength + 1);
             glGetShaderInfoLog(mShaderId, logLength, nullptr, &errorMessage[0]);
             deleteShader();
-            throw std::runtime_error(std::string(&errorMessage[0]));
+            throw std::runtime_error(info.filename() + ": \n" + std::string(&errorMessage[0]));
         }
     }
 
@@ -169,14 +179,14 @@ public:
     /// Move shader.
     GLSLShader(GLSLShader &&rhs) :
         mShaderId{0}
-    { std::swap(mShaderId, rhs.mShaderId); }
+    { swap(rhs); }
 
     /// Copying is not allowed.
     GLSLShader &operator=(const GLSLShader &rhs) = delete;
 
     /// Move shader.
-    GLSLShader &operator=(GLSLShader rhs)
-    { std::swap(mShaderId, rhs.mShaderId); return *this; }
+    GLSLShader &operator=(GLSLShader &&rhs)
+    { swap(rhs); return *this; }
 
     /// Shader ID getter.
     GLuint id() const
@@ -196,15 +206,24 @@ private:
         }
     }
 
+    /// Swap 2 shaders.
+    void swap(GLSLShader &other)
+    { std::swap(mShaderId, other.mShaderId); }
+
     /// ID of the shader.
     GLuint mShaderId;
 protected:
-};
+}; // class GLSLShader
 
 /// OpenGL shader program compilation.
 class GLSLProgram
 {
 public:
+    /// Default constructor.
+    GLSLProgram() :
+        mProgramId{0}
+    { }
+
     /**
      * Create GLSL program, from given list specifying the shaders.
      * @param list List specifying the shaders (e.g. {GL_VERTEX_SHADER, "shader.vert"}).
@@ -263,6 +282,22 @@ public:
     /// Use this program.
     void use()
     { glUseProgram(mProgramId); }
+
+    /// Copying is forbidden.
+    GLSLProgram(const GLSLProgram &rhs) = delete;
+
+    /// Move constructor.
+    GLSLProgram(GLSLProgram &&rhs) :
+        mProgramId{0}
+    { swap(rhs); }
+
+    /// Copying is forbidden.
+    GLSLProgram &operator=(const GLSLProgram &rhs) = delete;
+
+    /// Move-assign operator.
+    GLSLProgram &operator=(GLSLProgram &&rhs)
+    { swap(rhs); return *this; }
+
 private:
     /// Delete the program.
     void deleteProgram()
@@ -274,10 +309,14 @@ private:
         }
     }
 
+    /// Swap 2 GLSL programs.
+    void swap(GLSLProgram &other)
+    { std::swap(mProgramId, other.mProgramId); }
+
     /// ID of the shader program.
     GLuint mProgramId;
 protected:
-};
+}; // class GLSLProgram
 
 /// Renderable triangle.
 class Triangle
@@ -374,7 +413,7 @@ private:
     /// The vertex buffer ID.
     GLuint mVBId;
 protected:
-};
+}; // class Triangle
 
 /// Keyboard handling class.
 class Keyboard
@@ -384,7 +423,7 @@ public:
     using GLFWKeyboardCallbackT = void(*)(GLFWwindow*, int, int, int, int);
     /// Type of the action function, called when corresponding key is pressed.
     using ActionFun = std::function<void()>;
-    /// Type of the default action, arguments - window, key, scancode action, mods.
+    /// Type of the default action, arguments - window, key, scancode, action, mods.
     using DefaultActionFun = std::function<void(GLFWwindow*, int, int, int, int)>;
 
     /// Default constructor.
@@ -427,7 +466,6 @@ public:
      * @param key Key - e.g. GLFW_KEY_UP.
      * @param mods Modifiers - e.g. GLFW_MOD_SHIFT.
      * @param action Action taken with the key - e.g. GLFW_RELEASE.
-     * @param fun Function to call.
      */
     void setAction(int key, int mods, int action)
     { mMapping.erase({key, mods, action}); }
@@ -459,6 +497,13 @@ public:
     {
         return keyboardCallbackDispatch;
     }
+
+    /**
+     * Set this keyboards callback for given window.
+     * @param window Window which should use this keyboard.
+     */
+    void setCallback(GLFWwindow *window)
+    { glfwSetKeyCallback(window, callback()); }
 private:
     /// Helper structure for searching in map.
     struct KeyCombination
@@ -503,7 +548,7 @@ private:
      * @param action GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT.
      * @param mods Key modifiers.
      */
-    void keyboardCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+    void keyboardCallback(GLFWwindow *window, int key, int scancode, int action, int mods) const
     {
         decltype(mMapping.begin()) search{mMapping.find({key, mods, action})};
         if (search != mMapping.end())
@@ -521,20 +566,355 @@ private:
     /// Default action, called when no mapping is found.
     DefaultActionFun mDefaultAction;
     /// Basic empty keyboard.
-    static Keyboard sEmptyKeyboard;
-    /// Slected keyboard object, which will receive the callbacks.
-    static Keyboard *sSelected;
+    static const Keyboard sEmptyKeyboard;
+    /// Selected keyboard object, which will receive the callbacks.
+    static const Keyboard *sSelected;
 protected:
-};
+}; // class Keyboard
 
+/// Mouse handling class.
+class Mouse
+{
+public:
+    /// GLFW mouse button callback function type.
+    using GLFWMouseButtonCallbackT = void(*)(GLFWwindow*, int, int, int);
+    /// Type of the action function, called when corresponding key is pressed.
+    using ActionFun = std::function<void(double, double)>;
+    /// Type of the default action, arguments - window, key, scancode action, mods, xpos and ypos.
+    using DefaultActionFun = std::function<void(GLFWwindow*, int, int, int, double, double)>;
+    /// GLFW scroll callback function type.
+    using GLFWScrollCallbackT = void(*)(GLFWwindow*, double, double);
+    /// Action taken, when scroll occurs.
+    using ScrollActionFun = std::function<void(double, double, double, double)>;
+
+    /// Default constructor.
+    Mouse()
+    { }
+
+    /// If this Mouse is currently selected, change the selected to empty.
+    ~Mouse()
+    {
+        if (this == sSelected)
+        {
+            resetSelection();
+        }
+    }
+
+    /**
+     * Select this Mouse as the active mouse mapping.
+     */
+    void select()
+    { sSelected = this; }
+
+    /**
+     * Reset the selected Mouse to the default empty one.
+     */
+    void resetSelection()
+    { sSelected = &sEmptyMouse; }
+
+    /**
+     * Set action for given key combination.
+     * @param key Key - e.g. GLFW_MOUSE_BUTTON_RIGHT.
+     * @param mods Modifiers - e.g. GLFW_MOD_SHIFT.
+     * @param action Action taken with the key - e.g. GLFW_RELEASE.
+     * @param fun Function to call, function will receive x and y mouse positions.
+     */
+    void setAction(int key, int mods, int action, ActionFun fun)
+    { mMapping[{key, mods, action}] = fun; }
+
+    /**
+     * Reset action for given key combination.
+     * @param key Key - e.g. GLFW_MOUSE_BUTTON_RIGHT.
+     * @param mods Modifiers - e.g. GLFW_MOD_SHIFT.
+     * @param action Action taken with the key - e.g. GLFW_RELEASE.
+     */
+    void setAction(int key, int mods, int action)
+    { mMapping.erase({key, mods, action}); }
+
+    /**
+     * Set the default action, called when no other mapping is found.
+     * Function will be passed following arguments :
+     *  GLFWwindow* window - window, where the event originated.
+     *  int key - Key pressed, e.g. GLFW_KEY_UP.
+     *  int action - Action of the key - e.g. GLFW_RELEASE.
+     *  int mods - Mods - e.g. GLFW_MOD_SHIFT.
+     * @param fun Function to call.
+     */
+    void setDefaultAction(DefaultActionFun fun)
+    { mDefaultAction = fun; }
+
+    /**
+     * Reset the default action.
+     */
+    void resetDefaultAction()
+    { mDefaultAction = nullptr; }
+
+    /**
+     * Set function called, when scrolling occurs
+     * @param fun Function to call, function will receive x and y mouse position and x and y scroll offset.
+     */
+    void setScrollAction(ScrollActionFun fun)
+    { mScrollFun = fun; }
+
+    /**
+     * Reset the scroll action.
+     */
+    void resetScrollAction()
+    { mScrollFun = nullptr; }
+
+    /**
+     * Get callback to this class, compatible with glfwSetMouseButtonCallback.
+     * @return Callback function.
+     */
+    static GLFWMouseButtonCallbackT callback()
+    { return mouseCallbackDispatch; }
+
+    /**
+     * Get scrolling callback, compatible with glfwSetScrollCallback
+     * @return Callback function.
+     */
+    static GLFWScrollCallbackT scrollCallback()
+    { return scrollCallbackDispatch; }
+
+    /**
+     * Set this mouse button callback and scroll callback for given window.
+     * @param window Window which should use this mouse.
+     */
+    static void setCallback(GLFWwindow *window)
+    {
+        glfwSetMouseButtonCallback(window, callback());
+        glfwSetScrollCallback(window, scrollCallback());
+    }
+private:
+    /// Helper structure for searching in map.
+    struct KeyCombination
+    {
+        KeyCombination(int keyV, int modsV, int actionV) :
+            key{keyV}, mods{modsV}, action{actionV} { }
+
+        /// Keycode.
+        int key;
+        /// Modifiers.
+        int mods;
+        /// Action - e.g. GLFW_PRESS.
+        int action;
+
+        /// Comparison operator.
+        bool operator<(const KeyCombination &rhs) const
+        { return (key < rhs.key) || ((key == rhs.key) && (mods < rhs.mods)) || ((key == rhs.key) && (mods == rhs.mods) && (action < rhs.action)); }
+        /// Comparison equal operator.
+        bool operator==(const KeyCombination &rhs) const
+        { return (key == rhs.key) && (mods == rhs.mods) && (action == rhs.action); }
+    };
+
+    /**
+     * Callback method called by GLFW.
+     * Dispatches the call to the selected Mouse object.
+     * @param window Window, where the event originated.
+     * @param key Mouse key.
+     * @param action GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT.
+     * @param mods Key modifiers.
+     */
+    static void mouseCallbackDispatch(GLFWwindow *window, int key, int action, int mods)
+    { sSelected->mouseCallback(window, key, action, mods); }
+
+    /**
+     * Callback method called by GLFW.
+     * @param window Window, where the event originated.
+     * @param xOffset X offset from scrolling.
+     * @param yOffset Y offset from scrolling.
+     */
+    static void scrollCallbackDispatch(GLFWwindow *window, double xOffset, double yOffset)
+    { sSelected->scrollCallback(window, xOffset, yOffset); }
+
+    /**
+     * Callback method called by dispatcher.
+     * @param window Window, where the event originated.
+     * @param key Mouse key.
+     * @param action GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT.
+     * @param mods Key modifiers.
+     */
+    void mouseCallback(GLFWwindow *window, int key, int action, int mods) const
+    {
+        decltype(mMapping.begin()) search{mMapping.find({key, mods, action})};
+
+        double xPos{0};
+        double yPos{0};
+
+        glfwGetCursorPos(window, &xPos, &yPos);
+
+        if (search != mMapping.end())
+        { // We found an action!
+            search->second(xPos, yPos);
+        }
+        else if (mDefaultAction)
+        {
+            mDefaultAction(window, key, action, mods, xPos, yPos);
+        }
+    }
+
+    /**
+     * Called, when scrolling occurs.
+     * @param window Window, where the event originated.
+     * @param xOffset X offset of the scrolling.
+     * @param yOffset Y offset of the scrolling.
+     */
+    void scrollCallback(GLFWwindow *window, double xOffset, double yOffset) const
+    {
+        double xPos{0};
+        double yPos{0};
+
+        glfwGetCursorPos(window, &xPos, &yPos);
+
+        mScrollFun(xOffset, yOffset, xPos, yPos);
+    }
+
+    /// Mapping from keys to actions.
+    std::map<KeyCombination, ActionFun> mMapping;
+    /// Function called, when scrolling occurs.
+    ScrollActionFun mScrollFun;
+    /// Default action, called when no mapping is found.
+    DefaultActionFun mDefaultAction;
+    /// Basic empty mouse.
+    static const Mouse sEmptyMouse;
+    /// Selected mouse object, which will receive the callbacks.
+    static const Mouse *sSelected;
+protected:
+}; // class Mouse
+
+/// Gamepad handling class.
+class Gamepad
+{
+public:
+    /// GLFW keyboard callback function type.
+    using GLFWGamepadCallbackT = void(*)(int, int);
+    /// Type of the action function, called when corresponding key is pressed.
+    using ActionFun = std::function<void(int)>;
+    /// Type of the default action, arguments - gamepad, key, action.
+    using DefaultActionFun = std::function<void(int, int, int)>;
+
+    /// Default constructor.
+    Gamepad()
+    { }
+
+    /// Destructor.
+    ~Gamepad()
+    { }
+
+    /**
+     * Set action for given key combination.
+     * @param key Key - e.g. GLFW_KEY_UP.
+     * @param action Action taken with the key - e.g. GLFW_RELEASE.
+     * @param fun Function to call.
+     */
+    void setAction(int key, int action, ActionFun fun)
+    { mMapping[{key, action}] = fun; }
+
+    /**
+     * Reset action for given key combination.
+     * @param key Key - e.g. GLFW_KEY_UP.
+     * @param action Action taken with the key - e.g. GLFW_RELEASE.
+     */
+    void setAction(int key, int action)
+    { mMapping.erase({key, action}); }
+
+    /**
+     * Set the default action, called when no other mapping is found.
+     * Function will be passed following arguments :
+     *  GLFWwindow* window - window, where the event originated.
+     *  int gamepad - ID of the gamepad.
+     *  int key - Key pressed, e.g. GLFW_KEY_UP.
+     *  int action - Action of the key - e.g. GLFW_RELEASE.
+     * @param fun Function to call.
+     */
+    void setDefaultAction(DefaultActionFun fun)
+    { mDefaultAction = fun; }
+
+    /**
+     * Reset the default action.
+     */
+    void resetDefaultAction()
+    { mDefaultAction = nullptr; }
+
+    /// Get gamepad callback, compatible with glfwSetJoystickCallback.
+    static GLFWGamepadCallbackT callback()
+    { return gamepadCallback; }
+
+    /**
+     * Set gamepad callback for given window.
+     * @param window Window which should use this keyboard.
+     */
+    static void setCallback(GLFWwindow *window)
+    { glfwSetJoystickCallback(callback()); }
+private:
+    /// Helper structure for searching in map.
+    struct KeyCombination
+    {
+        KeyCombination(int keyV, int actionV) :
+            key{keyV}, action{actionV} { }
+
+        /// Keycode.
+        int key;
+        /// Action - e.g. GLFW_PRESS.
+        int action;
+
+        /// Comparison operator.
+        bool operator<(const KeyCombination &rhs) const
+        { return (key < rhs.key) || ((key == rhs.key) && (action < rhs.action)); }
+        /// Comparison equal operator.
+        bool operator==(const KeyCombination &rhs) const
+        { return (key == rhs.key) && (action == rhs.action); }
+    };
+
+    /**
+     * Callback called, when joystick is connected or disconnected.
+     * @param joystick ID of the joystick.
+     * @param event Event - GLFW_CONNECTED or GLFW_DISCONNECTED.
+     */
+    static void gamepadCallback(int joystick, int event)
+    {
+        std::cout << "Joystick : " << joystick << " ";
+        if (event == GLFW_CONNECTED)
+        {
+            std::cout << "has been connected!" << std::endl;
+        }
+        else if (event == GLFW_DISCONNECTED)
+        {
+            std::cout << "has been disconnected!" << std::endl;
+        }
+        else
+        {
+            std::cout << "unknown event!" << std::endl;
+        }
+    }
+
+    /// List of connected gamepads.
+    std::vector<int> mConnected;
+    /// Mapping from keys to actions.
+    std::map<KeyCombination, ActionFun> mMapping;
+    /// Default action, called when no mapping is found.
+    DefaultActionFun mDefaultAction;
+protected:
+}; // class Gamepad
+
+/// Main application class.
 class App
 {
 public:
+    /// Constructor.
     App();
+
+    /// Destructor.
     ~App();
 
+    /// Main application loop.
     void run();
 
+    /**
+     * GLFW callback, called when error occurs.
+     * @param error Error code.
+     * @param desc Error description.
+     */
     static void glfwErrorCallback(int error, const char *desc);
 private:
     /// Milliseconds in one second.
@@ -555,6 +935,9 @@ private:
     /// Once in how many milliseconds should a frame be rendered.
     static constexpr f64 MS_PER_FRAME{MS_IN_S / TARGET_FPS};
 
+    /// Reload shaders and recompile shader program.
+    void reloadShaders();
+
     // GLFW window.
     /// GLFW window instance.
     GLFWwindow *mWindow{nullptr};
@@ -568,7 +951,9 @@ private:
     // Application variable.
     /// Are we running?
     bool mRunning;
+    /// Shader program used for rendering.
+    GLSLProgram mProgram;
 protected:
-};
+}; // class App
 
 #endif //SIMPLE_GAME_APP_H
