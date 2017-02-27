@@ -20,6 +20,10 @@ const Keyboard *Keyboard::sSelected{&Keyboard::sEmptyKeyboard};
 const Mouse Mouse::sEmptyMouse;
 const Mouse *Mouse::sSelected{&Mouse::sEmptyMouse};
 
+std::vector<Gamepad::GamepadData> Gamepad::sConnected;
+const Gamepad::CallbackInformation Gamepad::sDefaultCallbacks;
+const Gamepad::CallbackInformation *Gamepad::sSelectedCallbacks{&Gamepad::sDefaultCallbacks};
+
 App::App()
 {
     glfwSetErrorCallback(App::glfwErrorCallback);
@@ -104,7 +108,40 @@ void App::run()
     mouse.setCallback(mWindow);
 
     Gamepad gamepad;
+    u32 usedJoystick{0};
+
+    gamepad.setDefaultAction([] (u16 gamepadId, u32 key, int action) {
+        std::cout << "Received gamepad event from gamepad : " << gamepadId << ";\n key= "
+                  << key << "; action= " << action << std::endl;
+    });
+    gamepad.setJoystickAction(usedJoystick, [usedJoystick] (u16 gamepadId, double value) {
+        std::cout << "Received gamepad event from gamepad : " << gamepadId << ";\n joystick= "
+                  << usedJoystick << "; value= " << value << std::endl;
+    });
+
+    gamepad.select();
     gamepad.setCallback(mWindow);
+
+    kb.setAction(GLFW_KEY_UP, 0, GLFW_PRESS, [&] () {
+        std::cout << "Moving to the next joystick." << std::endl;
+        gamepad.resetJoystickAction(usedJoystick);
+        gamepad.setJoystickAction(++usedJoystick, [usedJoystick] (u16 gamepadId, double value) {
+            std::cout << "Received gamepad event from gamepad : " << gamepadId << ";\n joystick= "
+                      << usedJoystick << "; value= " << value << std::endl;
+        });
+    });
+
+    kb.setAction(GLFW_KEY_DOWN, 0, GLFW_PRESS, [&] () {
+        if (usedJoystick)
+        {
+            std::cout << "Moving to the previous joystick." << std::endl;
+            gamepad.resetJoystickAction(usedJoystick);
+            gamepad.setJoystickAction(--usedJoystick, [usedJoystick] (u16 gamepadId, double value) {
+                std::cout << "Received gamepad event from gamepad : " << gamepadId << ";\n joystick= "
+                          << usedJoystick << "; value= " << value << std::endl;
+            });
+        }
+    });
 
     // In ms.
     f64 lag{0.0};
@@ -139,6 +176,7 @@ void App::run()
         }
 
         glfwPollEvents();
+        gamepad.pollEvents();
 
         while (lag >= MS_PER_UPDATE)
         {

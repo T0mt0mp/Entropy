@@ -17,6 +17,12 @@ include_directories(${ENTROPY_INCLUDE})
 set(APP_SOURCES
         ${PROJECT_SOURCE_DIR}/App.cpp)
 set(APP_HEADERS
+        ${PROJECT_INCLUDE_DIR}/Types.h
+        ${PROJECT_INCLUDE_DIR}/GLSLProgram.h
+        ${PROJECT_INCLUDE_DIR}/Timer.h
+        ${PROJECT_INCLUDE_DIR}/Keyboard.h
+        ${PROJECT_INCLUDE_DIR}/Mouse.h
+        ${PROJECT_INCLUDE_DIR}/Gamepad.h
         ${PROJECT_INCLUDE_DIR}/App.h)
 
 add_executable(${PROJECT_NAME} ${APP_SOURCES} ${APP_HEADERS})
