@@ -85,4 +85,9 @@
 #   define ENT_WARNING(_)
 #endif
 
+#ifdef NO_ENT_WARNING
+#   undef ENT_WARNING
+#   define ENT_WARNING(_)
+#endif
+
 #endif //ECS_FIT_ASSERT_H

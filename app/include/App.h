@@ -16,6 +16,7 @@
 #include "Gamepad.h"
 
 #include "GLSLProgram.h"
+#include "Camera.h"
 
 #include "Entropy/Entropy.h"
 #include "testing/Testing.h"
@@ -103,12 +104,12 @@ private:
 
     /// Vertex data for triangle.
     static const GLfloat VERTEX_BUFFER_DATA[3 * 3 * sizeof(GLfloat)];
-        /*{
-            // x      y     z
-            -1.0f, -1.0f, 0.0f,
-             1.0f, -1.0f, 0.0f,
-             0.0f,  1.0f, 0.0f
-        };*/
+    /*{
+        // x      y     z
+        -1.0f, -1.0f, 0.0f,
+         1.0f, -1.0f, 0.0f,
+         0.0f,  1.0f, 0.0f
+    };*/
 
     /// The vertex array ID.
     GLuint mVAId;
@@ -116,6 +117,73 @@ private:
     GLuint mVBId;
 protected:
 }; // class Triangle
+
+
+/// Position component.
+struct PositionC
+{
+    glm::vec3 p;
+}; // struct PositionC.
+
+/// Velocity component.
+struct VelocityC
+{
+    glm::vec3 v;
+}; // struct VelocityC.
+
+class MovementS : public Universe::SystemT
+{
+public:
+    using Require = ent::Require<PositionC, VelocityC>;
+
+    /**
+     * Move Entities.
+     * @param deltaT Time passed in seconds.
+     */
+    void run(f32 deltaT)
+    {
+        for (auto &e : foreach())
+        {
+            e.get<PositionC>()->p += deltaT * e.get<VelocityC>()->v;
+            if (e.get<PositionC>()->p.y > 2.0f || e.get<PositionC>()->p.y < -2.0f)
+            {
+                e.get<VelocityC>()->v *= -1.0;
+            }
+        }
+    }
+private:
+protected:
+};
+
+class TriangleRenderS : public Universe::SystemT
+{
+public:
+    using Require = ent::Require<PositionC>;
+
+    /**
+     * Render each Entity with Position component as triangle.
+     * @param c Current camera.
+     * @param t Triangle used in rendering.
+     * @param p Shader program used.
+     */
+    void render(Camera &c, Triangle &t, GLSLProgram &p)
+    {
+        const glm::mat4 &vp{c.viewProjectionMatrix()};
+        GLint mvpHandle{p.getUniformLocation("mvp")};
+        glm::mat4 mvp;
+
+        for (auto &e : foreach())
+        {
+            mvp = vp * glm::translate(glm::mat4(1.0f), e.get<PositionC>()->p);
+
+            glUniformMatrix4fv(mvpHandle, 1, GL_FALSE, &mvp[0][0]);
+
+            t.render();
+        }
+    }
+private:
+protected:
+};
 
 /// Main application class.
 class App

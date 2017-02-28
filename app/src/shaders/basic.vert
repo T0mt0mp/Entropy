@@ -1,10 +1,13 @@
 #version 330 core
 
-layout(location = 0) in vec3 vertexPosition_modelspace;
+/// Vertex position in model space.
+layout(location = 0) in vec3 vertexPosMS;
+
+/// Model-View-Projection matrix.
+uniform mat4 mvp;
 
 void main()
 {
-   gl_Position.xyz = vertexPosition_modelspace;
-   gl_Position.w = 1.0;
+    gl_Position = mvp * vec4(vertexPosMS, 1.0);
 }
 

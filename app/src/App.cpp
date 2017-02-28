@@ -73,6 +73,30 @@ App::~App()
 
 void App::run()
 {
+    Universe u;
+
+    u.registerComponent<PositionC>();
+    u.registerComponent<VelocityC>();
+
+    MovementS *movementSystem{u.addSystem<MovementS>()};
+    TriangleRenderS *triangleRenderSystem{u.addSystem<TriangleRenderS>()};
+
+    u.init();
+
+    Universe::EntityT e{u.createEntity()};
+    e.add<PositionC>()->p = glm::vec3(0.0f, 0.0f, 0.0f);
+    e.add<VelocityC>()->v = glm::vec3(0.0f, 0.5f, 0.0f);
+
+    e = u.createEntity();
+    e.add<PositionC>()->p = glm::vec3(1.0f, 0.0f, 0.0f);
+    e.add<VelocityC>()->v = glm::vec3(0.0f, 0.5f, 0.0f);
+
+    e = u.createEntity();
+    e.add<PositionC>()->p = glm::vec3(-1.0f, 0.0f, 0.0f);
+    e.add<VelocityC>()->v = glm::vec3(0.0f, 0.5f, 0.0f);
+
+    u.refresh();
+
     Keyboard kb;
 
     kb.setDefaultAction([] (GLFWwindow *window, int key, int scancode, int action, int mods) {
@@ -108,7 +132,15 @@ void App::run()
     mouse.setCallback(mWindow);
 
     Gamepad gamepad;
+    gamepad.setJoystickDeadzone(0.0f);
     u32 usedJoystick{0};
+
+    static constexpr double MAX_ANGULAR_SPEED_X{1.5f};
+    double xAngle{0.0f};
+    double xAngleGoal{0.0f};
+    static constexpr double MAX_ANGULAR_SPEED_Z{1.5f};
+    double zAngle{0.0f};
+    double zAngleGoal{0.0f};
 
     gamepad.setDefaultAction([] (u16 gamepadId, u32 key, int action) {
         std::cout << "Received gamepad event from gamepad : " << gamepadId << ";\n key= "
@@ -119,13 +151,30 @@ void App::run()
                   << usedJoystick << "; value= " << value << std::endl;
     });
 
+    gamepad.setJoystickAction(DS4Mapping::Joystick::ROTX_HALF, [&xAngleGoal] (u16 gamepadId, double value) {
+        double newGoal{-value * 90.0f};
+        if (std::abs(newGoal - xAngleGoal) > MAX_ANGULAR_SPEED_X)
+        {
+            xAngleGoal = -value * 90.0f;
+        }
+    });
+
+    gamepad.setJoystickAction(DS4Mapping::Joystick::ROTZ, [&zAngleGoal] (u16 gamepadId, double value) {
+        double newGoal{-value * 90.0f};
+        if (std::abs(newGoal - zAngleGoal) > MAX_ANGULAR_SPEED_Z)
+        {
+            zAngleGoal = -value * 90.0f;
+        }
+    });
+
     gamepad.select();
     gamepad.setCallback(mWindow);
 
     kb.setAction(GLFW_KEY_UP, 0, GLFW_PRESS, [&] () {
         std::cout << "Moving to the next joystick." << std::endl;
         gamepad.resetJoystickAction(usedJoystick);
-        gamepad.setJoystickAction(++usedJoystick, [usedJoystick] (u16 gamepadId, double value) {
+        ++usedJoystick;
+        gamepad.setJoystickAction(usedJoystick, [usedJoystick] (u16 gamepadId, double value) {
             std::cout << "Received gamepad event from gamepad : " << gamepadId << ";\n joystick= "
                       << usedJoystick << "; value= " << value << std::endl;
         });
@@ -136,7 +185,8 @@ void App::run()
         {
             std::cout << "Moving to the previous joystick." << std::endl;
             gamepad.resetJoystickAction(usedJoystick);
-            gamepad.setJoystickAction(--usedJoystick, [usedJoystick] (u16 gamepadId, double value) {
+            --usedJoystick;
+            gamepad.setJoystickAction(usedJoystick, [usedJoystick] (u16 gamepadId, double value) {
                 std::cout << "Received gamepad event from gamepad : " << gamepadId << ";\n joystick= "
                           << usedJoystick << "; value= " << value << std::endl;
             });
@@ -151,6 +201,9 @@ void App::run()
     u64 updateCounter{0};
 
     reloadShaders();
+
+    Camera camera(45.0f, static_cast<float>(mWindowWidth) / mWindowHeight, 0.1f, 100.0f);
+    camera.setPos({0.0f, 0.0f, 3.0f});
 
     Triangle triangle;
 
@@ -183,6 +236,9 @@ void App::run()
             updateCounter++;
 
             // Update...
+            movementSystem->run(static_cast<f32>(MS_PER_UPDATE / MS_IN_S));
+
+            u.refresh();
 
             lag -= MS_PER_UPDATE;
         }
@@ -191,7 +247,37 @@ void App::run()
 
         // Render...
         mProgram.use();
+
+        glm::mat4 model(1.0f);
+
+        if (xAngleGoal > xAngle)
+        {
+            xAngle = std::min(xAngle + std::min(xAngleGoal - xAngle, MAX_ANGULAR_SPEED_X), xAngleGoal);
+        }
+        else
+        {
+            xAngle = std::max(xAngle + std::max(xAngleGoal - xAngle, -MAX_ANGULAR_SPEED_X), xAngleGoal);
+        }
+
+        if (zAngleGoal > zAngle)
+        {
+            zAngle = std::min(zAngle + std::min(zAngleGoal - zAngle, MAX_ANGULAR_SPEED_Z), zAngleGoal);
+        }
+        else
+        {
+            zAngle = std::max(zAngle + std::max(zAngleGoal - zAngle, -MAX_ANGULAR_SPEED_Z), zAngleGoal);
+        }
+
+        camera.setRot({-glm::radians(xAngle), 0.0f, -glm::radians(zAngle)});
+
+        /*
+        glm::mat4 mvp{camera.viewProjectionMatrix() * model};
+        GLint mvpLocation{mProgram.getUniformLocation("mvp")};
+        glUniformMatrix4fv(mvpLocation, 1, GL_FALSE, &mvp[0][0]);
         triangle.render();
+         */
+
+        triangleRenderSystem->render(camera, triangle, mProgram);
 
         glfwSwapBuffers(mWindow);
 

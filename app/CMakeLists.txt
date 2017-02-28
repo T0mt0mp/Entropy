@@ -15,10 +15,13 @@ include_directories(${ENGINE_INCLUDE})
 include_directories(${ENTROPY_INCLUDE})
 
 set(APP_SOURCES
+        ${PROJECT_SOURCE_DIR}/ECS.cpp
         ${PROJECT_SOURCE_DIR}/App.cpp)
 set(APP_HEADERS
         ${PROJECT_INCLUDE_DIR}/Types.h
+        ${PROJECT_INCLUDE_DIR}/ECS.h
         ${PROJECT_INCLUDE_DIR}/GLSLProgram.h
+        ${PROJECT_INCLUDE_DIR}/Camera.h
         ${PROJECT_INCLUDE_DIR}/Timer.h
         ${PROJECT_INCLUDE_DIR}/Keyboard.h
         ${PROJECT_INCLUDE_DIR}/Mouse.h

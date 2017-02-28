@@ -9,6 +9,79 @@
 
 #include "Types.h"
 
+/// IDs of joysticks and button for DualShock4 controller.
+namespace DS4Mapping
+{
+    enum Joystick
+    {
+        // Right analog stick.
+        // Left = -1, Right = +1.
+        RX = 0,
+        // Up = -1, Down = +1.
+        RY = 1,
+
+        // Left analog stick.
+        // Left = -1, Right = +1.
+        LX = 2,
+        // Up = -1, Down = +1.
+        LY = 5,
+
+        // Analog value of triggers. Not pressed = -1, Max pressed = +1.
+        LT_ANALOG = 3,
+        RT_ANALOG = 4,
+
+        // Dpad directional buttons.
+        // Left = -1, Right = +1.
+        DPADX = 6,
+        // Up = -1, Down = +1.
+        DPADY = 7,
+
+        // Shaking the controller, differential values.
+        // UP = +1, DOWN = -1. Rotating around x-axis.
+        SHAKEX = 8,
+        // LEFT = +1, RIGHT = -1. Rotating around y-axis.
+        SHAKEY = 9,
+        // LEFT = +1, RIGHT = -1. Rotating around z-axis.
+        SHAKEZ = 10,
+
+        // Rotating controller, scalar values.
+        // LEFT = +1, RIGHT = -1. Maximal value is for 90 degrees.
+        ROTZ = 11,
+        // FRONT = +1, UPSIDE_DOWN = -1. 90 degrees up or down is == 0.
+        ROTX = 12,
+        // FONT = 0, UP = -1, DOWN = 1.
+        ROTX_HALF = 13,
+
+        UNK1 = 14,
+
+        // Touchpad.
+        // LEFT = -1, RIGHT = +1.
+        LAST_TOUCHX = 15,
+        // UP = -1, DOWN = +1.
+        LAST_TOUCHY = 16,
+
+        UNK2 = 17,
+    };
+
+    enum Button
+    {
+        SQUARE = 0,
+        CROSS = 1,
+        CIRCLE = 2,
+        TRIANGLE = 3,
+        LB = 4,
+        RB = 5,
+        LT = 6,
+        RT = 7,
+        SHARE = 8,
+        OPTIONS = 9,
+        LS = 10,
+        RS = 11,
+        PS = 12,
+        TOUCHPAD = 13,
+    };
+} // namespce DS4Mapping
+
 /// Gamepad handling class.
 class Gamepad
 {
@@ -163,6 +236,38 @@ public:
             }
         }
     }
+
+    /**
+     * Get number of joysticks for given gamepad.
+     * @param gamepadId ID of the gamepad.
+     * @return Number of joysticks.
+     */
+    static u64 getNumberOfJoysticks(u16 gamepadId)
+    {
+        auto findIt{findGamepad(gamepadId)};
+        if (findIt != sConnected.end())
+        {
+            return findIt->numberOfJoysticks();
+        }
+
+        return 0;
+    }
+
+    /**
+     * Get number of buttons for given gamepad.
+     * @param gamepadId ID of the gamepad.
+     * @return Number of buttons.
+     */
+    static u64 getNumberOfButtons(u16 gamepadId)
+    {
+        auto findIt{findGamepad(gamepadId)};
+        if (findIt != sConnected.end())
+        {
+            return findIt->numberOfButtons();
+        }
+
+        return 0;
+    }
 private:
     /// Helper structure for searching in map.
     struct KeyCombination
@@ -260,6 +365,20 @@ private:
             copyJoystickValues(joystickValues);
             copyButtonValues(buttonValues);
         }
+
+        /**
+         * Get the number of joysticks.
+         * @return Number of joysticks.
+         */
+        u64 numberOfJoysticks() const
+        { return mJoystickValues.size(); }
+
+        /**
+         * Get the number of buttons.
+         * @return Number of buttons.
+         */
+        u64 numberOfButtons() const
+        { return mButtonValues.size(); }
 
         /**
          * Is this gamepad still connected?
@@ -383,7 +502,8 @@ private:
             if (findIt == sConnected.end())
             { // Add gamepad to list of connected gamepads.
                 sConnected.emplace_back(gamepad, &sSelectedCallbacks);
-                std::cout << "Gamepad has been added: " << sConnected.size() << " gamepads connected" << std::endl;
+                std::cout << "Gamepad has been added, it has " << getNumberOfJoysticks(gamepad) << " joysticks and "
+                          << getNumberOfButtons(gamepad) << " buttons: " << sConnected.size() << " gamepads connected" << std::endl;
             } else
             {
                 std::cout << "But it was already connected?!?" << std::endl;

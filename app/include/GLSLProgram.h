@@ -215,6 +215,15 @@ public:
         // Auto-delete shaders.
     }
 
+    /**
+     * TODO - optimize multiple calls for same name.
+     * Get location for uniform with given name.
+     * @param name Name of the uniform.
+     * @return Location of the uniform for this program.
+     */
+    GLint getUniformLocation(const char *name) const
+    { return glGetUniformLocation(mProgramId, name); }
+
     /// Destructor DOES delete the program!
     ~GLSLProgram()
     { deleteProgram(); }

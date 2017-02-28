@@ -22,6 +22,12 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 #include "util/Types.h"
+
+#include "ECS.h"
 
 #endif //ECS_FIT_TYPES_H
