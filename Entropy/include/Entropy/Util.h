@@ -522,6 +522,24 @@ namespace ent
 
     /// Bitset, where each bit represents Entity presence in a group.
     using GroupBitset = InfoBitset<MAX_GROUPS>;
+
+    /**
+     * Get the next higher or equal number, which is power of two.
+     * @param value Value.
+     * @return Returns a number >= value, which is power of two.
+     */
+    static constexpr u64 pow2RoundUp(u64 value)
+    {
+        --value;
+        value |= value >> 0b1;
+        value |= value >> 0b10;
+        value |= value >> 0b100;
+        value |= value >> 0b1000;
+        value |= value >> 0b10000;
+        value |= value >> 0b100000;
+
+        return value + 1;
+    }
 } // namespace ent
 
 #endif //ECS_FIT_UTIL_H

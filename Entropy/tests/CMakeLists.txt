@@ -12,4 +12,6 @@ include_directories(${PROJECT_INCLUDE_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${ENGINE_INCLUDE_DIR})
 
+add_subdirectory(Misc)
 add_subdirectory(Entropy)
+add_subdirectory(Performance)

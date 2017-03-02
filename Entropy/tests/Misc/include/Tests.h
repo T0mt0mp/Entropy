@@ -11,14 +11,6 @@
 
 #include "testing/Testing.h"
 
-#define NO_ENT_WARNING
 #include <Entropy/Entropy.h>
-
-class Universe : public ent::Universe<Universe>
-{
-public:
-private:
-protected:
-};
 
 #endif //Tests_H

@@ -269,6 +269,7 @@ void App::run()
         }
 
         camera.setRot({-glm::radians(xAngle), 0.0f, -glm::radians(zAngle)});
+        camera.recalculate();
 
         /*
         glm::mat4 mvp{camera.viewProjectionMatrix() * model};

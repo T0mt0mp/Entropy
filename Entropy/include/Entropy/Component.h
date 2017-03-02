@@ -12,6 +12,7 @@
 #include "Util.h"
 #include "EntityId.h"
 #include "EntityManager.h"
+#include "Memory.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -112,6 +113,62 @@ namespace ent
     private:
         /// Mapping from EntityId to Component.
         std::map<EntityId, CompT> mMap;
+    protected:
+    };
+
+    /**
+     * ComponentHolder with std::map and a List.
+     * @tparam ComponentT Type of the Component contained within.
+     */
+    template <typename ComponentT>
+    class ComponentHolderList final : public BaseComponentHolder<ComponentT>
+    {
+    public:
+        using CompT = ComponentT;
+        using CompRef = CompT&;
+        using CompPtr = CompT*;
+
+        /**
+         * Default constructor.
+         */
+        ComponentHolderList();
+
+        /// Destructor
+        ~ComponentHolderList();
+
+        /**
+         * Add Component for given EntityId, if the Component
+         * already exists, nothing happens.
+         * @param id Id of the Entity.
+         * @return Returns pointer to the Component.
+         */
+        virtual inline CompPtr add(EntityId id) noexcept;
+
+        /**
+         * Get Component belonging to given EntityId.
+         * @param id Id of the Entity.
+         * @return Returns pointer to the Component, or nullptr, if it does not exist.
+         */
+        virtual inline CompPtr get(EntityId id) noexcept;
+
+        /**
+         * Does given Entity have an Component associated with it?
+         * @param id Id of the Entity.
+         * @return Returns true, if there IS an Component associated.
+         */
+        virtual inline bool has(EntityId id) const noexcept;
+
+        /**
+         * Remove Component for given Entity. If the Entity does not have
+         * Component associated with it, nothing happens.
+         * @param id Id of the Entity.
+         */
+        virtual inline void remove(EntityId id) noexcept;
+    private:
+        /// Mapping from EntityId to index in the List.
+        std::map<EntityId, u64> mMap;
+        /// List containing the components.
+        List<ComponentT> mList;
     protected:
     };
 
@@ -554,6 +611,66 @@ namespace ent
         }
     }
     // ComponentHolder implementation end.
+
+    // ComponentHolderList implementation.
+    template <typename CT>
+    ComponentHolderList<CT>::ComponentHolderList()
+    { }
+
+    template <typename CT>
+    ComponentHolderList<CT>::~ComponentHolderList()
+    { }
+
+    template <typename CT>
+    CT* ComponentHolderList<CT>::add(EntityId id) noexcept
+    {
+        decltype(mMap.begin()) findIt{mMap.find(id)};
+        if (findIt != mMap.end())
+        {
+            return &mList[findIt->second];
+        }
+        else
+        {
+            mMap[id] = mList.size();
+            mList.pushBack();
+            return &mList.back();
+        }
+    }
+
+    template <typename CT>
+    CT* ComponentHolderList<CT>::get(EntityId id) noexcept
+    {
+        decltype(mMap.begin()) findIt{mMap.find(id)};
+        if (findIt != mMap.end())
+        {
+            return &mList[findIt->second];
+        }
+
+        return nullptr;
+    }
+
+    template <typename CT>
+    bool ComponentHolderList<CT>::has(EntityId id) const noexcept
+    {
+        decltype(mMap.begin()) findIt{mMap.find(id)};
+        if (findIt != mMap.end())
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    template <typename CT>
+    void ComponentHolderList<CT>::remove(EntityId id) noexcept
+    {
+        decltype(mMap.begin()) findIt{mMap.find(id)};
+        if (findIt != mMap.end())
+        {
+            mMap.erase(findIt);
+        }
+    }
+    // ComponentHolderList implementation end.
 } // namespace ent
 
 #endif //ECS_FIT_COMPONENT_H

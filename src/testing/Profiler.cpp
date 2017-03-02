@@ -40,10 +40,9 @@ namespace prof
         f64 parentPercentage = mParentMegacycles ?
                                (including / mParentMegacycles) * 100.0 :
                                (100.0);
-        printf("%*s%-10.3f %-3.3f%%\t%15.0llu %.3f\t%.3f %3.3f%%\t%s\n",
-               mIndentLevel, "", including,
-               parentPercentage, data.getActualNumSamples(), avg, self,
-               selfPercentage, node->name());
+        printf("%10.3f %9.3f %12.0llu %9.3f %8.3f %7.3f%% %*s%s\n",
+               including, parentPercentage, data.getActualNumSamples(), avg, self,
+               selfPercentage, mIndentLevel, "", node->name());
 
         ForeachPrint printer(mIndentLevel + 1, including);
         node->foreachnn(printer);

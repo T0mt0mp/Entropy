@@ -52,6 +52,17 @@ public:
      */
     const glm::mat4::value_type *viewProjection()
     { return &getVP()[0][0]; }
+
+    /**
+     * Recalculate the ViewProjection matrix.
+     * Must be manually called, if the changes to
+     * other matrices should take effect.
+     */
+    void recalculate()
+    {
+        calculateView();
+        calculateViewProjection();
+    }
 private:
     /**
      * Calculate Rotation matrix using quaternions. Input vector
@@ -62,7 +73,6 @@ private:
     {
         mRotationQuat = glm::quat(rot);
         mRotation = glm::mat4_cast(mRotationQuat);
-        mViewDirty = true;
     }
 
     /**
@@ -72,14 +82,12 @@ private:
     void calculateTranslation(const glm::vec3 &pos)
     {
         mTranslation = glm::translate(glm::mat4(1.0f), -pos);
-        mViewDirty = true;
     }
 
     /// Calculate the View matrix.
     void calculateView()
     {
         mView = mRotation * mTranslation;
-        mViewProjectionDirty = true;
     }
 
     /**
@@ -92,7 +100,6 @@ private:
     void calculatePerspectiveProjection(f32 fov, f32 aspectRatio, f32 near, f32 far)
     {
         mProjection = glm::perspective(fov, aspectRatio, near, far);
-        mViewProjectionDirty = true;
     }
 
     /// Calculate the ViewProjection matrix.
@@ -102,10 +109,6 @@ private:
     /// Get the View matrix, if the dirty flag is set, it will be recalculated first.
     const glm::mat4 &getView()
     {
-        if (mViewDirty)
-        {
-            calculateView();
-        }
         return mView;
     }
 
@@ -126,10 +129,8 @@ private:
         getView();
         getProjection();
 
-        if (mViewProjectionDirty)
-        {
-            calculateViewProjection();
-        }
+        calculateViewProjection();
+
         return mViewProjection;
     }
 
@@ -141,14 +142,10 @@ private:
     glm::mat4 mRotation;
     /// View matrix = mRotation * mTranslation.
     glm::mat4 mView;
-    /// Dirty flag for View matrix.
-    bool mViewDirty;
     /// Projection matrix.
     glm::mat4 mProjection;
     /// ViewProjection matrix = mProjection * mView.
     glm::mat4 mViewProjection;
-    /// Dirty flag for ViewProjection matrix, signalizing recalculation is required.
-    bool mViewProjectionDirty;
 protected:
 }; // class Camera
 

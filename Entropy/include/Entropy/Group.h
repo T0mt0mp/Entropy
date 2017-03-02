@@ -8,6 +8,7 @@
 #define ECS_FIT_GROUP_H
 
 #include "Types.h"
+#include "Memory.h"
 #include "Util.h"
 #include "Component.h"
 #include "Entity.h"
@@ -108,7 +109,8 @@ namespace ent {
     class EntityList
     {
     public:
-        using IteratorT = EntityGroupIterator<UniverseT, decltype(std::begin(std::declval<IteratedT>()))>;
+        //using IteratorT = EntityGroupIterator<UniverseT, decltype(std::begin(std::declval<IteratedT>()))>;
+        using IteratorT = EntityGroupIterator<UniverseT, decltype(std::declval<IteratedT>().begin())>;
 
         /**
          * Create iterable object, iterating over given object.
@@ -153,8 +155,8 @@ namespace ent {
     {
     public:
         using EntityListT = std::set<EntityId>;
-        using AddedListT = std::vector<EntityId>;
-        using RemovedListT = std::vector<EntityId>;
+        using AddedListT = List<EntityId>;
+        using RemovedListT = List<EntityId>;
 
         /**
          * Construct a EntityGroup, specifying which
@@ -225,11 +227,11 @@ namespace ent {
         /// ID of this Group.
         u64 mId;
         /// List of Entities, corresponding with the filter.
-        std::set<EntityId> mEntities;
+        EntityListT mEntities;
         /// List of Entities, which were added since the last refresh.
-        std::vector<EntityId> mAdded;
+        AddedListT mAdded;
         /// List of Entities, which were removed since the last refresh.
-        std::vector<EntityId> mRemoved;
+        RemovedListT mRemoved;
     protected:
     }; // EntityGroup
 
@@ -416,7 +418,7 @@ namespace ent {
     {
         if (mEntities.insert(id).second)
         {
-            mAdded.push_back(id);
+            mAdded.pushBack(id);
         }
     }
 
@@ -424,7 +426,7 @@ namespace ent {
     {
         if (mEntities.erase(id))
         {
-            mRemoved.push_back(id);
+            mRemoved.pushBack(id);
         }
     }
 

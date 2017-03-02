@@ -10,17 +10,17 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++1z -pedantic -Wall -Werror")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++1z -pedantic -Wall -Winline -Werror")
-
-add_subdirectory(external)
-add_subdirectory(Entropy)
-
-# Engine library
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++1z -pedantic -Wall -Werror")
 
 set(ECS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(ECS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 set(ENGINE_INCLUDE ${ECS_INCLUDE_DIR})
+
+add_subdirectory(external)
+add_subdirectory(Entropy)
+
+# Engine library
 
 include_directories(${ECS_INCLUDE_DIR})
 
