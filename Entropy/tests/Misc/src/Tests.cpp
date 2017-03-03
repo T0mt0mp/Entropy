@@ -347,6 +347,43 @@ TU_Begin(EntropyMisc)
         }
     }
 
+    TU_Case(SortedList, "Testing the SortedList class")
+    {
+        static constexpr u64 NUM_ELEMENTS{100000};
+        ent::SortedList<u64> list;
+
+        for (u64 iii = NUM_ELEMENTS; iii > 0; --iii)
+        {
+            list.insert(iii);
+        }
+        for (u64 iii = NUM_ELEMENTS; iii > 0; --iii)
+        {
+            list.insert(iii);
+        }
+        for (u64 iii = 1; iii <= NUM_ELEMENTS; ++iii)
+        {
+            list.insert(iii);
+        }
+
+        TC_RequireEqual(list.size(), NUM_ELEMENTS);
+
+        for (u64 iii = 1; iii <= NUM_ELEMENTS; ++iii)
+        {
+            TC_RequireEqual(list[iii - 1], iii);
+        }
+
+        for (u64 iii = 1; iii <= NUM_ELEMENTS / 2; ++iii)
+        {
+            list.erase(iii);
+        }
+        TC_RequireEqual(list.size(), NUM_ELEMENTS / 2);
+
+        for (u64 iii = 0; iii <= NUM_ELEMENTS / 2 - 1; ++iii)
+        {
+            TC_RequireEqual(list[iii], NUM_ELEMENTS / 2 + iii + 1);
+        }
+    }
+
 TU_End(EntropyMisc)
 
 int main(int argc, char* argv[])

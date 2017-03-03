@@ -140,7 +140,15 @@ namespace ent
          * @param id ID of the Entity.
          * @return Returns reference to the bitset.
          */
-        inline const ComponentBitset &components(EntityId id) const ;
+        inline const ComponentBitset &components(EntityId id) const;
+
+        /**
+         * Get Group bitset for given Entity.
+         * TODO - return const.
+         * @param id ID of the Entity.
+         * @return Returns reference to the bitset.
+         */
+        inline GroupBitset &groups(EntityId id);
     private:
         /// Record about state of a single Entity
         struct EntityRecord
@@ -166,7 +174,7 @@ namespace ent
             };
 
             /// Presence in EntityGroups.
-            //GroupBitset groups;
+            GroupBitset groups;
 
             /// Current generation number.
             EIdType generation;
@@ -347,6 +355,15 @@ namespace ent
          */
         const ComponentBitset &components(EntityId id) const
         { return mEntities.components(id); }
+
+        /**
+         * Get Groups bitset for given Entity.
+         * TODO - return const.
+         * @param id ID of the Entity.
+         * @return Returns reference to the bitset.
+         */
+        GroupBitset &groups(EntityId id)
+        { return mEntities.groups(id); }
     private:
     protected:
         /// Container for the Entities.
@@ -402,6 +419,9 @@ namespace ent
 
     const ComponentBitset &EntityHolder::components(EntityId id) const
     { ENT_ASSERT_SLOW(valid(id)); return mRecords[id.index()].components; }
+
+    GroupBitset &EntityHolder::groups(EntityId id)
+    { ENT_ASSERT_SLOW(valid(id)); return mRecords[id.index()].groups; }
 
     void EntityHolder::pushFreeId(EIdType index)
     {

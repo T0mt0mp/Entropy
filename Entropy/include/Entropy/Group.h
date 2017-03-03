@@ -154,7 +154,7 @@ namespace ent {
     class EntityGroup final : NonCopyable
     {
     public:
-        using EntityListT = std::set<EntityId>;
+        using EntityListT = SortedList<EntityId>;
         using AddedListT = List<EntityId>;
         using RemovedListT = List<EntityId>;
 
@@ -416,24 +416,22 @@ namespace ent {
     // EntityGroup implementation.
     void EntityGroup::add(EntityId id)
     {
-        if (mEntities.insert(id).second)
-        {
-            mAdded.pushBack(id);
-        }
+        mEntities.insert(id);
+        mAdded.pushBack(id);
     }
 
     void EntityGroup::remove(EntityId id)
     {
-        if (mEntities.erase(id))
-        {
-            mRemoved.pushBack(id);
-        }
+        mEntities.erase(id);
+        mRemoved.pushBack(id);
     }
 
     void EntityGroup::refresh()
     {
         mAdded.clear();
+        mAdded.shrinkToFit();
         mRemoved.clear();
+        mAdded.shrinkToFit();
     }
     // EntityGroup implementation end.
 
@@ -484,15 +482,20 @@ namespace ent {
     void GroupManager<UT>::checkEntity(EntityId id)
     {
         const ComponentBitset &components(mEM.components(id));
+        GroupBitset &groups(mEM.groups(id));
 
         for (EntityGroup *grp : mGroupId)
         {
-            if (grp->filter().match(components))
+            bool matches{grp->filter().match(components)};
+            bool groupTest{groups.test(grp->id())};
+            if (!groupTest && matches)
             {
+                groups.set(grp->id());
                 grp->add(id);
             }
-            else
+            else if (groupTest && !matches)
             {
+                groups.reset(grp->id());
                 grp->remove(id);
             }
         }

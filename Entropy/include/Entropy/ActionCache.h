@@ -66,7 +66,8 @@ namespace ent
         SystemManager<UniverseT> &mSM;
 
         /// List of changed Entities since the last refresh.
-        std::set<EntityId> mChanged;
+        //std::set<EntityId> mChanged;
+        SortedList<EntityId> mChanged;
     protected:
     }; // class ActionCache
 
@@ -84,6 +85,8 @@ namespace ent
         {
             mGM.checkEntity(id);
         }
+
+        mChanged.clear();
     }
 
     template <typename UT>

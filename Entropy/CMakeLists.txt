@@ -23,7 +23,10 @@ set(ENTROPY_INCLUDE ${ENTROPY_INCLUDE_DIR} PARENT_SCOPE)
 include_directories(${ENTROPY_INCLUDE_DIR})
 
 set(ENTROPY_HEADERS
+        ${ENTROPY_INCLUDE_DIR}/Entropy/List.h
+        ${ENTROPY_INCLUDE_DIR}/Entropy/SortedList.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Memory.h
+        ${ENTROPY_INCLUDE_DIR}/Entropy/ComponentStorage.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Component.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/ActionCache.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Entity.h
