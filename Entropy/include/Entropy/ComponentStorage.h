@@ -170,6 +170,62 @@ namespace ent
     protected:
     }; // ComponentHolderMapList
 
+    /**
+     * ComponentHolder with a List.
+     * @tparam ComponentT Type of the Component contained within.
+     */
+    template <typename ComponentT>
+    class ComponentHolderList final : public BaseComponentHolder<ComponentT>
+    {
+    public:
+        using CompT = ComponentT;
+        using CompRef = CompT&;
+        using CompPtr = CompT*;
+
+        /**
+         * Default constructor.
+         */
+        ComponentHolderList();
+
+        /// Destructor
+        ~ComponentHolderList();
+
+        /**
+         * Add Component for given EntityId, if the Component
+         * already exists, nothing happens.
+         * @param id Id of the Entity.
+         * @return Returns pointer to the Component.
+         */
+        virtual inline CompPtr add(EntityId id) noexcept;
+
+        /**
+         * Get Component belonging to given EntityId.
+         * @param id Id of the Entity.
+         * @return Returns pointer to the Component, or nullptr, if it does not exist.
+         */
+        virtual inline CompPtr get(EntityId id) noexcept;
+
+        /**
+         * Does given Entity have an Component associated with it?
+         * @param id Id of the Entity.
+         * @return Returns true, if there IS an Component associated.
+         */
+        virtual inline bool has(EntityId id) const noexcept;
+
+        /**
+         * Remove Component for given Entity. If the Entity does not have
+         * Component associated with it, nothing happens.
+         * @param id Id of the Entity.
+         */
+        virtual inline void remove(EntityId id) noexcept;
+    private:
+        /// List containing the components.
+        List<ComponentT> mList;
+        /// Last index used.
+        u64 mMaxUsed;
+    protected:
+    }; // ComponentHolderMapList
+
     // ComponentHolder implementation.
     template <typename ComponentT>
     ComponentHolder<ComponentT>::ComponentHolder()
@@ -279,6 +335,52 @@ namespace ent
         }
     }
     // ComponentHolderMapList implementation end.
+
+    // ComponentHolderList implementation.
+    template <typename CT>
+    ComponentHolderList<CT>::ComponentHolderList() :
+        mMaxUsed{0}
+    { }
+
+    template <typename CT>
+    ComponentHolderList<CT>::~ComponentHolderList()
+    { }
+
+    template <typename CT>
+    CT* ComponentHolderList<CT>::add(EntityId id) noexcept
+    {
+        if (!has(id))
+        {
+            mList.resize(id.index() + 1);
+        }
+
+        return get(id);
+    }
+
+    template <typename CT>
+    CT* ComponentHolderList<CT>::get(EntityId id) noexcept
+    {
+        try
+        {
+            return &mList.at(id.index());
+        } catch(...)
+        {
+            return nullptr;
+        }
+    }
+
+    template <typename CT>
+    bool ComponentHolderList<CT>::has(EntityId id) const noexcept
+    {
+        return id.index() < mList.size();
+    }
+
+    template <typename CT>
+    void ComponentHolderList<CT>::remove(EntityId id) noexcept
+    {
+
+    }
+    // ComponentHolderList implementation end.
 } // namespace ent
 
 #endif //ECS_FIT_COMPONENTSTORAGE_H

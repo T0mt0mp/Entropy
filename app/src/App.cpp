@@ -14,6 +14,115 @@ const GLfloat Triangle::VERTEX_BUFFER_DATA[] =
         0.0f,  1.0f, 0.0f
     };
 
+const GLfloat Cube::VERTEX_BUFFER_DATA[] =
+    {
+        // x      y     z
+        // Left
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, -1.0f,
+
+        // Front
+        -1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+
+        -1.0f, -1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f,
+
+        // Right
+        1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+
+        1.0f, -1.0f, 1.0f,
+        1.0f, 1.0f, -1.0f,
+        1.0f, 1.0f, 1.0f,
+
+        // Back
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+
+        1.0f, -1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+
+        // Up
+        -1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, -1.0f,
+
+        -1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+
+        // Down
+        -1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+    };
+
+const GLfloat Cube::COLOR_BUFFER_DATA[] =
+    {
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+
+        1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+
+        1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        1.0f, 0.0f, 1.0f,
+        1.0f, 0.0f, 1.0f,
+        1.0f, 0.0f, 1.0f,
+
+        1.0f, 0.0f, 1.0f,
+        1.0f, 0.0f, 1.0f,
+        1.0f, 0.0f, 1.0f,
+
+        0.0f, 1.0f, 1.0f,
+        0.0f, 1.0f, 1.0f,
+        0.0f, 1.0f, 1.0f,
+
+        0.0f, 1.0f, 1.0f,
+        0.0f, 1.0f, 1.0f,
+        0.0f, 1.0f, 1.0f,
+    };
+
 const Keyboard Keyboard::sEmptyKeyboard;
 const Keyboard *Keyboard::sSelected{&Keyboard::sEmptyKeyboard};
 
@@ -60,7 +169,13 @@ App::App()
     glfwSetInputMode(mWindow, GLFW_STICKY_KEYS, GL_TRUE);
     glfwSetInputMode(mWindow, GLFW_STICKY_MOUSE_BUTTONS, GL_TRUE);
 
-    glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    glClearColor(0.0f, 0.7f, 0.1f, 0.0f);
 
     mRunning = true;
 }
@@ -73,27 +188,45 @@ App::~App()
 
 void App::run()
 {
+    PROF_BLOCK("Init");
+
     Universe u;
 
     u.registerComponent<PositionC>();
     u.registerComponent<VelocityC>();
+    u.registerComponent<RotSpeedC>();
 
     MovementS *movementSystem{u.addSystem<MovementS>()};
-    TriangleRenderS *triangleRenderSystem{u.addSystem<TriangleRenderS>()};
+    RotationS *rotationSystem{u.addSystem<RotationS>()};
+    RenderS *renderSystem{u.addSystem<RenderS>()};
 
     u.init();
 
-    Universe::EntityT e{u.createEntity()};
-    e.add<PositionC>()->p = glm::vec3(0.0f, 0.0f, 0.0f);
-    e.add<VelocityC>()->v = glm::vec3(0.0f, 0.5f, 0.0f);
+    static constexpr f32 X_SPACE{3.0f};
+    static constexpr u64 X_SIZE{30};
+    static constexpr f32 X_START{-1.0f * ((X_SIZE - 1) * X_SPACE / 2.0f)};
+    static constexpr f32 Y_SPACE{3.0f};
+    static constexpr u64 Y_SIZE{30};
+    static constexpr f32 Y_START{-1.0f * ((Y_SIZE - 1) * Y_SPACE / 2.0f)};
+    static constexpr f32 Z_SPACE{3.0f};
+    static constexpr u64 Z_SIZE{30};
+    static constexpr f32 Z_START{-1.0f * ((Z_SIZE - 1) * Z_SPACE / 2.0f)};
 
-    e = u.createEntity();
-    e.add<PositionC>()->p = glm::vec3(1.0f, 0.0f, 0.0f);
-    e.add<VelocityC>()->v = glm::vec3(0.0f, 0.5f, 0.0f);
-
-    e = u.createEntity();
-    e.add<PositionC>()->p = glm::vec3(-1.0f, 0.0f, 0.0f);
-    e.add<VelocityC>()->v = glm::vec3(0.0f, 0.5f, 0.0f);
+    for (u64 zPos = 0; zPos < Z_SIZE; ++zPos)
+    {
+        for (u64 yPos = 0; yPos < Y_SIZE; ++yPos)
+        {
+            for (u64 xPos = 0; xPos < X_SIZE; ++xPos)
+            {
+                Universe::EntityT e{u.createEntity()};
+                e.add<PositionC>()->p = glm::vec3(X_START + xPos * X_SPACE,
+                                                  Y_START + yPos * Y_SPACE,
+                                                  Z_START + zPos * Z_SPACE);
+                e.get<PositionC>()->r = glm::vec3(0.0f);
+                e.add<RotSpeedC>()->rs = glm::vec3(glm::linearRand(-1.0f, 1.0f));
+            }
+        }
+    }
 
     u.refresh();
 
@@ -206,6 +339,9 @@ void App::run()
     camera.setPos({0.0f, 0.0f, 3.0f});
 
     Triangle triangle;
+    Cube cube;
+
+    PROF_BLOCK_END();
 
     Timer updateTimer;
     Timer printTimer;
@@ -233,54 +369,61 @@ void App::run()
 
         while (lag >= MS_PER_UPDATE)
         {
+            PROF_SCOPE("Update");
             updateCounter++;
 
             // Update...
+            PROF_BLOCK("Movement");
             movementSystem->run(static_cast<f32>(MS_PER_UPDATE / MS_IN_S));
+            PROF_BLOCK_END();
 
+            PROF_BLOCK("Rotation");
+            rotationSystem->run(static_cast<f32>(MS_PER_UPDATE / MS_IN_S));
+            PROF_BLOCK_END();
+
+            PROF_BLOCK("Refresh");
             u.refresh();
+            PROF_BLOCK_END();
+
+            if (xAngleGoal > xAngle)
+            {
+                xAngle = std::min(xAngle + std::min(xAngleGoal - xAngle, MAX_ANGULAR_SPEED_X), xAngleGoal);
+            }
+            else
+            {
+                xAngle = std::max(xAngle + std::max(xAngleGoal - xAngle, -MAX_ANGULAR_SPEED_X), xAngleGoal);
+            }
+
+            if (zAngleGoal > zAngle)
+            {
+                zAngle = std::min(zAngle + std::min(zAngleGoal - zAngle, MAX_ANGULAR_SPEED_Z), zAngleGoal);
+            }
+            else
+            {
+                zAngle = std::max(zAngle + std::max(zAngleGoal - zAngle, -MAX_ANGULAR_SPEED_Z), zAngleGoal);
+            }
+
+            camera.setRot({-glm::radians(xAngle), 0.0f, -glm::radians(zAngle)});
 
             lag -= MS_PER_UPDATE;
         }
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // Render...
-        mProgram.use();
-
-        glm::mat4 model(1.0f);
-
-        if (xAngleGoal > xAngle)
-        {
-            xAngle = std::min(xAngle + std::min(xAngleGoal - xAngle, MAX_ANGULAR_SPEED_X), xAngleGoal);
-        }
-        else
-        {
-            xAngle = std::max(xAngle + std::max(xAngleGoal - xAngle, -MAX_ANGULAR_SPEED_X), xAngleGoal);
-        }
-
-        if (zAngleGoal > zAngle)
-        {
-            zAngle = std::min(zAngle + std::min(zAngleGoal - zAngle, MAX_ANGULAR_SPEED_Z), zAngleGoal);
-        }
-        else
-        {
-            zAngle = std::max(zAngle + std::max(zAngleGoal - zAngle, -MAX_ANGULAR_SPEED_Z), zAngleGoal);
-        }
-
-        camera.setRot({-glm::radians(xAngle), 0.0f, -glm::radians(zAngle)});
         camera.recalculate();
 
-        /*
-        glm::mat4 mvp{camera.viewProjectionMatrix() * model};
-        GLint mvpLocation{mProgram.getUniformLocation("mvp")};
-        glUniformMatrix4fv(mvpLocation, 1, GL_FALSE, &mvp[0][0]);
-        triangle.render();
-         */
+        PROF_BLOCK("glClear");
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        PROF_BLOCK_END();
 
-        triangleRenderSystem->render(camera, triangle, mProgram);
+        // Render...
+        PROF_BLOCK("Render");
+        mProgram.use();
 
+        renderSystem->render(camera, cube, mProgram);
+
+        PROF_BLOCK_END();
+
+        PROF_BLOCK("Swap");
         glfwSwapBuffers(mWindow);
+        PROF_BLOCK_END();
 
         frameCounter++;
     }
@@ -294,28 +437,6 @@ void App::glfwErrorCallback(int error, const char *desc)
 void App::reloadShaders()
 {
     try {
-        /*
-        GLSLProgram newProgram{
-            {GL_VERTEX_SHADER,
-                "#version 330 core\n"
-                "layout(location = 0) in vec3 vertexPosition_modelspace;\n"
-                "void main()\n"
-                "{\n"
-                "   gl_Position.xyz = vertexPosition_modelspace;\n"
-                "   gl_Position.w = 1.0;\n"
-                "}"
-            },
-            {GL_FRAGMENT_SHADER,
-                "#version 330 core\n"
-                "out vec3 color;\n"
-                "void main()\n"
-                "{\n"
-                "   color = vec3(0.0, 0.4, 0.0);\n"
-                "}"
-            }
-        };
-         */
-
         GLSLProgram newProgram{
             {GL_VERTEX_SHADER, std::string("shaders/basic.vert")},
             {GL_FRAGMENT_SHADER, std::string("shaders/basic.frag")}

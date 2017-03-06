@@ -230,6 +230,12 @@ namespace ent
         inline void reserve(size_type newCapacity);
 
         /**
+         * Resize the List to given size.
+         * @param size New size of the List.
+         */
+        inline void resize(size_type size);
+
+        /**
          * Shrink this List to find the number of used elements.
          */
         inline void shrinkToFit();
@@ -696,6 +702,17 @@ namespace ent
         if (capacity() < newCapacity)
         {
             reserveImpl(pow2RoundUp(newCapacity));
+        }
+    }
+
+    template <typename T,
+        typename Allocator>
+    void List<T, Allocator>::resize(size_type size)
+    {
+        if (mInUse < size)
+        {
+            reserve(size);
+            mInUse = size;
         }
     }
 

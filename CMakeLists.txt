@@ -65,7 +65,7 @@ set(ECS_SOURCES
         )
 
 add_library(ECS-FIT ${ECS_SOURCES} ${ECS_HEADERS})
-target_link_libraries(ECS-FIT ENTROPY)
+target_link_libraries(ECS-FIT ENTROPY pthread)
 
 # Testing
 

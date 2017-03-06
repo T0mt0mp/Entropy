@@ -99,7 +99,29 @@ namespace ent
         { return mList[pos]; }
         const_reference operator[](size_type pos) const
         { return mList[pos]; }
+
+        /// Create a new list, with the same data.
+        ListT toList() const
+        { return ListT(mList); }
+        /// Move inner list to a new list, destroys the SortedList contents.
+        ListT toListDestructive()
+        { return ListT(std::move(mList)); }
+
+        /// Copy data from another List and sort it.
+        void fromList(const ListT &list)
+        { mList = list; sort(); }
+        /// Move data from another List and sort it.
+        void fromList(ListT &&list)
+        { mList = std::move(list); sort(); }
+
+        /// Copy data from another List, WITHOUT sorting it!
+        void fromSortedList(const ListT &list)
+        { mList = list; }
+        /// Move data from another List, WITHOUT sorting it!
+        void fromSortedList(ListT &&list)
+        { mList = std::move(list); }
     private:
+        /// Copy data from another SortedList.
         inline void copy(const SortedList &other);
 
         /// Comparator object.

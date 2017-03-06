@@ -125,12 +125,6 @@ private:
      */
     const glm::mat4 &getVP()
     {
-        // Recalculate, if necessary.
-        getView();
-        getProjection();
-
-        calculateViewProjection();
-
         return mViewProjection;
     }
 

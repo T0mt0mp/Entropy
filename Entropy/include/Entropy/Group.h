@@ -53,7 +53,7 @@ namespace ent {
          * @param it Iterator.
          */
         EntityGroupIterator(UniverseT *uni, IterT it) :
-            mIterator{it}, mEntity{uni} { }
+            mIterator{it}, mEntity{uni}, mUniverse{uni} { }
 
         /// Prefix increment.
         EntityGroupIterator &operator++()
@@ -85,6 +85,17 @@ namespace ent {
         /// Access operator.
         PtrT operator->()
         { updateEntity(); return &mEntity; }
+
+        EntityGroupIterator operator+(u64 val)
+        { return EntityGroupIterator(mUniverse, mIterator + val); }
+
+        /**
+         * Subscript operator proxy.
+         * decltype(std::declval<IterT>()[std::declval<IndexT>()])
+         */
+        template <typename IndexT>
+        RefT operator[](IndexT idx)
+        { updateEntity(mIterator[idx]); return mEntity; }
     private:
         /**
          * Update the value of the innter Entity.
@@ -92,10 +103,19 @@ namespace ent {
         void updateEntity()
         { mEntity.setId(*mIterator); }
 
+        /**
+         * Update Entity to given ID.
+         * @param id ID of the Entity.
+         */
+        void updateEntity(EntityId id)
+        { mEntity.setId(id); }
+
         /// Inner iterator.
         IterT mIterator;
         /// Entity object, which will be returned.
         ValueT mEntity;
+        /// Universe pointer;
+        UniverseT *mUniverse;
     protected:
     }; // class EntityGroupIterator
 
