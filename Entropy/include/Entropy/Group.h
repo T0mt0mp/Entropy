@@ -130,7 +130,9 @@ namespace ent {
     {
     public:
         //using IteratorT = EntityGroupIterator<UniverseT, decltype(std::begin(std::declval<IteratedT>()))>;
-        using IteratorT = EntityGroupIterator<UniverseT, decltype(std::declval<IteratedT>().begin())>;
+        //using IteratorT = EntityGroupIterator<UniverseT, decltype(std::declval<IteratedT>().begin())>;
+        using IteratorT = EntityGroupIterator<UniverseT, typename IteratedT::iterator>;
+        using ConstIteratorT = EntityGroupIterator<UniverseT, typename IteratedT::const_iterator>;
 
         /**
          * Create iterable object, iterating over given object.
@@ -148,15 +150,20 @@ namespace ent {
         IteratorT begin()
         { return IteratorT(mUniverse, mIt.begin()); }
         /// Get begin iterator.
-        IteratorT begin() const
+        ConstIteratorT begin() const
         { return IteratorT(mUniverse, mIt.begin()); }
 
         /// Get end iterator.
         IteratorT end()
         { return IteratorT(mUniverse, mIt.end()); }
         /// Get end iterator.
-        IteratorT end() const
+        ConstIteratorT end() const
         { return IteratorT(mUniverse, mIt.end()); }
+
+        template <typename UT, typename IT>
+        friend IteratorT begin(EntityList<UT, IT> &entityList);
+        template <typename UT, typename IT>
+        friend IteratorT end(EntityList<UT, IT> &entityList);
     private:
         /// Universe object.
         UniverseT *mUniverse;

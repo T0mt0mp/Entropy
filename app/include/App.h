@@ -269,6 +269,13 @@ struct PositionC
     glm::vec3 r;
 }; // struct PositionC
 
+struct TransformC
+{
+    using HolderT = ent::ComponentHolderList<PositionC>;
+
+    glm::mat4 modelMatrix;
+};
+
 /// Velocity component.
 struct VelocityC
 {
@@ -327,39 +334,18 @@ private:
 protected:
 };
 
-class RenderS : public Universe::SystemT
+class TransformS : public Universe::SystemT
 {
 public:
-    using Require = ent::Require<PositionC>;
-
-    /**
-     * Render each Entity with Position component as triangle.
-     * @param c Current camera.
-     * @param cube Cube used in rendering.
-     * @param p Shader program used.
-     */
-    void render(Camera &c, Cube &cube, GLSLProgram &p)
+    using Require = ent::Require<PositionC, TransformC>;
+    void run()
     {
-        const GLsizei cubes{static_cast<GLsizei>(foreach().size())};
-        const glm::mat4 &vp{c.viewProjectionMatrix()};
-
-        GLint vpHandle{p.getUniformLocation("vp")};
-        GLint modelHandle{p.getAttribLocation("model")};
-
-        GLuint modelMatrixBuffer;
-        glGenBuffers(1, &modelMatrixBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, modelMatrixBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * cubes, nullptr, GL_STATIC_DRAW);
-        glm::mat4 *modelMatrices{static_cast<glm::mat4*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY))};
-
         PROF_BLOCK("Matrix loop");
-
         if (foreach().size() > PARALLEL_THRESHOLD)
         {
-            u64 index{0};
             for (auto &e : foreach())
             {
-                modelMatrices[index++] = glm::translate(glm::mat4(1.0f), e.get<PositionC>()->p) *
+                e.get<TransformC>()-> = glm::translate(glm::mat4(1.0f), e.get<PositionC>()->p) *
                                          glm::mat4_cast(glm::quat(e.get<PositionC>()->r));
             }
         }
@@ -400,6 +386,38 @@ public:
             }
         }
         PROF_BLOCK_END();
+    }
+private:
+    /// Minimal number of Entities to use parallelism for.
+    static constexpr u64 PARALLEL_THRESHOLD{5000};
+protected:
+};
+
+class RenderS : public Universe::SystemT
+{
+public:
+    using Require = ent::Require<PositionC>;
+
+    /**
+     * Render each Entity with Position component as triangle.
+     * @param c Current camera.
+     * @param cube Cube used in rendering.
+     * @param p Shader program used.
+     */
+    void render(Camera &c, Cube &cube, GLSLProgram &p)
+    {
+        const GLsizei cubes{static_cast<GLsizei>(foreach().size())};
+        const glm::mat4 &vp{c.viewProjectionMatrix()};
+
+        GLint vpHandle{p.getUniformLocation("vp")};
+        GLint modelHandle{p.getAttribLocation("model")};
+
+        GLuint modelMatrixBuffer;
+        glGenBuffers(1, &modelMatrixBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, modelMatrixBuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * cubes, nullptr, GL_STATIC_DRAW);
+        glm::mat4 *modelMatrices{static_cast<glm::mat4*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY))};
+
 
         glUnmapBuffer(GL_ARRAY_BUFFER);
 
@@ -431,10 +449,8 @@ public:
         glDeleteBuffers(1, &modelMatrixBuffer);
     }
 private:
-    /// Minimal number of Entities to use parallelism for.
-    static constexpr u64 PARALLEL_THRESHOLD{5000};
 protected:
-};
+}; // class RenderS
 
 /// Main application class.
 class App

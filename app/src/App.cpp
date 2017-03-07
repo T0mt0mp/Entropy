@@ -63,13 +63,13 @@ const GLfloat Cube::VERTEX_BUFFER_DATA[] =
         -1.0f, 1.0f, -1.0f,
 
         // Down
-        -1.0f, -1.0f, 1.0f,
         1.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, -1.0f,
-
         -1.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,
+
+        1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
     };
 
 const GLfloat Cube::COLOR_BUFFER_DATA[] =
