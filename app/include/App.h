@@ -260,36 +260,6 @@ private:
 protected:
 }; // class Cube
 
-/// Position component.
-struct PositionC
-{
-    using HolderT = ent::ComponentHolderList<PositionC>;
-
-    glm::vec3 p;
-    glm::vec3 r;
-}; // struct PositionC
-
-struct TransformC
-{
-    using HolderT = ent::ComponentHolderList<PositionC>;
-
-    glm::mat4 modelMatrix;
-};
-
-/// Velocity component.
-struct VelocityC
-{
-    glm::vec3 v;
-}; // struct VelocityC
-
-/// Rotation momentum component.
-struct RotSpeedC
-{
-    using HolderT = ent::ComponentHolderList<RotSpeedC>;
-
-    glm::vec3 rs;
-}; // struct RotSpeedC
-
 class MovementS : public Universe::SystemT
 {
 public:
@@ -341,12 +311,12 @@ public:
     void run()
     {
         PROF_BLOCK("Matrix loop");
-        if (foreach().size() > PARALLEL_THRESHOLD)
+        if (foreach().size() < PARALLEL_THRESHOLD)
         {
             for (auto &e : foreach())
             {
-                e.get<TransformC>()-> = glm::translate(glm::mat4(1.0f), e.get<PositionC>()->p) *
-                                         glm::mat4_cast(glm::quat(e.get<PositionC>()->r));
+                e.get<TransformC>()->modelMatrix = glm::translate(glm::mat4(1.0f), e.get<PositionC>()->p) *
+                                                   glm::mat4_cast(glm::quat(e.get<PositionC>()->r));
             }
         }
         else
@@ -365,15 +335,15 @@ public:
 
             for (u64 iii = 0; iii < numThreads; ++iii)
             {
-                threads.emplace_back([iii, perThread, numThreads, &beginIterator, &endIterator, &modelMatrices] () {
+                threads.emplace_back([iii, perThread, numThreads, &beginIterator, &endIterator] () {
                     u64 index{iii * perThread};
                     u64 endIndex{(iii + 1) * perThread};
-                    auto iterator{beginIterator + index};
+                    auto iterator(beginIterator + index);
                     auto end{(iii == (numThreads - 1)) ? (beginIterator + endIndex) : endIterator};
 
                     for (; iterator != end; ++iterator)
                     {
-                        modelMatrices[index] = glm::translate(glm::mat4(1.0f), iterator->get<PositionC>()->p) *
+                        iterator->get<TransformC>()->modelMatrix = glm::translate(glm::mat4(1.0f), iterator->get<PositionC>()->p) *
                                                glm::mat4_cast(glm::quat(iterator->get<PositionC>()->r));
                         index++;
                     }
@@ -396,7 +366,7 @@ protected:
 class RenderS : public Universe::SystemT
 {
 public:
-    using Require = ent::Require<PositionC>;
+    using Require = ent::Require<TransformC>;
 
     /**
      * Render each Entity with Position component as triangle.
@@ -418,6 +388,13 @@ public:
         glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * cubes, nullptr, GL_STATIC_DRAW);
         glm::mat4 *modelMatrices{static_cast<glm::mat4*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY))};
 
+        PROF_BLOCK("Transform copy");
+        u64 index{0};
+        for (auto &e : foreach())
+        {
+            modelMatrices[index++] = e.get<TransformC>()->modelMatrix;
+        }
+        PROF_BLOCK_END();
 
         glUnmapBuffer(GL_ARRAY_BUFFER);
 

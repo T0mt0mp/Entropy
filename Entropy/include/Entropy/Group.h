@@ -379,7 +379,12 @@ namespace ent {
             static auto value(ComponentManager<UniverseT> &compMgr)
             {
                 FilterBuilder<ContainerT<RestTs...>> next;
-                return compMgr.template mask<FirstT>() | next.value(compMgr);
+                decltype(compMgr.template mask<FirstT>()) thisValue{
+                    compMgr.template registered<FirstT>() ?
+                        compMgr.template mask<FirstT>() :
+                        0
+                };
+                return thisValue | next.value(compMgr);
             }
         };
 
@@ -388,7 +393,12 @@ namespace ent {
         struct FilterBuilder<ContainerT<LastT>> {
             static auto value(ComponentManager<UniverseT> &compMgr)
             {
-                return compMgr.template mask<LastT>();
+                decltype(compMgr.template mask<LastT>()) thisValue{
+                    compMgr.template registered<LastT>() ?
+                    compMgr.template mask<LastT>() :
+                    0
+                };
+                return thisValue;
             }
         };
 

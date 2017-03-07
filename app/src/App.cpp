@@ -192,24 +192,23 @@ void App::run()
 
     Universe u;
 
-    u.registerComponent<PositionC>();
-    u.registerComponent<VelocityC>();
-    u.registerComponent<RotSpeedC>();
+    u.initialize();
 
     MovementS *movementSystem{u.addSystem<MovementS>()};
     RotationS *rotationSystem{u.addSystem<RotationS>()};
+    TransformS *transformSystem{u.addSystem<TransformS>()};
     RenderS *renderSystem{u.addSystem<RenderS>()};
 
     u.init();
 
     static constexpr f32 X_SPACE{3.0f};
-    static constexpr u64 X_SIZE{30};
+    static constexpr u64 X_SIZE{10};
     static constexpr f32 X_START{-1.0f * ((X_SIZE - 1) * X_SPACE / 2.0f)};
     static constexpr f32 Y_SPACE{3.0f};
-    static constexpr u64 Y_SIZE{30};
+    static constexpr u64 Y_SIZE{10};
     static constexpr f32 Y_START{-1.0f * ((Y_SIZE - 1) * Y_SPACE / 2.0f)};
     static constexpr f32 Z_SPACE{3.0f};
-    static constexpr u64 Z_SIZE{30};
+    static constexpr u64 Z_SIZE{10};
     static constexpr f32 Z_START{-1.0f * ((Z_SIZE - 1) * Z_SPACE / 2.0f)};
 
     for (u64 zPos = 0; zPos < Z_SIZE; ++zPos)
@@ -224,6 +223,7 @@ void App::run()
                                                   Z_START + zPos * Z_SPACE);
                 e.get<PositionC>()->r = glm::vec3(0.0f);
                 e.add<RotSpeedC>()->rs = glm::vec3(glm::linearRand(-1.0f, 1.0f));
+                e.add<TransformC>();
             }
         }
     }
@@ -261,6 +261,14 @@ void App::run()
         yScroll += yOffset;
     });
 
+    f64 xMousePos{0};
+    f64 yMousePos{0};
+    mouse.setMousePosAction([&] (f64 posX, f64 posY)
+    {
+        xMousePos = posX;
+        yMousePos = posY;
+    });
+
     mouse.select();
     mouse.setCallback(mWindow);
 
@@ -268,11 +276,13 @@ void App::run()
     gamepad.setJoystickDeadzone(0.0f);
     u32 usedJoystick{0};
 
+    CameraInfo cameraInfo;
+
     static constexpr double MAX_ANGULAR_SPEED_X{1.5f};
-    double xAngle{0.0f};
     double xAngleGoal{0.0f};
+    //static constexpr double MAX_ANGULAR_SPEED_Y{1.5f};
+    //double yAngleGoal{0.0f};
     static constexpr double MAX_ANGULAR_SPEED_Z{1.5f};
-    double zAngle{0.0f};
     double zAngleGoal{0.0f};
 
     gamepad.setDefaultAction([] (u16 gamepadId, u32 key, int action) {
@@ -326,6 +336,20 @@ void App::run()
         }
     });
 
+    kb.setAction(GLFW_KEY_SPACE, 0, GLFW_PRESS, [&] () {
+        static bool disabled{false};
+        if (disabled)
+        {
+            disabled = false;
+            glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+        else
+        {
+            disabled = true;
+            glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+    });
+
     // In ms.
     f64 lag{0.0};
     // Counter for frames rendered.
@@ -336,7 +360,6 @@ void App::run()
     reloadShaders();
 
     Camera camera(45.0f, static_cast<float>(mWindowWidth) / mWindowHeight, 0.1f, 100.0f);
-    camera.setPos({0.0f, 0.0f, 3.0f});
 
     Triangle triangle;
     Cube cube;
@@ -367,6 +390,7 @@ void App::run()
         glfwPollEvents();
         gamepad.pollEvents();
 
+        PROF_BLOCK("Update loop");
         while (lag >= MS_PER_UPDATE)
         {
             PROF_SCOPE("Update");
@@ -385,6 +409,7 @@ void App::run()
             u.refresh();
             PROF_BLOCK_END();
 
+            /*
             if (xAngleGoal > xAngle)
             {
                 xAngle = std::min(xAngle + std::min(xAngleGoal - xAngle, MAX_ANGULAR_SPEED_X), xAngleGoal);
@@ -404,10 +429,39 @@ void App::run()
             }
 
             camera.setRot({-glm::radians(xAngle), 0.0f, -glm::radians(zAngle)});
+             */
+
+            cameraInfo.rot.x = yMousePos / 400.0f;
+            cameraInfo.rot.y = xMousePos / 400.0f;
+            cameraInfo.rot.z = 0.0f;
+
+            glm::vec3 spherePoint;
+            spherePoint.x = glm::cos(cameraInfo.rot.x) * glm::sin(cameraInfo.rot.y);
+            spherePoint.y = glm::sin(cameraInfo.rot.x) * glm::cos(cameraInfo.rot.y);
+            spherePoint.z = glm::cos(cameraInfo.rot.y);
+
+            std::cout << "Rot: "
+                      << glm::degrees(cameraInfo.rot.x) << " "
+                      << glm::degrees(cameraInfo.rot.y) << " "
+                      << glm::degrees(cameraInfo.rot.z) << std::endl;
+
+            std::cout << "Dir: "
+                      << (spherePoint.x) << " "
+                      << (spherePoint.y) << " "
+                      << (spherePoint.z) << std::endl;
+
+            camera.setPos(cameraInfo.pos);
+            camera.setRot(cameraInfo.rot);
 
             lag -= MS_PER_UPDATE;
         }
         camera.recalculate();
+
+        PROF_BLOCK("Transform system");
+        transformSystem->run();
+        PROF_BLOCK_END();
+
+        PROF_BLOCK_END();
 
         PROF_BLOCK("glClear");
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

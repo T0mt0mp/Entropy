@@ -179,6 +179,14 @@ namespace ent
          */
         template <typename ComponentT>
         inline const ComponentBitset &componentMask();
+
+        /**
+         * Check, if the given Component type has been registered.
+         * @tparam ComponentT Type of the Component.
+         * @return Returns true, if the Component has been registered.
+         */
+        template <typename ComponentT>
+        inline bool componentRegistered();
     private:
 
         // Entity manager proxy methods.
@@ -421,6 +429,11 @@ namespace ent
     template <typename ComponentT>
     const ComponentBitset &Universe<T>::componentMask()
     { return mCM.template mask<ComponentT>(); }
+
+    template <typename T>
+    template <typename ComponentT>
+    bool Universe<T>::componentRegistered()
+    { return mCM.template registered<ComponentT>(); }
 
     template <typename T>
     auto Universe<T>::createEntity() -> EntityT

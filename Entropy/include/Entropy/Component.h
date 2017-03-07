@@ -153,6 +153,15 @@ namespace ent
          */
         template <typename ComponentT>
         inline const ComponentBitset &mask() const;
+
+        /**
+         * Check, if given Component type is registered in this manager.
+         * @tparam ComponentT Type of the Component.
+         * @return Returns true, if the Component has been registered.
+         */
+        template <typename ComponentT>
+        bool registered() const
+        { return mRegistered<ComponentT>; }
     private:
         /// Component ID generator.
         class ComponentIdGenerator : public StaticClassIdGenerator<ComponentIdGenerator> {};
@@ -202,6 +211,13 @@ namespace ent
          */
         template <typename ComponentT>
         static ComponentBitset mMask;
+
+        /**
+         * Flag for checking, if given Component type is registered.
+         * @tparam ComponentT Type of the Component.
+         */
+        template <typename ComponentT>
+        static bool mRegistered;
     protected:
     }; // ComponentManager
 
@@ -393,8 +409,10 @@ namespace ent
     template <typename ComponentT>
     inline void ComponentManager<UT>::initMask()
     {
-        ENT_ASSERT_FAST(mMask<ComponentT>.none());
+        // Check, that the Component has not been already registered.
+        ENT_ASSERT_FAST(mMask<ComponentT>.none() && mRegistered<ComponentT> == false);
         mMask<ComponentT>.set(id<ComponentT>());
+        mRegistered<ComponentT> = true;
     }
 
     template <typename UT>
@@ -404,6 +422,10 @@ namespace ent
     template <typename UT>
     template <typename Component>
     ComponentBitset ComponentManager<UT>::mMask{0};
+
+    template <typename UT>
+    template <typename Component>
+    bool ComponentManager<UT>::mRegistered{false};
     // ComponentManager implementation end.
 } // namespace ent
 

@@ -40,6 +40,14 @@ public:
     { calculateRotation(rot); }
 
     /**
+     * Set the rotation of the camera, so that it points
+     * in given direction.
+     * @param dir Direction vector.
+     */
+    void setDirection(const glm::vec3 &dir)
+    { calculateRotationDir(dir); }
+
+    /**
      * Get ViewProjection matrix.
      * @return Returns the ViewProjection matrix.
      */
@@ -73,6 +81,15 @@ private:
     {
         mRotationQuat = glm::quat(rot);
         mRotation = glm::mat4_cast(mRotationQuat);
+    }
+
+    /**
+     * Set the rotation of the camera, so that it points
+     * in given direction.
+     * @param dir Direction vector.
+     */
+    void calculateRotationDir(const glm::vec3 &dir)
+    {
     }
 
     /**

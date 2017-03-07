@@ -8,3 +8,10 @@
 
 template class ent::Universe<Universe>;
 
+void Universe::initialize()
+{
+    registerComponent<PositionC>();
+    registerComponent<VelocityC>();
+    registerComponent<RotSpeedC>();
+    registerComponent<TransformC>();
+}

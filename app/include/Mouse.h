@@ -23,6 +23,10 @@ public:
     using GLFWScrollCallbackT = void(*)(GLFWwindow*, double, double);
     /// Action taken, when scroll occurs.
     using ScrollActionFun = std::function<void(double, double, double, double)>;
+    /// GLFW mouse position callback function type.
+    using GLFWMousePosCallbackT = void(*)(GLFWwindow*, double, double);
+    /// Action taken, when mouse position is taken.
+    using MousePosActionFun = std::function<void(double, double)>;
 
     /// Default constructor.
     Mouse()
@@ -100,6 +104,19 @@ public:
     { mScrollFun = nullptr; }
 
     /**
+     * Set function called, when mouse position is received.
+     * @param fun Function to call, x and y coordinates are passed as double values.
+     */
+    void setMousePosAction(MousePosActionFun fun)
+    { mMousePosFun = fun; }
+
+    /**
+     * Reset the mouse position callback.
+     */
+    void resetMousePosAction()
+    { mMousePosFun = nullptr; }
+
+    /**
      * Get callback to this class, compatible with glfwSetMouseButtonCallback.
      * @return Callback function.
      */
@@ -114,6 +131,13 @@ public:
     { return scrollCallbackDispatch; }
 
     /**
+     * Get mouse pos callback, compatible with glfwSetCursorPosCallback.
+     * @return Callback function.
+     */
+    static GLFWScrollCallbackT mousePosCallback()
+    { return mousePosCallbackDispatch; }
+
+    /**
      * Set this mouse button callback and scroll callback for given window.
      * @param window Window which should use this mouse.
      */
@@ -121,6 +145,7 @@ public:
     {
         glfwSetMouseButtonCallback(window, callback());
         glfwSetScrollCallback(window, scrollCallback());
+        glfwSetCursorPosCallback(window, mousePosCallback());
     }
 private:
     /// Helper structure for searching in map.
@@ -165,6 +190,15 @@ private:
     { sSelected->scrollCallback(window, xOffset, yOffset); }
 
     /**
+     * Callback method called by GLFW.
+     * @param window Window, where the event originated.
+     * @param posX X position of mouse cursor.
+     * @param posY Y position of mouse cursor.
+     */
+    static void mousePosCallbackDispatch(GLFWwindow *window, double posX, double posY)
+    { sSelected->mousePosCallback(window, posX, posY); }
+
+    /**
      * Callback method called by dispatcher.
      * @param window Window, where the event originated.
      * @param key Mouse key.
@@ -198,18 +232,37 @@ private:
      */
     void scrollCallback(GLFWwindow *window, double xOffset, double yOffset) const
     {
-        double xPos{0};
-        double yPos{0};
+        if (mScrollFun)
+        {
+            double xPos{0};
+            double yPos{0};
 
-        glfwGetCursorPos(window, &xPos, &yPos);
+            glfwGetCursorPos(window, &xPos, &yPos);
 
-        mScrollFun(xOffset, yOffset, xPos, yPos);
+            mScrollFun(xOffset, yOffset, xPos, yPos);
+        }
+    }
+
+    /**
+     * Called, when position of the cursor is gained.
+     * @param window Window, where the event originated.
+     * @param posX X position of the mouse cursor.
+     * @param posY Y position of the mouse cursor.
+     */
+    void mousePosCallback(GLFWwindow *window, double posX, double posY) const
+    {
+        if (mMousePosFun)
+        {
+            mMousePosFun(posX, posY);
+        }
     }
 
     /// Mapping from keys to actions.
     std::map<KeyCombination, ActionFun> mMapping;
     /// Function called, when scrolling occurs.
     ScrollActionFun mScrollFun;
+    /// Function called, when mouse position is received.
+    MousePosActionFun mMousePosFun;
     /// Default action, called when no mapping is found.
     DefaultActionFun mDefaultAction;
     /// Basic empty mouse.

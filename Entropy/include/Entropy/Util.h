@@ -116,7 +116,7 @@ namespace ent
          * @return Returns reference to the inner object.
          */
         T &operator()()
-        { ENT_ASSERT_FAST(constructed()); return (*mHandler); }
+        { return (*mHandler); }
 
         /**
          * Pointer getter, if the inner object is not
