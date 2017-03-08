@@ -29,14 +29,12 @@ if(NOT EXISTS "${GLFW_DIR}/.git")
 endif()
 
 # Check the GLEW submodule.
-set(GLEW_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glew")
-if(NOT EXISTS "${GLEW_DIR}/.git")
-    message(WARNING "GLEW submodule not initialized, initializing...")
-    execute_process(COMMAND git submodule update --init -- external/glew WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-    execute_process(COMMAND make extensions WORKING_DIRECTORY ${GLEW_DIR})
-endif()
-
-#add_subdirectory(${GLEW_DIR}/build/cmake)
+set(GLEW_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glew_prepared")
+#if(NOT EXISTS "${GLEW_DIR}/.git")
+    #message(WARNING "GLEW submodule not initialized, initializing...")
+    #execute_process(COMMAND git submodule update --init -- external/glew WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    #execute_process(COMMAND make extensions WORKING_DIRECTORY ${GLEW_DIR})
+#endif()
 
 # We don't want any of these.
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -56,7 +54,6 @@ include_directories(
 
 add_library(glew_static STATIC
         ${GLEW_DIR}/src/glew.c
-        ${GLEW_DIR}/include
 )
 add_definitions(
         -DGLEW_STATIC
