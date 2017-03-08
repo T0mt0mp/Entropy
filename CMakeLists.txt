@@ -10,7 +10,18 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++1z -pedantic -Wall -Werror")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++1z -pedantic -Wall -Werror")
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -pedantic -Wall -Werror")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+endif()
+
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
+    set(CMAKE_CXX_FLAGS_DEBUG "")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2")
+endif()
 
 set(ECS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(ECS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)

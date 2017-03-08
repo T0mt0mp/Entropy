@@ -202,13 +202,13 @@ void App::run()
     u.init();
 
     static constexpr f32 X_SPACE{3.0f};
-    static constexpr u64 X_SIZE{10};
+    static constexpr u64 X_SIZE{30};
     static constexpr f32 X_START{-1.0f * ((X_SIZE - 1) * X_SPACE / 2.0f)};
     static constexpr f32 Y_SPACE{3.0f};
-    static constexpr u64 Y_SIZE{10};
+    static constexpr u64 Y_SIZE{30};
     static constexpr f32 Y_START{-1.0f * ((Y_SIZE - 1) * Y_SPACE / 2.0f)};
     static constexpr f32 Z_SPACE{3.0f};
-    static constexpr u64 Z_SIZE{10};
+    static constexpr u64 Z_SIZE{30};
     static constexpr f32 Z_START{-1.0f * ((Z_SIZE - 1) * Z_SPACE / 2.0f)};
 
     for (u64 zPos = 0; zPos < Z_SIZE; ++zPos)
@@ -440,6 +440,7 @@ void App::run()
             spherePoint.y = glm::sin(cameraInfo.rot.x) * glm::cos(cameraInfo.rot.y);
             spherePoint.z = glm::cos(cameraInfo.rot.y);
 
+            /*
             std::cout << "Rot: "
                       << glm::degrees(cameraInfo.rot.x) << " "
                       << glm::degrees(cameraInfo.rot.y) << " "
@@ -449,6 +450,7 @@ void App::run()
                       << (spherePoint.x) << " "
                       << (spherePoint.y) << " "
                       << (spherePoint.z) << std::endl;
+                      */
 
             camera.setPos(cameraInfo.pos);
             camera.setRot(cameraInfo.rot);

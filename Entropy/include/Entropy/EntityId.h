@@ -142,11 +142,7 @@ namespace ent
     { return genPart(mId); }
 
     constexpr EIdType EntityId::rGenToLGen(EIdType rGen)
-    {
-        // Check for generation overflow.
-        ENT_ASSERT_SLOW(rGen <= MAX_GEN);
-        return rGen << EID_INDEX_BITS;
-    }
+    { return rGen << EID_INDEX_BITS; }
 
     constexpr EIdType EntityId::lGenToRGen(EIdType lGen)
     { return lGen >> EID_INDEX_BITS; }
@@ -158,11 +154,7 @@ namespace ent
     { return lGenToRGen(packedId & GEN_MASK); }
 
     constexpr EIdType EntityId::combineGenIndex(EIdType lGen, EIdType index)
-    {
-        // Check for index overflow.
-        ENT_ASSERT_SLOW(index <= MAX_INDEX);
-        return lGen | index;
-    }
+    { return lGen | index; }
     // EntityId implementation end.
 } // namespace ent
 
