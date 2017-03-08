@@ -14,7 +14,6 @@ include_directories(${ENGINE_INCLUDE_DIR})
 
 add_subdirectory(List)
 add_subdirectory(Common)
-add_subdirectory(DataStruct)
 add_subdirectory(BPTree)
 add_subdirectory(BPTreePure)
 add_subdirectory(Profiler)
