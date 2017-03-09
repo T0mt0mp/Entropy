@@ -45,7 +45,7 @@ namespace thr
             mFlag.clear(std::memory_order_release);
         }
     private:
-        std::atomic_flag mFlag{ATOMIC_FLAG_INIT};
+        std::atomic_flag mFlag = ATOMIC_FLAG_INIT;
     protected:
     };
 

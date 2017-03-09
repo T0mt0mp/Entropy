@@ -316,7 +316,7 @@ namespace ent
         static_assert(std::is_constructible<ASystemT, CArgTs...>::value,
                       "Unable to construct System with given constructor parameters!");
 
-        ASystemT *system{mSM.addSystem<ASystemT>(this, std::forward<CArgTs>(args)...)};
+        ASystemT *system{mSM.template addSystem<ASystemT>(this, std::forward<CArgTs>(args)...)};
 
         return system;
     }
@@ -325,7 +325,7 @@ namespace ent
     template <typename ASystemT>
     ASystemT *Universe<T>::getSystem()
     {
-        return mSM.getSystem<ASystemT>();
+        return mSM.template getSystem<ASystemT>();
     }
 
     template <typename T>
@@ -341,7 +341,7 @@ namespace ent
               typename RejectT>
     EntityGroup *Universe<T>::addGetGroup()
     {
-        return mGM.addGetGroup<RequireT, RejectT>();
+        return mGM.template addGetGroup<RequireT, RejectT>();
     }
 
     template <typename T>
@@ -359,7 +359,7 @@ namespace ent
             ENT_WARNING("registerComponent called multiple times!");
         }
 
-        static const u64 cId{mCM.registerComponent<ComponentT>(std::forward<CArgTs>(args)...)};
+        static const u64 cId{mCM.template registerComponent<ComponentT>(std::forward<CArgTs>(args)...)};
 
         registered = true;
 

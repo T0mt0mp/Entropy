@@ -26,7 +26,7 @@
     }
 
 #ifndef NDEBUG
-#   define _ASSERT_BASE(COND_EXP, LINE, FILE, FUNC) \
+#   define U_ASSERT_BASE(COND_EXP, LINE, FILE, FUNC) \
     if ((COND_EXP)) \
     {} \
     else \
@@ -37,18 +37,18 @@
         std::raise(SIGABRT); \
     }
 #else
-#   define _ASSERT_BASE(COND_EXP, LINE, FILE, FUNC)
+#   define U_ASSERT_BASE(COND_EXP, LINE, FILE, FUNC)
 #endif
 
 #ifndef NDEBUG_FAST
-#   define ASSERT_FAST(COND_EXP) _ASSERT_BASE((COND_EXP), \
+#   define ASSERT_FAST(COND_EXP) U_ASSERT_BASE((COND_EXP), \
                                  __LINE__, __FILE__, __func__)
 #else
 #   define ASSERT_FAST(_)
 #endif
 
 #ifndef NDEBUG_SLOW
-#   define ASSERT_SLOW(COND_EXP) _ASSERT_BASE((COND_EXP), \
+#   define ASSERT_SLOW(COND_EXP) U_ASSERT_BASE((COND_EXP), \
                                  __LINE__, __FILE__, __func__)
 #else
 #   define ASSERT_SLOW(_)

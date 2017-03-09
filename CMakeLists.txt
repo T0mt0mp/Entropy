@@ -23,6 +23,12 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "/O2")
 endif()
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -pedantic -Wall -Werror")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+endif()
+
 set(ECS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(ECS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
