@@ -16,6 +16,12 @@
 
 #include "Assert.h"
 
+#ifdef _MSC_VER
+#	define ENT_CONSTEXPR const
+#else
+#	define ENT_CONSTEXPR constexpr
+#endif
+
 /// Main Entropy namespace
 namespace ent
 {

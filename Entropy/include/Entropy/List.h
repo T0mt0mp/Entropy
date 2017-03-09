@@ -534,9 +534,9 @@ namespace ent
     };
 
     // List implementation.
-    template <typename T,
-        typename Allocator>
-    List<T, Allocator>::List(List::size_type count, const Allocator &alloc) :
+    template <typename T, 
+		typename Allocator>
+    List<T, Allocator>::template List(size_type count, const Allocator &alloc) :
         mAllocator{alloc}
     {
         initSize(count);
@@ -544,7 +544,7 @@ namespace ent
 
     template <typename T,
         typename Allocator>
-    List<T, Allocator>::List(List::size_type count, const_reference value, const Allocator &alloc) :
+    List<T, Allocator>::List(size_type count, const_reference value, const Allocator &alloc) :
         mAllocator{alloc}
     {
         initSize(count);
@@ -878,7 +878,7 @@ namespace ent
 
     template <typename T,
         typename Allocator>
-    auto List<T, Allocator>::allocate(List::size_type size) -> pointer
+    auto List<T, Allocator>::allocate(size_type size) -> pointer
     {
         if (size)
         {
@@ -890,21 +890,21 @@ namespace ent
 
     template <typename T,
         typename Allocator>
-    void List<T, Allocator>::deallocate(List::pointer arr, size_type size)
+    void List<T, Allocator>::deallocate(pointer arr, size_type size)
     {
         mAllocator.deallocate(arr, size);
     }
 
     template <typename T,
         typename Allocator>
-    void List<T, Allocator>::copyData(List::pointer from, List::pointer to, List::size_type size) noexcept
+    void List<T, Allocator>::copyData(pointer from, pointer to, size_type size) noexcept
     {
         std::memcpy(to, from, size * sizeof(T));
     }
 
     template <typename T,
         typename Allocator>
-    void List<T, Allocator>::rCopyData(List::pointer from, List::pointer to, List::size_type size) noexcept
+    void List<T, Allocator>::rCopyData(pointer from, pointer to, size_type size) noexcept
     {
         std::memmove(to, from, size * sizeof(T));
     }
@@ -952,7 +952,7 @@ namespace ent
 
     template <typename T,
         typename Allocator>
-    void List<T, Allocator>::eraseImpl(List::iterator pos)
+    void List<T, Allocator>::eraseImpl(iterator pos)
     {
         copyData(pos + 1, pos, useEndPtr() - pos);
         mInUse--;
@@ -960,7 +960,7 @@ namespace ent
 
     template <typename T,
         typename Allocator>
-    void List<T, Allocator>::eraseImpl(List::iterator beg, List::iterator end)
+    void List<T, Allocator>::eraseImpl(iterator beg, iterator end)
     {
         copyData(end, beg, useEndPtr() - end);
         mInUse -= end - beg;

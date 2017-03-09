@@ -232,8 +232,8 @@ TU_Begin(EntropyMisc)
         using Type = ent::EntityId;
         using List = ent::List<Type>;
         using Vector = std::vector<Type>;
-        static constexpr u64 SIZE{1000000};
-        static constexpr ent::EntityId VALUE{0};
+        static ENT_CONSTEXPR u64 SIZE{1000000};
+        static ENT_CONSTEXPR ent::EntityId VALUE{0};
 
         {
             PROF_SCOPE("Construct empty");

@@ -14,6 +14,10 @@
 #include "util/Threading.h"
 #include "testing/HashNode.h"
 
+#ifdef _WIN32
+#	include <intrin.h>
+#endif
+
 // Profiling macros:
 #ifndef NPROFILE
 #   define PROF_CONCAT(FIRST, SECOND) \
