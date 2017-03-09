@@ -536,7 +536,7 @@ namespace ent
     // List implementation.
     template <typename T, 
 		typename Allocator>
-    List<T, Allocator>::template List(size_type count, const Allocator &alloc) :
+    List<T, Allocator>::List(size_type count, const Allocator &alloc) :
         mAllocator{alloc}
     {
         initSize(count);

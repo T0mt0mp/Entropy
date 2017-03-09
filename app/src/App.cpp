@@ -130,7 +130,7 @@ const Mouse Mouse::sEmptyMouse;
 const Mouse *Mouse::sSelected{&Mouse::sEmptyMouse};
 
 std::vector<Gamepad::GamepadData> Gamepad::sConnected;
-const Gamepad::CallbackInformation Gamepad::sDefaultCallbacks;
+const Gamepad::CallbackInformation Gamepad::sDefaultCallbacks{};
 const Gamepad::CallbackInformation *Gamepad::sSelectedCallbacks{&Gamepad::sDefaultCallbacks};
 
 App::App()

@@ -24,39 +24,39 @@ namespace ent
     {
     public:
         /// Starting with generation number 0
-        static ENT_CONSTEXPR EIdType START_GEN{0};
+        static constexpr EIdType START_GEN{0};
 
         /**
          * Create EntityID with given index and generation numbers.
          * @param index Index part of this EID.
          * @param generation Generation part of this EID.
          */
-        EntityId(EIdType index = 0, EIdType generation = START_GEN);
+        constexpr EntityId(EIdType index = 0, EIdType generation = START_GEN);
 
         /**
          * Get the packed ID of this EID.
          * @return Packed ID of this EID.
          */
-        ENT_CONSTEXPR EIdType id() const;
+        constexpr EIdType id() const;
 
         /**
          * Get the index part of this EID
          * @return Index starting at the LSb.
          */
-        ENT_CONSTEXPR EIdType index() const;
+        constexpr EIdType index() const;
 
         /**
          * Get the generation part of this EID.
          * @return Generation starting at the LSb.
          */
-        ENT_CONSTEXPR EIdType generation() const;
+        constexpr EIdType generation() const;
 
         /// Equal operator.
-        ENT_CONSTEXPR bool operator==(const EntityId &rhs) const
+        constexpr bool operator==(const EntityId &rhs) const
         { return mId == rhs.mId; }
 
         /// Compare operator.
-        ENT_CONSTEXPR bool operator<(const EntityId &rhs) const
+        constexpr bool operator<(const EntityId &rhs) const
         { return index() < rhs.index(); }
 
         /// Print operator.
@@ -68,7 +68,7 @@ namespace ent
          * @param rGen Generation aligned to the right.
          * @return Generation aligned to the left.
          */
-        static ENT_CONSTEXPR EIdType rGenToLGen(EIdType rGen);
+        static constexpr EIdType rGenToLGen(EIdType rGen);
 
         /**
          * Take generation number aligned to the left (most significant bits) and
@@ -76,21 +76,21 @@ namespace ent
          * @param lGen Generation aligned to the left.
          * @return Generation aligned to the right.
          */
-        static ENT_CONSTEXPR EIdType lGenToRGen(EIdType lGen);
+        static constexpr EIdType lGenToRGen(EIdType lGen);
 
         /**
          * Take packed ID and extract the index part of it.
          * @param packedId Packed entity identifier containing generation and index.
          * @return Index part of the identifier aligned to the right.
          */
-        static ENT_CONSTEXPR EIdType indexPart(EIdType packedId);
+        static constexpr EIdType indexPart(EIdType packedId);
 
         /**
          * Take packed ID and extract the generation part of it
          * @param packedId Packed entity identifier containing generation and index.
          * @return Generation part of the identifier alighed to the right.
          */
-        static ENT_CONSTEXPR EIdType genPart(EIdType packedId);
+        static constexpr EIdType genPart(EIdType packedId);
 
         /**
          * Take generation aligned to the left and index aligned to the right and
@@ -99,7 +99,7 @@ namespace ent
          * @param index Index number aligned to the right
          * @return Packed identifier combining the 2 parts.
          */
-        static ENT_CONSTEXPR EIdType combineGenIndex(EIdType lGen, EIdType index);
+        static constexpr EIdType combineGenIndex(EIdType lGen, EIdType index);
 
         /**
          * Packed Entity identifier:
@@ -109,51 +109,51 @@ namespace ent
         EIdType mId;
 
         /// Zero packed identifier.
-        static ENT_CONSTEXPR EIdType ZERO{0};
+        static constexpr EIdType ZERO{0};
 
         /// Mask for getting generation bits from the packed identifier.
-        static ENT_CONSTEXPR EIdType GEN_MASK{(~ZERO) << EID_INDEX_BITS};
+        static constexpr EIdType GEN_MASK{(~ZERO) << EID_INDEX_BITS};
         /// Mask for getting index bits from the packed identifier.
-        static ENT_CONSTEXPR EIdType INDEX_MASK{~GEN_MASK};
+        static constexpr EIdType INDEX_MASK{~GEN_MASK};
     protected:
     public:
         /// Maximum value for generation.
-        static ENT_CONSTEXPR EIdType MAX_GEN{((~ZERO) >> EID_INDEX_BITS)};
+        static constexpr EIdType MAX_GEN{((~ZERO) >> EID_INDEX_BITS)};
         /// Maximum value for index.
-        static ENT_CONSTEXPR EIdType MAX_INDEX{INDEX_MASK};
+        static constexpr EIdType MAX_INDEX{INDEX_MASK};
         /// Maximum number of generations per index.
-        static ENT_CONSTEXPR EIdType MAX_GENS{MAX_GEN + 1};
+        static constexpr EIdType MAX_GENS{MAX_GEN + 1};
         /// Maximum number of entity indexes.
-        static ENT_CONSTEXPR EIdType MAX_ENTITIES{INDEX_MASK + 1};
+        static constexpr EIdType MAX_ENTITIES{INDEX_MASK + 1};
     }; // EntityId
 
     // EntityId implementation.
-    EntityId::EntityId(EIdType index, EIdType generation) :
+    constexpr EntityId::EntityId(EIdType index, EIdType generation) :
         mId{combineGenIndex(rGenToLGen(generation), index)}
     { }
 
-    ENT_CONSTEXPR EIdType EntityId::id() const
+    constexpr EIdType EntityId::id() const
     { return mId; }
 
-    ENT_CONSTEXPR EIdType EntityId::index() const
+    constexpr EIdType EntityId::index() const
     { return indexPart(mId); }
 
-    ENT_CONSTEXPR EIdType EntityId::generation() const
+    constexpr EIdType EntityId::generation() const
     { return genPart(mId); }
 
-    ENT_CONSTEXPR EIdType EntityId::rGenToLGen(EIdType rGen)
+    constexpr EIdType EntityId::rGenToLGen(EIdType rGen)
     { return rGen << EID_INDEX_BITS; }
 
-    ENT_CONSTEXPR EIdType EntityId::lGenToRGen(EIdType lGen)
+    constexpr EIdType EntityId::lGenToRGen(EIdType lGen)
     { return lGen >> EID_INDEX_BITS; }
 
-    ENT_CONSTEXPR EIdType EntityId::indexPart(EIdType packedId)
+    constexpr EIdType EntityId::indexPart(EIdType packedId)
     { return packedId & INDEX_MASK; }
 
-    ENT_CONSTEXPR EIdType EntityId::genPart(EIdType packedId)
+    constexpr EIdType EntityId::genPart(EIdType packedId)
     { return lGenToRGen(packedId & GEN_MASK); }
 
-    ENT_CONSTEXPR EIdType EntityId::combineGenIndex(EIdType lGen, EIdType index)
+    constexpr EIdType EntityId::combineGenIndex(EIdType lGen, EIdType index)
     { return lGen | index; }
     // EntityId implementation end.
 } // namespace ent
