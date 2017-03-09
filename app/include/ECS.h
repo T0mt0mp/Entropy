@@ -50,7 +50,6 @@ struct RotSpeedC
     glm::vec3 rs;
 }; // struct RotSpeedC
 
-
 class Universe : public ent::Universe<Universe>
 {
 public:
@@ -58,6 +57,7 @@ public:
 private:
 protected:
 };
-extern template class ent::Universe<Universe>;
+
+//extern template class ent::Universe<Universe>;
 
 #endif //SIMPLE_GAME_ECS_H

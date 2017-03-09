@@ -483,12 +483,21 @@ namespace prof
     class ThreadStatus
     {
     public:
+		/*
+		ThreadStatus()
+		{
+			std::printf("ThreadStatus : %p\n", this);
+		}
+		*/
         /// Ptr to the current node in the call stack.
-        CallNode *mCurNode{nullptr};
+        //CallNode *mCurNode{nullptr};
+        CallNode *mCurNode;
         /// Ptr to the root node of the call stack.
-        CallNode *mRoot{nullptr};
+        //CallNode *mRoot{nullptr};
+        CallNode *mRoot;
         /// Ptr to the current thread node.
-        ThreadNode *mThreadNode{nullptr};
+        //ThreadNode *mThreadNode{nullptr};
+        ThreadNode *mThreadNode;
     private:
     protected:
     };
@@ -611,6 +620,9 @@ namespace prof
         u64 mNumThreadExit{0};
         /// Overhead per enter/exit scope.
         f64 mScopeOverhead{0.0};
+
+		/// Used for checking, that only one construction occurred.
+		static u64 sConstructions;
     };
 
     /**

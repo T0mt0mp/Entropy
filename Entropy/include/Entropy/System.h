@@ -75,8 +75,16 @@ namespace ent
          * Container for the System.
          * @tparam SystemT Type of the System.
          */
+		/*
         template <typename SystemT>
         static ConstructionHandler<SystemT> mSystem;
+		*/
+        template <typename SystemT>
+		static ConstructionHandler<SystemT> &systemGetter()
+		{
+			static ConstructionHandler<SystemT> sys;
+			return sys;
+		}
 
         /// Group manager from the same Universe.
         GroupManager<UniverseT> &mGM;
@@ -158,9 +166,11 @@ namespace ent
     }; // System
 
     // SystemManager implementation.
+	/*
     template <typename UT>
     template <typename SystemT>
     ConstructionHandler<SystemT> SystemManager<UT>::mSystem;
+	*/
 
     template <typename UT>
     SystemManager<UT>::SystemManager(GroupManager<UT> &groupMgr) :
@@ -182,15 +192,24 @@ namespace ent
                       "System has to inherit from ent::System !");
         static_assert(sizeof(SystemT(cArgs...)), "System has to be instantiable!");
 
-        mSystem<SystemT>.construct(std::forward<CArgTs>(cArgs)...);
+        //mSystem<SystemT>.construct(std::forward<CArgTs>(cArgs)...);
+        systemGetter<SystemT>().construct(std::forward<CArgTs>(cArgs)...);
         using Extract = RequireRejectExtractor<SystemT>;
+		/*
         mSystem<SystemT>().setGroup(
             mGM.template addGetGroup<
                 typename Extract::RequireT,
                 typename Extract::RejectT
             >());
+		*/
+        systemGetter<SystemT>()().setGroup(
+            mGM.template addGetGroup<
+                typename Extract::RequireT,
+                typename Extract::RejectT
+            >());
 
-        SystemT *sys{mSystem<SystemT>.ptr()};
+        //SystemT *sys{mSystem<SystemT>.ptr()};
+        SystemT *sys{systemGetter<SystemT>().ptr()};
 
         sys->setUniverse(uni);
         return sys;

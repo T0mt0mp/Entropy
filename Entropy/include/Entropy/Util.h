@@ -179,7 +179,7 @@ namespace ent
 
     // Start the IDs at 0.
     template <typename T>
-    u64 StaticClassIdGenerator<T>::mCounter{0};
+    u64 StaticClassIdGenerator<T>::mCounter = 0;
 
 #ifdef NOT_USED
     /**
@@ -425,13 +425,13 @@ namespace ent
             mBitset(std::move(rhs)) { }
 
         // Copy-assignment operators.
-        constexpr InfoBitset &operator=(const InfoBitset &rhs)
+        InfoBitset &operator=(const InfoBitset &rhs)
         { mBitset = rhs.mBitset; return *this; }
-        constexpr InfoBitset &operator=(InfoBitset &&rhs)
+        InfoBitset &operator=(InfoBitset &&rhs)
         { mBitset = std::move(rhs.mBitset); return *this; }
-        constexpr InfoBitset &operator=(const CBitset &rhs)
+        InfoBitset &operator=(const CBitset &rhs)
         { mBitset = rhs; return *this; }
-        constexpr InfoBitset &operator=(CBitset &&rhs)
+        InfoBitset &operator=(CBitset &&rhs)
         { mBitset = std::move(rhs); return *this; }
 
         InfoBitset &operator=(u64 val)

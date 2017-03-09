@@ -56,7 +56,7 @@ namespace ent
         { return mId == rhs.mId; }
 
         /// Compare operator.
-        constexpr bool operator<(const EntityId &rhs) const
+        ENT_CONSTEXPR bool operator<(const EntityId &rhs) const
         { return index() < rhs.index(); }
 
         /// Print operator.
@@ -129,17 +129,20 @@ namespace ent
 
     // EntityId implementation.
     constexpr EntityId::EntityId(EIdType index, EIdType generation) :
-        mId{combineGenIndex(rGenToLGen(generation), index)}
+        //mId{combineGenIndex(rGenToLGen(generation), index)}
+        mId{generation << EID_INDEX_BITS | index}
     { }
 
     constexpr EIdType EntityId::id() const
     { return mId; }
 
     constexpr EIdType EntityId::index() const
-    { return indexPart(mId); }
+    //{ return indexPart(mId); }
+    { return mId & INDEX_MASK; }
 
     constexpr EIdType EntityId::generation() const
-    { return genPart(mId); }
+    //{ return genPart(mId); }
+    { return (mId & GEN_MASK) >> EID_INDEX_BITS; }
 
     constexpr EIdType EntityId::rGenToLGen(EIdType rGen)
     { return rGen << EID_INDEX_BITS; }

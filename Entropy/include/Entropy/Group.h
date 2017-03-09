@@ -439,9 +439,18 @@ namespace ent {
          * @tparam RequireT List of required Component types.
          * @tparam RejectT List of rejected Component types.
          */
+		/*
         template<typename RequireT,
             typename RejectT>
         static ConstructionHandler<EntityGroup> mGroup;
+		*/
+        template<typename RequireT,
+            typename RejectT>
+		static ConstructionHandler<EntityGroup> &groupGetter()
+		{
+			static ConstructionHandler<EntityGroup> group;
+			return group;
+		}
 
         /// Entity manager from the same Universe.
         EntityManager<UniverseT> &mEM;
@@ -473,10 +482,12 @@ namespace ent {
     // EntityGroup implementation end.
 
     // GroupManager implementation.
+	/*
     template<typename UT>
     template<typename RequireT,
         typename RejectT>
     ConstructionHandler<EntityGroup> GroupManager<UT>::mGroup;
+	*/
 
     template<typename UT>
     GroupManager<UT>::GroupManager(EntityManager<UT> &entityMgr, ComponentManager<UT> &compMgr) :
@@ -497,12 +508,20 @@ namespace ent {
               typename RejectT>
     EntityGroup *GroupManager<UT>::addGetGroup()
     {
+		/*
         if (!mGroup<RequireT, RejectT>.constructed())
         {
             initGroup<RequireT, RejectT>();
         }
 
         return &mGroup<RequireT, RejectT>();
+		*/
+        if (!groupGetter<RequireT, RejectT>().constructed())
+        {
+            initGroup<RequireT, RejectT>();
+        }
+
+        return &groupGetter<RequireT, RejectT>()();
     }
 
     template <typename UT>
@@ -554,9 +573,11 @@ namespace ent {
         }
 #endif
 
-        mGroup<RequireT, RejectT>.construct(groupFilter, mGroupId.size());
+        //mGroup<RequireT, RejectT>.construct(groupFilter, mGroupId.size());
+        groupGetter<RequireT, RejectT>().construct(groupFilter, mGroupId.size());
 
-        mGroupId.push_back(mGroup<RequireT, RejectT>.ptr());
+        //mGroupId.push_back(mGroup<RequireT, RejectT>.ptr());
+        mGroupId.push_back(groupGetter<RequireT, RejectT>().ptr());
     }
 
     template <typename UT>

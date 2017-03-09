@@ -8,13 +8,14 @@
 
 namespace prof
 {
+	u64 ProfilingManager::sConstructions{0};
+    thread_local ThreadStatus ProfilingManager::mThreadStatus;
     ProfilingManager &ProfilingManager::instance()
     {
         static ProfilingManager mgr;
         return mgr;
     }
     ProfilingManager &mgr{ProfilingManager::instance()};
-    thread_local ThreadStatus ProfilingManager::mThreadStatus;
 
     ForeachPrint::ForeachPrint(u32 indent, f64 parentMegacycles) :
         mIndentLevel(indent),
@@ -56,6 +57,7 @@ namespace prof
 
     void ProfilingManager::reset()
     {
+		std::printf("Reset\n");
         delete mRoot;
         mRoot = new ThreadNode("/", nullptr);
 
@@ -72,6 +74,11 @@ namespace prof
     ProfilingManager::ProfilingManager() :
         mRoot(new ThreadNode("/", nullptr))
     {
+		std::printf("Construct\n");
+		// Only one construction should happen.
+		ASSERT_FAST(sConstructions == 0);
+		sConstructions++;
+
         //mRoot->data().timer().start();
 
         // Measure amount of time per enterScope->exitScope.
@@ -185,6 +192,7 @@ namespace prof
             i8 tryOccupy = threadNode->data().occupy();
             ASSERT_FATAL(tryOccupy);
 
+			std::printf("EnterThread %p\n", &mThreadStatus);
             mThreadStatus.mThreadNode = threadNode;
             mThreadStatus.mCurNode = threadNode->data().getRoot();
             mThreadStatus.mRoot = mThreadStatus.mCurNode;

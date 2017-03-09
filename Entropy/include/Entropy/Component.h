@@ -161,7 +161,8 @@ namespace ent
          */
         template <typename ComponentT>
         bool registered() const
-        { return mRegistered<ComponentT>; }
+        //{ return mRegistered<ComponentT>; }
+        { return registeredGetter<ComponentT>(); }
     private:
         /// Component ID generator.
         class ComponentIdGenerator : public StaticClassIdGenerator<ComponentIdGenerator> {};
@@ -200,8 +201,16 @@ namespace ent
          * Holder instance.
          * @tparam HolderT Type of the Holder.
          */
+		/*
         template <typename HolderT>
         static ConstructionHandler<HolderT> mHolder;
+		*/
+        template <typename HolderT>
+        static ConstructionHandler<HolderT> &holderGetter()
+		{
+			static ConstructionHandler<HolderT> handler;
+			return handler;
+		}
 
         /**
          * Mask for Component type.
@@ -209,15 +218,31 @@ namespace ent
          * If there are no bits set, the Component is not registered.
          * @tparam ComponentT Type of the Component.
          */
+		/*
         template <typename ComponentT>
         static ComponentBitset mMask;
+		*/
+        template <typename ComponentT>
+		static ComponentBitset &maskGetter()
+		{
+			static ComponentBitset bitset{0u};
+			return bitset;
+		}
 
         /**
          * Flag for checking, if given Component type is registered.
          * @tparam ComponentT Type of the Component.
          */
+		/*
         template <typename ComponentT>
         static bool mRegistered;
+		*/
+        template <typename ComponentT>
+		static bool &registeredGetter()
+		{
+			static bool reg{false};
+			return reg;
+		}
     protected:
     }; // ComponentManager
 
@@ -313,7 +338,8 @@ namespace ent
               typename... CArgTs>
     u64 ComponentManager<UT>::registerComponent(CArgTs... args)
     {
-        ENT_ASSERT_FAST(!mHolder<HolderT>.constructed());
+        //ENT_ASSERT_FAST(!mHolder<HolderT>.constructed());
+        ENT_ASSERT_FAST(!holderGetter<HolderT>().constructed());
         const u64 cId{id<ComponentT>()};
 
         ENT_ASSERT_FAST(cId < MAX_COMPONENTS); // Unable to register more Component types
@@ -339,7 +365,8 @@ namespace ent
     template <typename ComponentT>
     const ComponentBitset &ComponentManager<UT>::mask() const
     {
-        return mMask<ComponentT>;
+        //return mMask<ComponentT>;
+        return maskGetter<ComponentT>();
     }
 
     template <typename UT>
@@ -387,14 +414,16 @@ namespace ent
     template <typename HolderT>
     inline HolderT &ComponentManager<UT>::getHolder()
     {
-        return mHolder<HolderT>();
+        //return mHolder<HolderT>();
+        return holderGetter<HolderT>()();
     }
 
     template <typename UT>
     template <typename HolderT>
     inline const HolderT &ComponentManager<UT>::getHolder() const
     {
-        return mHolder<HolderT>();
+        //return mHolder<HolderT>();
+        return holderGetter<HolderT>()();
     }
 
     template <typename UT>
@@ -402,7 +431,8 @@ namespace ent
               typename... CArgTs>
     void ComponentManager<UT>::initHolder(CArgTs... args)
     {
-        mHolder<HolderT>.construct(std::forward<CArgTs>(args)...);
+        //mHolder<HolderT>.construct(std::forward<CArgTs>(args)...);
+        holderGetter<HolderT>().construct(std::forward<CArgTs>(args)...);
     }
 
     template <typename UT>
@@ -410,11 +440,15 @@ namespace ent
     inline void ComponentManager<UT>::initMask()
     {
         // Check, that the Component has not been already registered.
-        ENT_ASSERT_FAST(mMask<ComponentT>.none() && mRegistered<ComponentT> == false);
-        mMask<ComponentT>.set(id<ComponentT>());
-        mRegistered<ComponentT> = true;
+        //ENT_ASSERT_FAST(mMask<ComponentT>.none() && mRegistered<ComponentT> == false);
+        ENT_ASSERT_FAST(maskGetter<ComponentT>().none() && registeredGetter<ComponentT>() == false);
+        //mMask<ComponentT>.set(id<ComponentT>());
+        maskGetter<ComponentT>().set(id<ComponentT>());
+        //mRegistered<ComponentT> = true;
+        registeredGetter<ComponentT>() = true;
     }
 
+	/*
     template <typename UT>
     template <typename HolderT>
     ConstructionHandler<HolderT> ComponentManager<UT>::mHolder;
@@ -426,6 +460,7 @@ namespace ent
     template <typename UT>
     template <typename Component>
     bool ComponentManager<UT>::mRegistered{false};
+	*/
     // ComponentManager implementation end.
 } // namespace ent
 

@@ -59,6 +59,13 @@ add_definitions(
         -DGLEW_STATIC
 )
 
+if(WIN32)
+	set(GL_LIB opengl32.lib)
+else()
+	set(GL_LIB GL)
+endif()
+
+
 set(APP_SOURCES
         ${PROJECT_SOURCE_DIR}/ECS.cpp
         ${PROJECT_SOURCE_DIR}/App.cpp)
@@ -74,7 +81,7 @@ set(APP_HEADERS
         ${PROJECT_INCLUDE_DIR}/App.h)
 
 add_executable(${PROJECT_NAME} ${APP_SOURCES} ${APP_HEADERS})
-target_link_libraries(${PROJECT_NAME} ECS-FIT GL glew_static glfw)
+target_link_libraries(${PROJECT_NAME} ECS-FIT ${GL_LIB} glew_static glfw)
 
 add_custom_target(
         copyShaders

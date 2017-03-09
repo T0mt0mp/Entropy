@@ -301,10 +301,10 @@ namespace ent
     }; // Universe
 
     template <typename T>
-    bool Universe<T>::mInstantiated{false};
+    bool Universe<T>::mInstantiated = false;
 
     template <typename T>
-    bool Universe<T>::mInitialized{false};
+    bool Universe<T>::mInitialized = false;
 
     template <typename T>
     template <typename ASystemT,

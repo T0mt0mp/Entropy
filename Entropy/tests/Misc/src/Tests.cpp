@@ -8,6 +8,9 @@
 
 #include <vector>
 
+class Test : public ent::Universe<Test>
+{};
+
 struct ListTester
 {
     ListTester() { constructed++; }
