@@ -18,7 +18,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     set(CMAKE_CXX_FLAGS_DEBUG "")
     set(CMAKE_CXX_FLAGS_RELEASE "/O2")
 endif()
@@ -82,7 +82,7 @@ set(ECS_SOURCES
         )
 
 add_library(ECS-FIT ${ECS_SOURCES} ${ECS_HEADERS})
-target_link_libraries(ECS-FIT ENTROPY pthread)
+target_link_libraries(ECS-FIT ENTROPY)
 
 # Testing
 

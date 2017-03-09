@@ -181,6 +181,7 @@ namespace ent
     template <typename T>
     u64 StaticClassIdGenerator<T>::mCounter{0};
 
+#ifdef NOT_USED
     /**
      * Used for creation of classes used for generation of unique IDs for types.
      * Values are generated at compile-time.
@@ -389,6 +390,7 @@ namespace ent
         static constexpr u64 mId{ClassIdHolder::template next<ClassT>()};
     protected:
     }; // ClassIdGenerator
+#endif
 
     /**
      * Bitset, where each bit represents information about presence of something.
@@ -404,7 +406,7 @@ namespace ent
 
         /// Default constructor.
         constexpr InfoBitset() :
-            InfoBitset(0u)
+            mBitset(0u)
         { }
 
         /// Construct from a number.
@@ -528,7 +530,7 @@ namespace ent
      * @param value Value.
      * @return Returns a number >= value, which is power of two.
      */
-    static constexpr u64 pow2RoundUp(u64 value)
+    static ENT_CONSTEXPR u64 pow2RoundUp(u64 value)
     {
         --value;
         value |= value >> 0b1;

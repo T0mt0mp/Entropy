@@ -6,6 +6,7 @@
 
 #include "Tests.h"
 
+#ifdef NOT_USED
 template <typename T>
 class ClassIdGenerator
 {
@@ -205,6 +206,7 @@ constexpr u64 next(u64 R = writer<reader(0, flag<32> {}) + N>::value) {
     return R;
 }
  */
+#endif
 
 TU_Begin(MiscUnit)
 

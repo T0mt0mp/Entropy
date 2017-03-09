@@ -351,7 +351,7 @@ namespace ent
 
         if (result)
         {
-            mEM.template addComponent(id, ComponentManager<UT>::id<ComponentT>());
+            mEM.addComponent(id, ComponentManager<UT>::id<ComponentT>());
         }
 
         return result;
@@ -370,7 +370,7 @@ namespace ent
         typename HolderT>
     inline bool ComponentManager<UT>::has(EntityId id)
     {
-        return mEM.template hasComponent(id, ComponentManager<UT>::id<ComponentT>());
+        return mEM.hasComponent(id, ComponentManager<UT>::id<ComponentT>());
     }
 
     template <typename UT>
@@ -378,7 +378,7 @@ namespace ent
         typename HolderT>
     inline void ComponentManager<UT>::remove(EntityId id)
     {
-        mEM.template removeComponent(id, ComponentManager<UT>::id<ComponentT>());
+        mEM.removeComponent(id, ComponentManager<UT>::id<ComponentT>());
 
         return getHolder<HolderT>().remove(id);
     }

@@ -19,12 +19,14 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -pedantic -Wall -Werror")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+	set(THREAD_LIB pthread)
 endif()
 
 if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     set(CMAKE_CXX_FLAGS_DEBUG "")
     set(CMAKE_CXX_FLAGS_RELEASE "/O2")
+	set(THREAD_LIB "")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -72,6 +74,7 @@ set(ENTROPY_SOURCES
         )
 
 add_library(ENTROPY ${ENTROPY_SOURCES} ${ENTROPY_HEADERS})
+target_link_libraries(ENTROPY ${THREAD_LIB})
 
 # Testing
 add_subdirectory(tests)

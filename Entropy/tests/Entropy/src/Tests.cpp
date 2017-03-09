@@ -222,6 +222,7 @@ TU_Begin(EntropyEntity)
 
     }
 
+	/*
     TU_Case(ClassIdGenerator0, "Testing the ClassIdGenerator class")
     {
         class GenA : public ent::ClassIdGenerator<GenA> {};
@@ -275,6 +276,7 @@ TU_Begin(EntropyEntity)
         TC_RequireConstexpr(GenC::generated<double>());
         TC_RequireConstexpr(GenC::generated<float>());
     }
+	*/
 
     TU_Case(Universe0, "Testing the Universe class")
     {
