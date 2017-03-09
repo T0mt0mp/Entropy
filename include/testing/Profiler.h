@@ -483,12 +483,6 @@ namespace prof
     class ThreadStatus
     {
     public:
-		/*
-		ThreadStatus()
-		{
-			std::printf("ThreadStatus : %p\n", this);
-		}
-		*/
         /// Ptr to the current node in the call stack.
         //CallNode *mCurNode{nullptr};
         CallNode *mCurNode;

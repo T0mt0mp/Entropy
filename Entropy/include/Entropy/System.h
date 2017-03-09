@@ -219,7 +219,7 @@ namespace ent
     template <typename SystemT>
     SystemT *SystemManager<UT>::getSystem() const
     {
-        return mSystem<SystemT>.ptr();
+        return systemGetter<SystemT>().ptr();
     }
     // SystemManager implementation end.
 } // namespace ent

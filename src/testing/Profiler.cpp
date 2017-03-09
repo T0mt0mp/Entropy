@@ -57,7 +57,6 @@ namespace prof
 
     void ProfilingManager::reset()
     {
-		std::printf("Reset\n");
         delete mRoot;
         mRoot = new ThreadNode("/", nullptr);
 
@@ -74,7 +73,6 @@ namespace prof
     ProfilingManager::ProfilingManager() :
         mRoot(new ThreadNode("/", nullptr))
     {
-		std::printf("Construct\n");
 		// Only one construction should happen.
 		ASSERT_FAST(sConstructions == 0);
 		sConstructions++;
@@ -192,7 +190,6 @@ namespace prof
             i8 tryOccupy = threadNode->data().occupy();
             ASSERT_FATAL(tryOccupy);
 
-			std::printf("EnterThread %p\n", &mThreadStatus);
             mThreadStatus.mThreadNode = threadNode;
             mThreadStatus.mCurNode = threadNode->data().getRoot();
             mThreadStatus.mRoot = mThreadStatus.mCurNode;
