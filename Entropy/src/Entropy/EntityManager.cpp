@@ -19,6 +19,14 @@ namespace ent
         mRecords.emplace_back();
     }
 
+    void EntityHolder::reset()
+    {
+        mNumFree = 0;
+        mFirstFree = 0;
+        mLastFree = 0;
+        mRecords.clear();
+    }
+
     EntityId EntityHolder::create()
     {
         EIdType index{0};
@@ -68,18 +76,22 @@ namespace ent
     EntityId EntityHolder::create(EIdType id)
     {
         ENT_WARNING("Create with requested ID is not implemented yet!");
+        ENT_UNUSED(id);
         return EntityId();
     }
 
     auto EntityHolder::createSequential(u64 size) -> SequenceRecord
     {
         ENT_WARNING("Create sequence is not implemented yet!");
+        ENT_UNUSED(size);
         return {};
     }
 
     auto EntityHolder::createSequential(EIdType startId, u64 size) -> SequenceRecord
     {
         ENT_WARNING("Create sequence (id request) is not implemented yet!");
+        ENT_UNUSED(startId);
+        ENT_UNUSED(size);
         return {};
     }
     // EntityHolder implementation end.

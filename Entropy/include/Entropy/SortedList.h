@@ -84,6 +84,9 @@ namespace ent
         void clear()
         { return mList.clear(); }
 
+        void reclaim()
+        { return mList.reclaim(); }
+
         size_type size() const
         { return mList.size(); }
 

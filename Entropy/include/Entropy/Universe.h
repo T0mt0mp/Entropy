@@ -25,7 +25,7 @@ namespace ent
      * @tparam T Used for distinguishing between Universes, CRTP.
      */
     template <typename T>
-    class Universe : OnceInstantiable<Universe<T>>
+    class Universe : NonCopyable
     {
     public:
         using UniverseT = Universe<T>;
@@ -36,9 +36,13 @@ namespace ent
 
         /**
          * Default constructor for Universe.
-         * !!Only one instantiation is allowed per Universe type!!
          */
         Universe();
+
+        /**
+         * On destruction, the Universe calls reset on itself!
+         */
+        ~Universe();
 
         /**
          * Initialize all required structures AFTER adding all the
@@ -60,6 +64,12 @@ namespace ent
          *   Refresh EntityGroups.
          */
         void refresh();
+
+        /**
+         * Reset the managers.
+         * Does NOT reset registered Component types.
+         */
+        void reset();
 
         // System manager proxy methods.
     public:
@@ -283,10 +293,6 @@ namespace ent
         UniverseStats mStats;
 #endif
 
-        /// Flag for instantiation, only one is allowed.
-        static bool mInstantiated;
-        /// Flag representing the state of this Universe.
-        static bool mInitialized;
         /// Used for managing Entities.
         EntityManager<UniverseT> mEM;
         /// Used for managing ComponentHolders.
@@ -299,12 +305,6 @@ namespace ent
         ActionCache<UniverseT> mAC;
     protected:
     }; // Universe
-
-    template <typename T>
-    bool Universe<T>::mInstantiated = false;
-
-    template <typename T>
-    bool Universe<T>::mInitialized = false;
 
     template <typename T>
     template <typename ASystemT,
@@ -349,19 +349,14 @@ namespace ent
               typename... CArgTs>
     u64 Universe<T>::registerComponent(CArgTs... args)
     {
-        // Adding Component types is only allowed before initialization.
-        ENT_ASSERT_FAST(!mInitialized);
-
-        static bool registered{false};
         // Check for multiple calls for single Component.
-        if (registered)
+        if (mCM.template registered<ComponentT>())
         {
             ENT_WARNING("registerComponent called multiple times!");
+            return mCM.template id<ComponentT>();
         }
 
-        static const u64 cId{mCM.template registerComponent<ComponentT>(std::forward<CArgTs>(args)...)};
-
-        registered = true;
+        u64 cId{mCM.template registerComponent<ComponentT>(std::forward<CArgTs>(args)...)};
 
         return cId;
     }
@@ -377,14 +372,13 @@ namespace ent
     }
 
     template <typename T>
+    Universe<T>::~Universe()
+    { reset(); }
+
+    template <typename T>
     void Universe<T>::init()
     {
-        ENT_ASSERT_FAST(!mInitialized);
-
-
-
         refresh();
-        mInitialized = true;
     }
 
     template <typename T>
@@ -403,6 +397,16 @@ namespace ent
         mEM.refresh();
         mCM.refresh();
         mSM.refresh();
+    }
+
+    template <typename T>
+    void Universe<T>::reset()
+    {
+        mSM.reset();
+        mEM.reset();
+        mCM.reset();
+        mGM.reset();
+        mAC.reset();
     }
 
     template <typename T>

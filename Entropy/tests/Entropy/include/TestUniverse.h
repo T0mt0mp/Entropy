@@ -49,4 +49,8 @@ public:
     }
 };
 
+class RealUniverse3 : public ent::Universe<RealUniverse3>
+{
+};
+
 #endif //ECS_FIT_TESTUNIVERSE_H

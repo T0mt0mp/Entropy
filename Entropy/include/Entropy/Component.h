@@ -83,6 +83,11 @@ namespace ent
         void refresh();
 
         /**
+         * Reset Component holders.
+         */
+        void reset();
+
+        /**
          * Register given Component with its ComponentHolder.
          * @tparam ComponentT Type of the Component.
          * @tparam HolderT Type of the Holder, deduced from Component type.
@@ -164,8 +169,13 @@ namespace ent
         //{ return mRegistered<ComponentT>; }
         { return registeredGetter<ComponentT>(); }
     private:
-        /// Component ID generator.
-        class ComponentIdGenerator : public StaticClassIdGenerator<ComponentIdGenerator> {};
+        /// Reset the Component ID counter to 0.
+        static void resetComponentIdCounter()
+        { sComponentIdCounter = 0; }
+
+        /// Get new unique Component ID and increment the counter.
+        static u64 compIdInc()
+        { return sComponentIdCounter++; }
 
         /**
          * Get ComponentHolder.
@@ -193,6 +203,13 @@ namespace ent
          */
         template <typename ComponentT>
         inline void initMask();
+
+        /**
+         * Initialize the ID for given Component type.
+         * @tparam ComponentT Type of the Component.
+         */
+        template <typename ComponentT>
+        inline void initId();
 
         /// Entity manager from the same Universe.
         EntityManager<UniverseT> &mEM;
@@ -243,6 +260,23 @@ namespace ent
 			static bool reg{false};
 			return reg;
 		}
+
+        /**
+         * Get ID for given Component type.
+         * @tparam ComponentT Type of the Component.
+         */
+        template <typename ComponentT>
+        static u64 &idGetter()
+        {
+            static u64 innerId{0};
+            return innerId;
+        }
+
+        /// List of reset functions for Component registration.
+        std::vector<std::function<void()>> mComponentResets;
+
+        /// Counter for Component IDs.
+        static u64 sComponentIdCounter;
     protected:
     }; // ComponentManager
 
@@ -311,15 +345,12 @@ namespace ent
 
     // ComponentManager implementation.
     template <typename UT>
+    u64 ComponentManager<UT>::sComponentIdCounter{0};
+
+    template <typename UT>
     ComponentManager<UT>::ComponentManager(EntityManager<UT> &entityMgr) :
         mEM(entityMgr)
     {
-        static bool instantiated{false};
-        if (instantiated)
-        {
-            ENT_WARNING("Class instantiated multiple times, correct functionality is compromised!");
-        }
-        instantiated = true;
     }
 
     template <typename UT>
@@ -333,6 +364,17 @@ namespace ent
     }
 
     template <typename UT>
+    void ComponentManager<UT>::reset()
+    {
+        for (auto &l : mComponentResets)
+        {
+            l();
+        }
+
+        resetComponentIdCounter();
+    }
+
+    template <typename UT>
     template <typename ComponentT,
               typename HolderT,
               typename... CArgTs>
@@ -340,6 +382,9 @@ namespace ent
     {
         //ENT_ASSERT_FAST(!mHolder<HolderT>.constructed());
         ENT_ASSERT_FAST(!holderGetter<HolderT>().constructed());
+
+        initId<ComponentT>();
+
         const u64 cId{id<ComponentT>()};
 
         ENT_ASSERT_FAST(cId < MAX_COMPONENTS); // Unable to register more Component types
@@ -350,6 +395,13 @@ namespace ent
         initHolder<HolderT>(std::forward<CArgTs>(args)...);
         initMask<ComponentT>();
 
+        mComponentResets.emplace_back([] () {
+            holderGetter<HolderT>().destruct();
+            maskGetter<ComponentT>().reset();
+            idGetter<ComponentT>() = 0;
+            registeredGetter<ComponentT>() = false;
+        });
+
         return cId;
     }
 
@@ -357,8 +409,7 @@ namespace ent
     template <typename ComponentT>
     u64 ComponentManager<UT>::id()
     {
-        static const u64 cId{ComponentIdGenerator::template getId<ComponentT>()};
-        return cId;
+        return idGetter<ComponentT>();
     }
 
     template <typename UT>
@@ -446,6 +497,13 @@ namespace ent
         maskGetter<ComponentT>().set(id<ComponentT>());
         //mRegistered<ComponentT> = true;
         registeredGetter<ComponentT>() = true;
+    }
+
+    template <typename UT>
+    template <typename ComponentT>
+    inline void ComponentManager<UT>::initId()
+    {
+        idGetter<ComponentT>() = compIdInc();
     }
 
 	/*

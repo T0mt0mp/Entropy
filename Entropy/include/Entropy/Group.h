@@ -194,6 +194,11 @@ namespace ent {
          */
         EntityGroup(const ComponentFilter &filter, u64 groupId);
 
+        /**
+         * Reset this group to default state.
+         */
+        inline void reset();
+
         /// Filter getter.
         const ComponentFilter &filter() const
         { return mFilter; }
@@ -326,6 +331,11 @@ namespace ent {
         void refresh();
 
         /**
+         * Reset all the groups.
+         */
+        void reset();
+
+        /**
          * Add or get already created Entity group.
          * The pointer is guaranteed to be valid as long as the
          * GroupManager is instantiated - the Group will not be
@@ -434,6 +444,9 @@ namespace ent {
         /// Mapping of Entity groups to IDs.
         std::vector<EntityGroup *> mGroupId;
 
+        /// Vector of destruction functors.
+        std::vector<std::function<void()>> mGroupResets;
+
         /**
          * Static instance of EntityGroup.
          * @tparam RequireT List of required Component types.
@@ -460,6 +473,13 @@ namespace ent {
     }; // GroupManager
 
     // EntityGroup implementation.
+    void EntityGroup::reset()
+    {
+        mEntities.reclaim();
+        mAdded.reclaim();
+        mRemoved.reclaim();
+    }
+
     void EntityGroup::add(EntityId id)
     {
         mEntities.insert(id);
@@ -504,6 +524,16 @@ namespace ent {
     }
 
     template <typename UT>
+    void GroupManager<UT>::reset()
+    {
+        for (auto &r : mGroupResets)
+        {
+            r();
+        }
+        mGroupId.clear();
+    }
+
+    template <typename UT>
     template <typename RequireT,
               typename RejectT>
     EntityGroup *GroupManager<UT>::addGetGroup()
@@ -521,7 +551,7 @@ namespace ent {
             initGroup<RequireT, RejectT>();
         }
 
-        return &groupGetter<RequireT, RejectT>()();
+        return groupGetter<RequireT, RejectT>().ptr();
     }
 
     template <typename UT>
@@ -562,7 +592,7 @@ namespace ent {
               typename RejectT>
     void GroupManager<UT>::initGroup()
     {
-        static ComponentFilter groupFilter{buildFilter<RequireT, RejectT>()};
+        ComponentFilter groupFilter{buildFilter<RequireT, RejectT>()};
 
 #ifdef ENT_DEBUG
         if (checkRedundancy(groupFilter))
@@ -578,6 +608,9 @@ namespace ent {
 
         //mGroupId.push_back(mGroup<RequireT, RejectT>.ptr());
         mGroupId.push_back(groupGetter<RequireT, RejectT>().ptr());
+        mGroupResets.emplace_back([&] () {
+            groupGetter<RequireT, RejectT>().destruct();
+        });
     }
 
     template <typename UT>

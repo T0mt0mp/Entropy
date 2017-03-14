@@ -47,6 +47,11 @@ namespace ent
         void refresh();
 
         /**
+         * Destruct all systems.
+         */
+        void reset();
+
+        /**
          * Add System of given type to the manager. System is constructed
          * with provided constructor parameters.
          * If there already exists System of given type, the old one
@@ -86,6 +91,8 @@ namespace ent
 			return sys;
 		}
 
+        /// List of reset lambdas.
+        std::vector<std::function<void()>> mSystemResets;
         /// Group manager from the same Universe.
         GroupManager<UniverseT> &mGM;
     protected:
@@ -103,6 +110,9 @@ namespace ent
     {
     public:
         friend class SystemManager<UniverseT>;
+
+        ~System()
+        { mInitialized = false; }
 
         /// Check, if the System is ready for use.
         bool isInitialized() const
@@ -184,6 +194,15 @@ namespace ent
     }
 
     template <typename UT>
+    void SystemManager<UT>::reset()
+    {
+        for (auto &l : mSystemResets)
+        {
+            l();
+        }
+    }
+
+    template <typename UT>
     template <typename SystemT,
               typename... CArgTs>
     SystemT *SystemManager<UT>::addSystem(UT *uni, CArgTs... cArgs)
@@ -210,6 +229,10 @@ namespace ent
 
         //SystemT *sys{mSystem<SystemT>.ptr()};
         SystemT *sys{systemGetter<SystemT>().ptr()};
+
+        mSystemResets.emplace_back([&] () {
+            systemGetter<SystemT>().destruct();
+        });
 
         sys->setUniverse(uni);
         return sys;

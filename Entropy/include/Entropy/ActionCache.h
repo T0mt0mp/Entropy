@@ -39,6 +39,11 @@ namespace ent
         void refresh();
 
         /**
+         * Reset the actions.
+         */
+        void reset();
+
+        /**
          * Add Component to the given Entity.
          * @tparam ComponentT Type of the Component
          * @param id Id of the Component
@@ -87,6 +92,12 @@ namespace ent
         }
 
         mChanged.clear();
+    }
+
+    template <typename UT>
+    void ActionCache<UT>::reset()
+    {
+        mChanged.reclaim();
     }
 
     template <typename UT>

@@ -38,6 +38,11 @@ namespace ent
         EntityHolder();
 
         /**
+         * Reset the Entities.
+         */
+        void reset();
+
+        /**
          * Create a new Entity and return its ID.
          * @return Returns ID of the new Entity.
          */
@@ -244,6 +249,12 @@ namespace ent
          */
         EntityId create()
         { return mEntities.create(); }
+
+        /**
+         * Reset the Entities.
+         */
+        void reset()
+        { mEntities.reset(); }
 
         /**
          * TODO - implement.

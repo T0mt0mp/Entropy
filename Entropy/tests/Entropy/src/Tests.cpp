@@ -210,6 +210,78 @@ public:
     }
 };
 
+template <typename T>
+struct DestructionHolder : public ent::BaseComponentHolder<T>
+{
+    DestructionHolder()
+    {
+        sConstructed++;
+    }
+
+    ~DestructionHolder()
+    {
+        sDestructed++;
+    }
+
+    virtual T* add(ent::EntityId id) noexcept
+    {
+        return &mInst;
+    }
+
+    virtual T* get(ent::EntityId id) noexcept
+    {
+        return &mInst;
+    }
+
+    virtual bool has(ent::EntityId id) const noexcept
+    {
+        return true;
+    }
+
+    virtual void remove(ent::EntityId id) noexcept
+    {
+
+    }
+
+    T mInst;
+
+    static u64 sConstructed;
+    static u64 sDestructed;
+};
+
+template <typename T>
+u64 DestructionHolder<T>::sConstructed{0};
+template <typename T>
+u64 DestructionHolder<T>::sDestructed{0};
+
+struct DestructionC
+{
+    using HolderT = DestructionHolder<DestructionC>;
+
+    float x;
+};
+
+struct DestructionSystem : public RealUniverse3::SystemT
+{
+    using Require = ent::Require<DestructionC>;
+
+    DestructionSystem()
+    {
+        sConstructed++;
+    }
+
+    ~DestructionSystem()
+    {
+        sDestructed++;
+    }
+
+    static u64 sConstructed;
+    static u64 sDestructed;
+};
+
+u64 DestructionSystem::sConstructed{0};
+u64 DestructionSystem::sDestructed{0};
+
 TU_Begin(EntropyEntity)
 
     TU_Setup
@@ -617,6 +689,85 @@ TU_Begin(EntropyEntity)
             TC_RequireEqual(sys->foreachRemoved().size(), 0u);
             TC_RequireEqual(sys->foreach().size(), NUM_ENTITIES * it);
         }
+    }
+
+    TU_Case(UniverseDestruction, "Testing correct destruction of Universe instance.")
+    {
+        using Entity = RealUniverse3::EntityT;
+        using Holder = DestructionHolder<DestructionC>;
+        DestructionSystem *sys1{nullptr};
+        DestructionSystem *sys2{nullptr};
+
+        {
+            RealUniverse3 u;
+
+            TC_RequireEqual(u.registerComponent<DestructionC>(), 0u);
+
+            TC_RequireEqual(Holder::sConstructed, 1u);
+            TC_RequireEqual(Holder::sDestructed, 0u);
+
+            sys1 = u.addSystem<DestructionSystem>();
+
+            TC_RequireEqual(DestructionSystem::sConstructed, 1u);
+            TC_RequireEqual(DestructionSystem::sDestructed, 0u);
+
+            u.init();
+
+            TC_Require(sys1->isInitialized());
+            TC_RequireEqual(sys1->foreach().size(), 0u);
+
+            Entity e = u.createEntity();
+
+            TC_RequireEqual(e.id(), ent::EntityId(1u, 0u));
+
+            e.add<DestructionC>();
+
+            u.refresh();
+
+            TC_Require(sys1->isInitialized());
+            TC_RequireEqual(sys1->foreach().size(), 1u);
+        }
+
+        TC_RequireEqual(Holder::sConstructed, 1u);
+        TC_RequireEqual(Holder::sDestructed, 1u);
+        TC_RequireEqual(DestructionSystem::sConstructed, 1u);
+        TC_RequireEqual(DestructionSystem::sDestructed, 1u);
+
+        {
+            RealUniverse3 u;
+
+            TC_RequireEqual(u.registerComponent<DestructionC>(), 0u);
+
+            TC_RequireEqual(Holder::sConstructed, 2u);
+            TC_RequireEqual(Holder::sDestructed, 1u);
+
+            sys2 = u.addSystem<DestructionSystem>();
+
+            TC_RequireEqual(DestructionSystem::sConstructed, 2u);
+            TC_RequireEqual(DestructionSystem::sDestructed, 1u);
+
+            u.init();
+
+            TC_Require(sys2->isInitialized());
+            TC_RequireEqual(sys1, sys2);
+            TC_RequireEqual(sys2->foreach().size(), 0u);
+
+            Entity e = u.createEntity();
+
+            TC_RequireEqual(e.id(), ent::EntityId(1u, 0u));
+
+            e.add<DestructionC>();
+
+            u.refresh();
+
+            TC_Require(sys2->isInitialized());
+            TC_RequireEqual(sys2->foreach().size(), 1u);
+        }
+
+        TC_RequireEqual(Holder::sConstructed, 2u);
+        TC_RequireEqual(Holder::sDestructed, 2u);
+        TC_RequireEqual(DestructionSystem::sConstructed, 2u);
+        TC_RequireEqual(DestructionSystem::sDestructed, 2u);
     }
 
 TU_End(EntropyEntity)
