@@ -67,7 +67,7 @@ namespace ent
 
         /**
          * Reset the managers.
-         * Does NOT reset registered Component types.
+         * All Components/Systems will have to be added again.
          */
         void reset();
 
@@ -373,7 +373,7 @@ namespace ent
 
     template <typename T>
     Universe<T>::~Universe()
-    { reset(); }
+    { }
 
     template <typename T>
     void Universe<T>::init()

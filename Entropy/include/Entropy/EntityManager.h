@@ -399,6 +399,11 @@ namespace ent
         EntityManager();
 
         /**
+         * Destruct the Entity manager and the Entities.
+         */
+        ~EntityManager();
+
+        /**
          * TODO - EntityManager refresh.
          */
         void refresh();
@@ -469,6 +474,10 @@ namespace ent
     // EntityManager implementation.
     template <typename UT>
     EntityManager<UT>::EntityManager()
+    { }
+
+    template <typename UT>
+    EntityManager<UT>::~EntityManager()
     { }
 
     template <typename UT>

@@ -355,7 +355,9 @@ namespace ent
 
     template <typename UT>
     ComponentManager<UT>::~ComponentManager()
-    { }
+    {
+        reset();
+    }
 
     template <typename UT>
     void ComponentManager<UT>::refresh()
@@ -370,6 +372,7 @@ namespace ent
         {
             l();
         }
+        mComponentResets.clear();
 
         resetComponentIdCounter();
     }

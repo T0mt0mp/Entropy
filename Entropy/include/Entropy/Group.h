@@ -326,6 +326,11 @@ namespace ent {
         GroupManager(EntityManager<UniverseT> &entityMgr, ComponentManager<UniverseT> &compMgr);
 
         /**
+         * Resets the Group manager.
+         */
+        ~GroupManager();
+
+        /**
          * TODO - refresh GroupManager.
          */
         void refresh();
@@ -514,6 +519,12 @@ namespace ent {
         mEM(entityMgr), mCM(compMgr)
     { }
 
+    template<typename UT>
+    GroupManager<UT>::~GroupManager()
+    {
+        reset();
+    }
+
     template <typename UT>
     void GroupManager<UT>::refresh()
     {
@@ -530,6 +541,8 @@ namespace ent {
         {
             r();
         }
+        mGroupResets.clear();
+
         mGroupId.clear();
     }
 

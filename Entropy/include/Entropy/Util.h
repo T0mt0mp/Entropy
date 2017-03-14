@@ -83,7 +83,13 @@ namespace ent
         ConstructionHandler() {}
 
         /// Destructor, calls destructor on inner class iff it was constructed.
-        ~ConstructionHandler() {}
+        ~ConstructionHandler()
+        {
+            if (constructed())
+            {
+                destruct();
+            }
+        }
 
         /**
          * Construct the inner object. If there is constructed object inside,

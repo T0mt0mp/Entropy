@@ -34,6 +34,11 @@ namespace ent
                     GroupManager<UniverseT> &groupMgr, SystemManager<UniverseT> &systemMgr);
 
         /**
+         * Destruct and reset the Action cache.
+         */
+        ~ActionCache();
+
+        /**
          * Refresh cache and perform actions.
          */
         void refresh();
@@ -81,6 +86,10 @@ namespace ent
     ActionCache<UT>::ActionCache(EntityManager <UT> &entityMgr, ComponentManager <UT> &compMgr,
                                  GroupManager <UT> &groupMgr, SystemManager <UT> &systemMgr) :
         mEM(entityMgr), mCM(compMgr), mGM(groupMgr), mSM(systemMgr)
+    { }
+
+    template <typename UT>
+    ActionCache<UT>::~ActionCache()
     { }
 
     template <typename UT>

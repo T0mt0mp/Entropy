@@ -42,6 +42,11 @@ namespace ent
         SystemManager(GroupManager<UniverseT> &groupMgr);
 
         /**
+         * Destruct the System manager and all System within.
+         */
+        ~SystemManager();
+
+        /**
          * TODO - Refresh the Systems.
          */
         void refresh();
@@ -188,6 +193,10 @@ namespace ent
     { }
 
     template <typename UT>
+    SystemManager<UT>::~SystemManager()
+    { reset(); }
+
+    template <typename UT>
     void SystemManager<UT>::refresh()
     {
         ENT_WARNING("SystemManager::refresh() is not finished yet!");
@@ -200,6 +209,7 @@ namespace ent
         {
             l();
         }
+        mSystemResets.clear();
     }
 
     template <typename UT>

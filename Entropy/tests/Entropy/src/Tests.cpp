@@ -768,6 +768,18 @@ TU_Begin(EntropyEntity)
         TC_RequireEqual(Holder::sDestructed, 2u);
         TC_RequireEqual(DestructionSystem::sConstructed, 2u);
         TC_RequireEqual(DestructionSystem::sDestructed, 2u);
+
+        {
+            RealUniverse3 u;
+            TC_RequireEqual(u.registerComponent<DestructionC>(), 0u);
+            TC_RequireEqual(u.addSystem<DestructionSystem>(), sys1);
+            u.reset();
+            TC_RequireEqual(u.registerComponent<DestructionC>(), 0u);
+            TC_RequireEqual(u.addSystem<DestructionSystem>(), sys1);
+            u.reset();
+            TC_RequireEqual(u.registerComponent<DestructionC>(), 0u);
+            TC_RequireEqual(u.addSystem<DestructionSystem>(), sys1);
+        }
     }
 
 TU_End(EntropyEntity)
