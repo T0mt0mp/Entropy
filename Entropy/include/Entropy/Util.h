@@ -10,6 +10,11 @@
 #include <limits>
 #include <utility>
 #include <memory>
+#include <string>
+// CHAR_BIT
+#include <climits>
+// memcpy
+#include <cstring>
 
 #include "Types.h"
 
@@ -400,97 +405,165 @@ namespace ent
 
     /**
      * Bitset, where each bit represents information about presence of something.
+     * The bitset is guaranteed to be contiguous and all memory used is inside the object.
+     * Bitset is guaranteed to work correctly with copying/moving the bits of
+     * the object, without using constructor.
      * @tparam N Number of bits in this bitset.
      */
     template <u64 N>
     class InfoBitset final
     {
-    public:
-        // TODO - rewrite bitset, trivial constructor.
-        /// Type of the inner bitset.
-        using CBitset = std::bitset<N>;
+    private:
+        /// Number of bits requested.
+        static ENT_CONSTEXPR_EXPR u64 NUM_BITS{N};
+        static_assert(NUM_BITS != 0u, "Bitset must have at least 1 bit!");
+        /// Base memory block type.
+        using BMBType = u64;
+        /// Number of chars (probably bytes) in one base memory block.
+        static ENT_CONSTEXPR_EXPR u64 BLOCK_IN_CHARS{sizeof(BMBType) / sizeof(char)};
+        static_assert((BLOCK_IN_CHARS * sizeof(char)) == sizeof(BMBType));
+        /// Size of the base memory block type in bits.
+        static ENT_CONSTEXPR_EXPR u64 BITS_IN_BLOCK{BLOCK_IN_CHARS * CHAR_BIT};
+        static_assert(BITS_IN_BLOCK != 0u);
+        /// Number of base memory blocks to get required number of bits.
+        static ENT_CONSTEXPR_EXPR u64 NUM_BLOCKS{(N / BITS_IN_BLOCK) + ((N % BITS_IN_BLOCK) == 0u ? 0u : 1u)};
+        /// Number of base memory blocks which are completely used by bitset bits.
+        static ENT_CONSTEXPR_EXPR u64 NUM_WHOLE_BLOCKS{(N / BITS_IN_BLOCK)};
+        /// Number of bytes used by bitset bits.
+        static ENT_CONSTEXPR_EXPR u64 NUM_USED_BYTES{(N / (sizeof(char) * CHAR_BIT)) +
+                                                     ((N % (sizeof(char) * CHAR_BIT)) == 0u ? 0u : 1u)};
+        /// Byte value, where all bits are set to '0'.
+        static ENT_CONSTEXPR_EXPR u8 BYTE_ZERO{0u};
+        /// Byte value, where all bits are set to '1'.
+        static ENT_CONSTEXPR_EXPR u8 BYTE_ONE{~BYTE_ZERO};
+        /// Block value, where all bits are set to '0'.
+        static ENT_CONSTEXPR_EXPR BMBType BLOCK_ZERO{0u};
+        /// Block value, where all bits are set to '1'.
+        static ENT_CONSTEXPR_EXPR BMBType BLOCK_ONE{~BLOCK_ZERO};
+        /// Is there a partly-used memory block?
+        static ENT_CONSTEXPR_EXPR bool PARTLY_USED{NUM_WHOLE_BLOCKS != NUM_BLOCKS};
+        /// Number of bits used in the last memory block.
+        static ENT_CONSTEXPR_EXPR u64 BITS_IN_LAST_BLOCK{NUM_BITS - (NUM_WHOLE_BLOCKS * BITS_IN_BLOCK)};
 
-        /// Default constructor.
-        constexpr InfoBitset() :
-            mBitset(0u)
+        /**
+         * Get index of the block, where bit with given index is located.
+         * @param pos Position of the bit.
+         * @return Block, where the bit is located.
+         */
+        static ENT_CONSTEXPR_FUN u64 memBlock(u64 pos)
+        { return pos / BITS_IN_BLOCK; }
+
+        /**
+         * Get index of the bit, where bit with given index is located.
+         * @param pos Position of the bitset bit.
+         * @return Position of the block bit.
+         */
+        static ENT_CONSTEXPR_FUN u64 memBit(u64 pos)
+        { return pos % BITS_IN_BLOCK; }
+
+        /**
+         * Get mask for bit on given position.
+         * This mask should be applied to the block, where the bit is located.
+         * @param pos Position of the bit in bitset.
+         * @return Returns AND mask.
+         */
+        static ENT_CONSTEXPR_FUN BMBType bitMask(u64 pos)
+        { return static_cast<BMBType>(1u) << memBit(pos); }
+
+        /**
+         * Mask used for masking out unused part of last memory block.
+         * @return Returns mask, used for 'and' masking.
+         */
+        static ENT_CONSTEXPR_FUN BMBType partlyUsedBlockMask()
+        { return ~((~static_cast<BMBType>(0u)) << BITS_IN_LAST_BLOCK); }
+    public:
+        /**
+         * Get number of bits.
+         * @return The number of bits in this bitset.
+         */
+        static ENT_CONSTEXPR_FUN u64 size()
+        { return NUM_BITS; }
+
+        /**
+         * Get number of unused bits.
+         * @return The number of unused bits in the contiguous memory.
+         */
+        static ENT_CONSTEXPR_FUN u64 excess()
+        { return (NUM_BLOCKS * BITS_IN_BLOCK) - size(); }
+
+        /// Default constructor, initializes the value to 0.
+        ENT_CONSTEXPR_FUN InfoBitset() :
+            InfoBitset(0u)
         { }
 
         /// Construct from a number.
-        constexpr InfoBitset(u64 num) :
-            mBitset(num)
+        ENT_CONSTEXPR_FUN InfoBitset(BMBType num) :
+            mMemory{num}
         { }
 
         // Copy/move operators.
-        constexpr InfoBitset(const InfoBitset &rhs) :
-            mBitset(rhs.mBitset) { }
-        constexpr InfoBitset(InfoBitset &&rhs) :
-            mBitset(std::move(rhs.mBitset)) { }
-        constexpr InfoBitset(const CBitset &rhs) :
-            mBitset(rhs) { }
-        constexpr InfoBitset(CBitset &&rhs) :
-            mBitset(std::move(rhs)) { }
+        InfoBitset(const InfoBitset &rhs)
+        { copy(rhs); }
+        InfoBitset(InfoBitset &&rhs)
+        { move(rhs); }
 
         // Copy-assignment operators.
         InfoBitset &operator=(const InfoBitset &rhs)
-        { mBitset = rhs.mBitset; return *this; }
+        { copy(rhs); return *this; }
         InfoBitset &operator=(InfoBitset &&rhs)
-        { mBitset = std::move(rhs.mBitset); return *this; }
-        InfoBitset &operator=(const CBitset &rhs)
-        { mBitset = rhs; return *this; }
-        InfoBitset &operator=(CBitset &&rhs)
-        { mBitset = std::move(rhs); return *this; }
+        { move(rhs); return *this; }
 
-        InfoBitset &operator=(u64 val)
-        { mBitset = val; return *this; }
+        /**
+         * Assign any value into this bitset, using memcpy.
+         * Size of the value type must be <= to the number of bits.
+         * @tparam T Type of the value.
+         * @param val Value to copy.
+         * @return Returns this.
+         */
+        template <typename T>
+        InfoBitset &operator=(const T &val)
+        { fromVal(val); return *this; }
 
         /// Set all bits to true.
         InfoBitset &set()
-        { mBitset.set(); return *this; }
+        { setImpl(); return *this; }
 
         /**
          * Set bit on given position to given value (true by default).
          * @param pos Position of the bit.
          * @param val Value to set.
          */
-        InfoBitset &set(std::size_t pos, bool val = true)
-        { mBitset.set(pos, val); return *this; }
+        InfoBitset &set(std::size_t pos)
+        { setImpl(pos); return *this; }
 
         /// Set all bits to false.
         InfoBitset &reset()
-        { mBitset.reset(); return *this; }
+        { resetImpl(); return *this; }
 
         /**
          * Reset bit on given position.
          * @param pos Position of the bit.
          */
         InfoBitset &reset(std::size_t pos)
-        { mBitset.reset(pos); return *this; }
-
-        /**
-         * Get the max number of component types.
-         * @return The max number of component types.
-         */
-        std::size_t size() const
-        { return mBitset.size(); }
+        { resetImpl(pos); return *this; }
 
         /**
          * Count the number of bits set to true.
          * @return The number of bits set to true.
          */
         std::size_t count() const
-        { return mBitset.count(); }
+        { return countImpl(); }
+
+        /// Are all bits set to true?
+        bool all() const;
 
         /// Are any bits set to true?
         bool any() const
-        { return mBitset.any(); }
+        { return !noneImpl(); }
 
         /// Are none of the bits set to true?
         bool none() const
-        { return mBitset.none(); }
-
-        /// Are all of the bits set to true?
-        bool all() const
-        { return mBitset.all(); }
+        { return noneImpl(); }
 
         /**
          * Get the value of the bit on given position.
@@ -498,45 +571,123 @@ namespace ent
          * @return Value of the bit.
          */
         bool test(std::size_t pos) const
-        { return mBitset.test(pos); }
+        { return testImpl(pos); }
+
+        /**
+         * Copy bits from other bitset.
+         * @param other The other bitset.
+         */
+        void copy(const InfoBitset &other);
+
+        /**
+         * Swap bits between 2 bitsets.
+         * @param other The other bitset.
+         */
+        void swap(InfoBitset &other);
+
+        /// Convert this bitset to string.
+        std::string toString() const;
 
         /// Binary AND operator.
-        InfoBitset operator&(const InfoBitset &rhs) const
-        { return InfoBitset(mBitset & rhs.mBitset); }
+        InfoBitset operator&(const InfoBitset &rhs) const;
 
         /// Binary OR operator.
-        InfoBitset operator|(const InfoBitset &rhs) const
-        { return InfoBitset(mBitset | rhs.mBitset); }
+        InfoBitset operator|(const InfoBitset &rhs) const;
 
         /// Comparison operator.
-        bool operator==(const InfoBitset &rhs) const
-        { return mBitset == rhs.mBitset; }
+        bool operator==(const InfoBitset &rhs) const;
+
+        /// Comparison operator.
+        bool operator!=(const InfoBitset &rhs) const
+        { return !(*this == rhs);}
 
         /// Print operator.
         template <u64 M>
-        friend std::ostream &operator<<(std::ostream &out, const InfoBitset<M> &rhs)
-        {
-            out << rhs.mBitset;
-            return out;
-        }
+        friend std::ostream &operator<<(std::ostream &out, const InfoBitset<M> &rhs);
     private:
-        /// Inner bitset.
-        CBitset mBitset;
+        /**
+         * Move bits from other bitset.
+         * @param other The other bitset.
+         */
+        void move(InfoBitset &other)
+        { copy(other); }
+
+        /**
+         * Get block with given index.
+         * @param block ID of the block.
+         * @return Returns reference to the block.
+         */
+        ENT_CONSTEXPR_FUN BMBType &getBlock(u64 block)
+        { return mMemory[block]; }
+        ENT_CONSTEXPR_FUN const BMBType &getBlock(u64 block) const
+        { return mMemory[block]; }
+
+        /**
+         * Perform memory copy of given value to the bit storage.
+         * At most the number of bits copied will be the number of bits in this bitset.
+         * @tparam T Type of the value.
+         * @param val Value to copy.
+         */
+        template <typename T>
+        void fromVal(const T &val);
+
+        /**
+         * Set all bits to true.
+         */
+        void setImpl();
+
+        /**
+         * Set bit on given position to true.
+         * @param pos Position of the bit.
+         */
+        void setImpl(u64 pos);
+
+        /**
+         * Set all bits to false.
+         */
+        void resetImpl();
+
+        /**
+         * Set bit on given position to false.
+         * @param pos Position of the bit.
+         */
+        void resetImpl(u64 pos);
+
+        /**
+         * Count the number of bits set to true.
+         * @return The number of bits set to true.
+         */
+        u64 countImpl() const;
+
+        /**
+         * Test the bits, if none of the are set to true.
+         * @return Returns true iff none of the bits are set to true.
+         */
+        bool noneImpl() const;
+
+        /**
+         * Test bit on given position and return its value.
+         * @param pos Position to test.
+         * @return Returns the value of given bit.
+         */
+        ENT_CONSTEXPR_FUN bool testImpl(u64 pos) const;
     protected:
+        /// Memory blocks containing the bits.
+        BMBType mMemory[NUM_BLOCKS];
     }; // InfoBitset
 
     /// Bitset, where each bit represents either a present, or absent Component.
     using ComponentBitset = InfoBitset<MAX_COMPONENTS>;
 
-    /// Bitset, where each bit represents Entity presence in a group.
-    using GroupBitset = InfoBitset<MAX_GROUPS>;
+    /// Bitset, where each bit represents Entity presence in a group. +1 for the activity flag.
+    using GroupBitset = InfoBitset<MAX_GROUPS + 1>;
 
     /**
      * Get the next higher or equal number, which is power of two.
      * @param value Value.
      * @return Returns a number >= value, which is power of two.
      */
-    static ENT_CONSTEXPR u64 pow2RoundUp(u64 value)
+    static ENT_CONSTEXPR_FUN u64 pow2RoundUp(u64 value)
     {
         --value;
         value |= value >> 0b1;
@@ -548,6 +699,193 @@ namespace ent
 
         return value + 1;
     }
+
+    // InfoBitset implementation.
+    template <u64 N>
+    bool InfoBitset<N>::all() const
+    {
+        for (u64 block = 0u; block < NUM_WHOLE_BLOCKS; ++block)
+        {
+            if (getBlock(block) != BLOCK_ONE)
+            {
+                return false;
+            }
+        }
+
+        if (PARTLY_USED)
+        { // Take care of the last block.
+            if ((getBlock(NUM_BLOCKS - 1u) & partlyUsedBlockMask()) !=
+                (BLOCK_ONE & partlyUsedBlockMask()))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    template <u64 N>
+    void InfoBitset<N>::copy(const InfoBitset &other)
+    {
+        std::memcpy(mMemory, other.mMemory, sizeof(mMemory));
+    }
+
+    template <u64 N>
+    void InfoBitset<N>::swap(InfoBitset &other)
+    {
+        for (u64 block = 0; block < NUM_BLOCKS; ++block)
+        {
+            std::swap(mMemory[block], other.mMemory[block]);
+        }
+    }
+
+    template <u64 N>
+    std::string InfoBitset<N>::toString() const
+    {
+        std::string out;
+        out.resize(NUM_BITS);
+
+        for (u64 bit = 0u; bit < NUM_BITS; ++bit)
+        {
+            out[bit] = testImpl(bit) ? '1' : '0';
+        }
+
+        return out;
+    }
+
+    template <u64 N>
+    auto InfoBitset<N>::operator&(const InfoBitset &rhs) const -> InfoBitset
+    {
+        InfoBitset result;
+
+        for (u64 block = 0u; block < NUM_BLOCKS; ++block)
+        {
+            result.getBlock(block) = getBlock(block) & rhs.getBlock(block);
+        }
+
+        return result;
+    }
+
+    template <u64 N>
+    auto InfoBitset<N>::operator|(const InfoBitset &rhs) const -> InfoBitset
+    {
+        InfoBitset result;
+
+        for (u64 block = 0u; block < NUM_BLOCKS; ++block)
+        {
+            result.getBlock(block) = getBlock(block) | rhs.getBlock(block);
+        }
+
+        return result;
+    }
+
+    template <u64 N>
+    bool InfoBitset<N>::operator==(const InfoBitset &rhs) const
+    {
+        for (u64 block = 0u; block < NUM_WHOLE_BLOCKS; ++block)
+        {
+            if (getBlock(block) != rhs.getBlock(block))
+            {
+                return false;
+            }
+        }
+
+        if (PARTLY_USED)
+        { // Take care of the partly used memory block.
+            if ((getBlock(NUM_BLOCKS - 1u) & partlyUsedBlockMask()) !=
+                (rhs.getBlock(NUM_BLOCKS - 1u) & partlyUsedBlockMask()))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    template <u64 M>
+    std::ostream &operator<<(std::ostream &out, const InfoBitset<M> &rhs)
+    {
+        out << rhs.toString();
+        return out;
+    }
+
+    template <u64 N>
+    template <typename T>
+    void InfoBitset<N>::fromVal(const T &val)
+    {
+        std::memcpy(mMemory, &val, NUM_USED_BYTES);
+    }
+
+    template <u64 N>
+    void InfoBitset<N>::setImpl()
+    {
+        std::memset(mMemory, BYTE_ONE, NUM_USED_BYTES);
+    }
+
+    template <u64 N>
+    void InfoBitset<N>::setImpl(u64 pos)
+    {
+        getBlock(memBlock(pos)) |= bitMask(pos);
+    }
+
+    template <u64 N>
+    void InfoBitset<N>::resetImpl()
+    {
+        std::memset(mMemory, BYTE_ZERO, NUM_USED_BYTES);
+    }
+
+    template <u64 N>
+    void InfoBitset<N>::resetImpl(u64 pos)
+    {
+        getBlock(memBlock(pos)) &= ~bitMask(pos);
+    }
+
+    template <u64 N>
+    u64 InfoBitset<N>::countImpl() const
+    {
+        u64 result{0u};
+
+        for (u64 block = 0u; block < NUM_WHOLE_BLOCKS; ++block)
+        {
+            result += popcount64(getBlock(block));
+        }
+
+        if (PARTLY_USED)
+        { // Take care of the partly used memory block.
+            result += popcount64(getBlock(NUM_BLOCKS - 1u) & partlyUsedBlockMask());
+        }
+
+        return result;
+    }
+
+    template <u64 N>
+    bool InfoBitset<N>::noneImpl() const
+    {
+        for (u64 block = 0u; block < NUM_WHOLE_BLOCKS; ++block)
+        {
+            if (getBlock(block) != static_cast<BMBType>(0u))
+            {
+                return false;
+            }
+        }
+
+        if (PARTLY_USED)
+        { // Take care of the partly used memory block.
+            if ((getBlock(NUM_BLOCKS - 1u) & partlyUsedBlockMask()) != static_cast<BMBType>(0u))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    template <u64 N>
+    ENT_CONSTEXPR_FUN bool InfoBitset<N>::testImpl(u64 pos) const
+    {
+        return getBlock(memBlock(pos)) & bitMask(pos);
+    }
+    // InfoBitset implementation end.
 } // namespace ent
 
 #endif //ECS_FIT_UTIL_H

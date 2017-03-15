@@ -225,6 +225,11 @@ namespace ent {
         inline void refresh();
 
         /**
+         * Finalize adding and removing of Entities.
+         */
+        inline void finalize();
+
+        /**
          * Get foreach iterator object, iterating over Entities.
          * @tparam UT Universe type.
          * @param uni Universe ptr.
@@ -232,7 +237,7 @@ namespace ent {
          */
         template <typename UT>
         EntityList<UT, EntityListT> foreach(UT *uni)
-        { return EntityList<UT, EntityListT>(uni, mEntities); }
+        { return EntityList<UT, EntityListT>(uni, *mEntities); }
 
         /**
          * Get foreach iterator object, iterating over added Entities.
@@ -254,12 +259,26 @@ namespace ent {
         EntityList<UT, RemovedListT> foreachRemoved(UT *uni)
         { return EntityList<UT, RemovedListT>(uni, mRemoved); }
     private:
+        /// Get the front Entity buffer.
+        EntityListT *entitiesFront()
+        { return mEntities; }
+        /// Get the back Entity buffer.
+        EntityListT *entitiesBack()
+        { return mEntitiesBack; }
+        /// Swap the Entity buffers = front <-> back.
+        void swapEntityBuffers()
+        { std::swap(mEntities, mEntitiesBack); }
+
         /// Filter specifying which Entities belong into this group.
         ComponentFilter mFilter;
         /// ID of this Group.
         u64 mId;
         /// List of Entities, corresponding with the filter.
-        EntityListT mEntities;
+        EntityListT *mEntities;
+        /// List of Entities, corresponding with the filter.
+        EntityListT *mEntitiesBack;
+        /// Front and back buffers.
+        EntityListT mEntityBuffers[2];
         /// List of Entities, which were added since the last refresh.
         AddedListT mAdded;
         /// List of Entities, which were removed since the last refresh.
@@ -366,6 +385,11 @@ namespace ent {
         ComponentFilter buildFilter() const;
 
         /**
+         * Finalize refreshing the groups after adding/removing Entities.
+         */
+        void finalizeGroups();
+
+        /**
          * Check given Entity and add/remove it from
          * @param id ID of the Entity.
          */
@@ -394,7 +418,7 @@ namespace ent {
             static auto value(ComponentManager<UniverseT> &compMgr)
             {
                 FilterBuilder<ContainerT<RestTs...>> next;
-                decltype(compMgr.template mask<FirstT>()) thisValue{
+                ComponentBitset thisValue{
                     compMgr.template registered<FirstT>() ?
                         compMgr.template mask<FirstT>() :
                         0
@@ -408,7 +432,7 @@ namespace ent {
         struct FilterBuilder<ContainerT<LastT>> {
             static auto value(ComponentManager<UniverseT> &compMgr)
             {
-                decltype(compMgr.template mask<LastT>()) thisValue{
+                ComponentBitset thisValue{
                     compMgr.template registered<LastT>() ?
                     compMgr.template mask<LastT>() :
                     0
@@ -480,20 +504,21 @@ namespace ent {
     // EntityGroup implementation.
     void EntityGroup::reset()
     {
-        mEntities.reclaim();
+        mEntityBuffers[0].reclaim();
+        mEntityBuffers[1].reclaim();
         mAdded.reclaim();
         mRemoved.reclaim();
     }
 
     void EntityGroup::add(EntityId id)
     {
-        mEntities.insert(id);
+        //mEntities.insertUnique(id);
         mAdded.pushBack(id);
     }
 
     void EntityGroup::remove(EntityId id)
     {
-        mEntities.erase(id);
+        //mEntities.erase(id);
         mRemoved.pushBack(id);
     }
 
@@ -503,6 +528,107 @@ namespace ent {
         mAdded.shrinkToFit();
         mRemoved.clear();
         mAdded.shrinkToFit();
+    }
+
+    void EntityGroup::finalize()
+    {
+        std::sort(mAdded.begin(), mAdded.end());
+        std::sort(mRemoved.begin(), mRemoved.end());
+
+        // Assure the size for the back buffer.
+        entitiesBack()->resize(entitiesFront()->size() + mAdded.size() + mRemoved.size());
+        // Sort the new list into the back buffer.
+        auto iit1 = mAdded.cbegin();
+        auto ieit1 = mAdded.cend();
+        auto iit2 = mRemoved.cbegin();
+        auto ieit2 = mRemoved.cend();
+        auto iit3 = entitiesFront()->cbegin();
+        auto ieit3 = entitiesFront()->cend();
+
+        auto oit = entitiesBack()->begin();
+        auto oeit = entitiesBack()->end();
+
+        for (;
+             oit != oeit && (iit1 != ieit1 || iit2 != ieit2 || iit3 != ieit3);
+             ++oit)
+        {
+            /*
+             *                   A < B
+             *           T                   F
+             *         A < C               B < C
+             *    T            F    T               F
+             *    |            |    |               |
+             *    A            C    B               C
+             *                 +    +               +
+             *            ?C == A ?B == A         ?C == B
+             *                                    ?B == A
+             */
+
+            /*
+            // A < B
+            if ((iit1 != ieit1) && ((iit2 != ieit2) || (*iit1 < *iit2)))
+            { // A < B
+                // A < C
+                if ((iit3 != ieit3) || (*iit1 < *iit3))
+                { // A < C
+                    // -> A
+                    *oit = *iit1;
+                    ++iit1;
+                }
+                else
+                { // C <= A
+                    // -> C + ?C == A?
+                    *oit = *iit3;
+                    ++iit3;
+                }
+            }
+            else
+            { // B >= A
+                // B < C
+                if ((iit2 != ieit2) && ((iit3 != ieit3) || (*iit2 < *iit3)))
+                { // B < C
+                    // -> B + ?B == A?
+                    *oit = *iit2;
+                    ++iit2;
+                }
+                else
+                { // C >= B >= A
+                    // -> C + ?C == B? + ?B == A?
+                    *oit = *iit3;
+                    ++iit3;
+                }
+            }
+             */
+
+            *oit = (iit1 != ieit1) && ((iit2 == ieit2) || (*iit1 < *iit2)) ?
+                   (iit3 == ieit3) || (*iit1 < *iit3) ?
+                   (*iit1) : (*iit3)
+                                                                           :
+                   (iit2 != ieit2) && ((iit3 == ieit3) || (*iit2 < *iit3)) ?
+                   (*iit2) : (*iit3);
+
+            while ((iit1 != ieit1) && (*iit1 == *oit))
+            {
+                ++iit1;
+            }
+            while ((iit2 != ieit2) && (*iit2 == *oit))
+            {
+                ++iit2;
+            }
+            while ((iit3 != ieit3) && (*iit3 == *oit))
+            {
+                ++iit3;
+            }
+        }
+
+        ENT_ASSERT_SLOW(iit1 == ieit1);
+        ENT_ASSERT_SLOW(iit2 == ieit2);
+        ENT_ASSERT_SLOW(iit3 == ieit3);
+
+        u64 finalSize{static_cast<u64>(oit - entitiesBack()->begin())};
+        entitiesBack()->resize(finalSize);
+
+        swapEntityBuffers();
     }
     // EntityGroup implementation end.
 
@@ -551,14 +677,6 @@ namespace ent {
               typename RejectT>
     EntityGroup *GroupManager<UT>::addGetGroup()
     {
-		/*
-        if (!mGroup<RequireT, RejectT>.constructed())
-        {
-            initGroup<RequireT, RejectT>();
-        }
-
-        return &mGroup<RequireT, RejectT>();
-		*/
         if (!groupGetter<RequireT, RejectT>().constructed())
         {
             initGroup<RequireT, RejectT>();
@@ -581,22 +699,31 @@ namespace ent {
     void GroupManager<UT>::checkEntity(EntityId id)
     {
         const ComponentBitset &components(mEM.components(id));
-        GroupBitset &groups(mEM.groups(id));
+        const GroupBitset &groups(mEM.groups(id));
 
         for (EntityGroup *grp : mGroupId)
         {
             bool matches{grp->filter().match(components)};
-            bool groupTest{groups.test(grp->id())};
+            bool groupTest{groups.test(grp->id() + 1)};
             if (!groupTest && matches)
             {
-                groups.set(grp->id());
+                mEM.setGroup(id, grp->id() + 1);
                 grp->add(id);
             }
             else if (groupTest && !matches)
             {
-                groups.reset(grp->id());
+                mEM.resetGroup(id, grp->id() + 1);
                 grp->remove(id);
             }
+        }
+    }
+
+    template <typename UT>
+    void GroupManager<UT>::finalizeGroups()
+    {
+        for (EntityGroup *grp : mGroupId)
+        {
+            grp->finalize();
         }
     }
 
@@ -616,10 +743,9 @@ namespace ent {
         }
 #endif
 
-        //mGroup<RequireT, RejectT>.construct(groupFilter, mGroupId.size());
         groupGetter<RequireT, RejectT>().construct(groupFilter, mGroupId.size());
 
-        //mGroupId.push_back(mGroup<RequireT, RejectT>.ptr());
+        ENT_ASSERT_FAST(mGroupId.size() <= MAX_GROUPS);
         mGroupId.push_back(groupGetter<RequireT, RejectT>().ptr());
         mGroupResets.emplace_back([&] () {
             groupGetter<RequireT, RejectT>().destruct();

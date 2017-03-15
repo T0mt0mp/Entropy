@@ -10,6 +10,7 @@
 #include "Util.h"
 #include "Types.h"
 #include "EntityId.h"
+#include "List.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -134,7 +135,7 @@ namespace ent
 
         /**
          * Checks if the given Entity is active.
-         * !! Does NOT check index bounds !!
+         * Also checks, if the Entity is valid (index + generation).
          * @param id ID of the Entity.
          * @return Returns true, if the Entity is active.
          */
@@ -142,6 +143,7 @@ namespace ent
 
         /**
          * Get Component bitset for given Entity.
+         * !! Does NOT check index bounds !!
          * @param id ID of the Entity.
          * @return Returns reference to the bitset.
          */
@@ -149,28 +151,29 @@ namespace ent
 
         /**
          * Get Group bitset for given Entity.
-         * TODO - return const.
+         * !! Does NOT check index bounds !!
          * @param id ID of the Entity.
          * @return Returns reference to the bitset.
          */
-        inline GroupBitset &groups(EntityId id);
+        inline const GroupBitset &groups(EntityId id);
+
+        /**
+         * Set Entity group flag.
+         * @param id ID of the Entity.
+         * @param groupId ID of the group. Starting at 0 - up to MAX_GROUPS.
+         */
+        inline void setGroup(EntityId id, u64 groupId);
+
+        /**
+         * reset Entity group flag.
+         * @param id ID of the Entity.
+         * @param groupId ID of the group. Starting at 0 - up to MAX_GROUPS.
+         */
+        inline void resetGroup(EntityId id, u64 groupId);
     private:
         /// Record about state of a single Entity
         struct EntityRecord
         {
-            EntityRecord() :
-                components{0}, /*groups{0},*/ generation{0}, active{false}
-            { }
-            EntityRecord(bool isActive) :
-                components{0}, /*groups{0},*/ generation{EntityId::START_GEN}, active{isActive}
-            { }
-            EntityRecord(const EntityRecord &rhs) :
-                components{rhs.components},
-                //groups{rhs.groups},
-                generation{rhs.generation},
-                active{rhs.active}
-            { }
-
             union {
                 /// Present Components bitset.
                 ComponentBitset components;
@@ -178,14 +181,26 @@ namespace ent
                 EIdType nextFree;
             };
 
-            /// Presence in EntityGroups.
+            /// Presence in EntityGroups, lowest significance bit represents information about activity of Entity.
             GroupBitset groups;
 
             /// Current generation number.
             EIdType generation;
-            /// Is the Entity active?
-            bool active;
         };
+
+        /**
+         * Initialize Entity on given index to 0 values.
+         * @param index Index of the Entity.
+         */
+        inline void initEntity(EIdType index);
+
+        /**
+         * Check if Entity on given index is active.
+         * Does NOT check index bounds by itself.
+         * @param index
+         */
+        bool activeImpl(EIdType index) const
+        { return mRecords[index].groups.test(0u); }
 
         /**
          * Check for validity of given index and generation number.
@@ -227,7 +242,7 @@ namespace ent
         inline EIdType popFreeId();
 
         /// Records of Entities.
-        std::vector<EntityRecord> mRecords;
+        List<EntityRecord> mRecords;
         /// Start of the chain of free Entity IDs.
         EIdType mFirstFree;
         /// Last free Entity ID.
@@ -369,12 +384,27 @@ namespace ent
 
         /**
          * Get Groups bitset for given Entity.
-         * TODO - return const.
          * @param id ID of the Entity.
          * @return Returns reference to the bitset.
          */
-        GroupBitset &groups(EntityId id)
+        const GroupBitset &groups(EntityId id)
         { return mEntities.groups(id); }
+
+        /**
+         * Set Entity group flag.
+         * @param id ID of the Entity.
+         * @param groupId ID of the Group - starts at 1, up to MAX_GROUPS.
+         */
+        void setGroup(EntityId id, u64 groupId)
+        { mEntities.setGroup(id, groupId); }
+
+        /**
+         * Reset Entity group flag.
+         * @param id ID of the Entity.
+         * @param groupId ID of the Group - starts at 1, up to MAX_GROUPS.
+         */
+        void resetGroup(EntityId id, u64 groupId)
+        { mEntities.resetGroup(id, groupId); }
     private:
     protected:
         /// Container for the Entities.
@@ -422,13 +452,13 @@ namespace ent
     { return valid(id) && mRecords[id.index()].components.test(index); }
 
     void EntityHolder::activate(EntityId id)
-    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].active = true; }
+    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].groups.set(0u); }
 
     void EntityHolder::deactivate(EntityId id)
-    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].active = false; }
+    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].groups.reset(0u); }
 
     bool EntityHolder::active(EntityId id) const
-    { return valid(id) && mRecords[id.index()].active; }
+    { return valid(id) && activeImpl(id.index()); }
 
     bool EntityHolder::valid(EntityId id) const
     { return validImpl(id.index(), id.generation()); }
@@ -436,8 +466,35 @@ namespace ent
     const ComponentBitset &EntityHolder::components(EntityId id) const
     { ENT_ASSERT_SLOW(valid(id)); return mRecords[id.index()].components; }
 
-    GroupBitset &EntityHolder::groups(EntityId id)
+    const GroupBitset &EntityHolder::groups(EntityId id)
     { ENT_ASSERT_SLOW(valid(id)); return mRecords[id.index()].groups; }
+
+    void EntityHolder::setGroup(EntityId id, u64 groupId)
+    { ENT_ASSERT_SLOW(valid(id) && groupId > 0u && groupId < MAX_GROUPS); mRecords[id.index()].groups.set(groupId); }
+
+    void EntityHolder::resetGroup(EntityId id, u64 groupId)
+    { ENT_ASSERT_SLOW(valid(id) && groupId > 0u && groupId < MAX_GROUPS); mRecords[id.index()].groups.reset(groupId); }
+
+    void EntityHolder::initEntity(EIdType index)
+    {
+        std::memset(&mRecords[index], 0u, sizeof(EntityRecord));
+
+        /*
+        EntityRecord &rec = mRecords[index];
+        rec.generation = EntityId::START_GEN;
+
+        if (sizeof(ComponentBitset) > sizeof(EIdType))
+        {
+            rec.components.reset();
+        }
+        else
+        {
+            rec.nextFree = 0u;
+        }
+
+        rec.groups.reset();
+         */
+    }
 
     void EntityHolder::pushFreeId(EIdType index)
     {
@@ -465,7 +522,8 @@ namespace ent
 
         mFirstFree = mRecords[result].nextFree;
 
-        mNumFree = result ? 0 : mNumFree - 1;
+        // If the result ID is 0, then there are no more IDs available.
+        mNumFree = result ? mNumFree - 1 : 0;
 
         return result;
     }

@@ -455,6 +455,7 @@ TU_Begin(EntropyEntity)
         for (u64 iii = 1; iii <= CREATE_NUM; ++iii)
         {
             TC_RequireEqual(h1.create(), EntityId(iii, 0));
+            TC_Require(h1.active(EntityId(iii, 0)));
         }
         TC_Require(!h1.destroy(EntityId()));
         for (u64 iii = 1; iii <= ent::ENT_MIN_FREE; ++iii)
@@ -579,11 +580,29 @@ TU_Begin(EntropyEntity)
             TC_Require(!ent.get<TestComponent<1>>());
             TC_Require(!ent.get<TestComponent<2>>());
         }
+
+        u.reset();
+        u.init();
+
+        for (u64 iii = 0; iii < 100; ++iii)
+        {
+            Entity e = u.createEntity();
+
+            TC_Require(e.id().index() <= ent::ENT_MIN_FREE);
+
+            e.destroy();
+        }
     }
 
     TU_Case(SystemManager0, "Testing the SystemManager class")
     {
         SecondUniverse::UniverseT &u{SecondUniverse::instance()};
+        TC_RequireEqual(u.registerComponent<TestComponent<0>>(), 0u);
+        TC_RequireEqual(u.registerComponent<TestComponent<1>>(), 1u);
+        TC_RequireEqual(u.registerComponent<TestComponent<2>>(), 2u);
+        TC_RequireEqual(u.componentMask<TestComponent<0>>(), 1u);
+        TC_RequireEqual(u.componentMask<TestComponent<1>>(), 2u);
+        TC_RequireEqual(u.componentMask<TestComponent<2>>(), 4u);
 
         TestSystem *sys1 = u.addSystem<TestSystem>(1u);
         TestSystem2<0> *sys2 = u.addSystem<TestSystem2<0>>(2u);

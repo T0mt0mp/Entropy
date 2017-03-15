@@ -103,6 +103,9 @@ namespace ent
         const_reference operator[](size_type pos) const
         { return mList[pos]; }
 
+        void resize(u64 size)
+        { mList.resize(size); }
+
         /// Create a new list, with the same data.
         ListT toList() const
         { return ListT(mList); }

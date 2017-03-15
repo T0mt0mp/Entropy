@@ -50,8 +50,436 @@ TU_Begin(EntropyMisc)
 
     }
 
+    TU_Case(TripleMergeSort, "Testing triple merge sort")
+    {
+        PROF_BLOCK("TripleMergeSort");
+
+        std::vector<u64> input1{2, 3, 4};
+        std::vector<u64> input2{1, 4, 5, 6, 7};
+        std::vector<u64> input3{0, 4, 7, 8, 9};
+
+        std::vector<u64> output;
+        output.resize(input1.size() + input2.size() + input3.size());
+
+        auto iit1 = input1.cbegin();
+        auto ieit1 = input1.cend();
+        auto iit2 = input2.cbegin();
+        auto ieit2 = input2.cend();
+        auto iit3 = input3.cbegin();
+        auto ieit3 = input3.cend();
+
+        auto oit = output.begin();
+        auto oeit = output.end();
+
+        for (;oit != oeit && (iit1 != ieit1 || iit2 != ieit2 || iit3 != ieit3);
+             ++oit)
+        {
+            /*
+             *                   A < B
+             *           T                   F
+             *         A < C               B < C
+             *    T            F    T               F
+             *    |            |    |               |
+             *    A            C    B               C
+             *                 +    +               +
+             *            ?C == A ?B == A         ?C == B
+             *                                    ?B == A
+             */
+
+            /*
+            // A < B
+            if ((iit1 != ieit1) && ((iit2 != ieit2) || (*iit1 < *iit2)))
+            { // A < B
+                // A < C
+                if ((iit3 != ieit3) || (*iit1 < *iit3))
+                { // A < C
+                    // -> A
+                    *oit = *iit1;
+                    ++iit1;
+                }
+                else
+                { // C <= A
+                    // -> C + ?C == A?
+                    *oit = *iit3;
+                    ++iit3;
+                }
+            }
+            else
+            { // B >= A
+                // B < C
+                if ((iit2 != ieit2) && ((iit3 != ieit3) || (*iit2 < *iit3)))
+                { // B < C
+                    // -> B + ?B == A?
+                    *oit = *iit2;
+                    ++iit2;
+                }
+                else
+                { // C >= B >= A
+                    // -> C + ?C == B? + ?B == A?
+                    *oit = *iit3;
+                    ++iit3;
+                }
+            }
+             */
+
+            bool a{iit1 != ieit1};
+            ENT_UNUSED(a);
+            bool b{iit2 != ieit2};
+            ENT_UNUSED(b);
+            bool c{iit3 != ieit3};
+            ENT_UNUSED(c);
+            *oit = (iit1 != ieit1) && ((iit2 == ieit2) || (*iit1 < *iit2)) ?
+                   (iit3 == ieit3) || (*iit1 < *iit3) ?
+                   (*iit1) : (*iit3)
+                                                                           :
+                   (iit2 != ieit2) && ((iit3 == ieit3) || (*iit2 < *iit3)) ?
+                   (*iit2) : (*iit3);
+
+            while ((iit1 != ieit1) && (*iit1 == *oit))
+            {
+                ++iit1;
+            }
+            while ((iit2 != ieit2) && (*iit2 == *oit))
+            {
+                ++iit2;
+            }
+            while ((iit3 != ieit3) && (*iit3 == *oit))
+            {
+                ++iit3;
+            }
+        }
+
+        u64 finalSize{static_cast<u64>(oit - output.begin())};
+        TC_RequireEqual(finalSize, 10u);
+        output.resize(finalSize);
+
+        u64 counter{0};
+        for (u64 &el : output)
+        {
+            TC_RequireEqual(el, counter);
+            counter++;
+        }
+
+        TC_RequireEqual(counter, 10u);
+    }
+
+    TU_Case(InfoBitset0, "Testing the InfoBitset class")
+    {
+        PROF_SCOPE("Bitsets");
+
+        {
+            PROF_SCOPE("Bitset size 199.");
+
+            static ENT_CONSTEXPR_EXPR u64 SIZE{199u};
+            using Bitset = ent::InfoBitset<SIZE>;
+            TC_RequireEqual(Bitset::size(), SIZE);
+            TC_RequireEqual(sizeof(Bitset), 4 * sizeof(u64));
+            TC_RequireEqual(Bitset::excess(), 256u - SIZE);
+
+            Bitset bitset1;
+            TC_Require(bitset1.none());
+
+            bitset1.set(SIZE - 1);
+            TC_Require(bitset1.any());
+            TC_RequireEqual(bitset1.count(), 1u);
+            TC_Require(bitset1.test(SIZE - 1));
+
+            bitset1.set();
+            TC_Require(bitset1.all());
+
+            bitset1.reset();
+            TC_Require(!bitset1.all());
+            TC_Require(!bitset1.any());
+            TC_Require(bitset1.none());
+
+            for (u64 iii = 0; iii < SIZE; ++iii)
+            {
+                bitset1.set(iii);
+            }
+            TC_Require(bitset1.all());
+            TC_Require(bitset1.any());
+            TC_Require(!bitset1.none());
+            for (u64 iii = 0; iii < SIZE; ++iii)
+            {
+                TC_Require(bitset1.test(iii));
+            }
+            TC_RequireEqual(bitset1.count(), SIZE);
+
+            static constexpr u64 POS{4};
+            Bitset bitset2{1u << POS};
+            TC_Require(!bitset2.all());
+            TC_Require(bitset2.any());
+            TC_Require(!bitset2.none());
+            TC_Require(bitset2.test(POS));
+
+            TC_RequireNEqual(bitset1, bitset2);
+            TC_RequireNEqual(bitset2, bitset1);
+
+            std::string test(SIZE, '0');
+            test[4] = '1';
+            TC_RequireEqual(bitset2.toString(), test);
+
+            Bitset bitset3(bitset1);
+            TC_Require(bitset3.all());
+            TC_Require(bitset3.any());
+            TC_Require(!bitset3.none());
+
+            TC_RequireEqual(bitset1, bitset3);
+            TC_RequireEqual(bitset3, bitset1);
+
+            bitset2.copy(bitset3);
+            TC_RequireEqual(bitset2, bitset3);
+            TC_RequireEqual(bitset2, bitset1);
+
+            Bitset bitset4;
+            TC_RequireNEqual(bitset4, bitset1);
+
+            bitset2.swap(bitset4);
+            TC_Require(!bitset2.all());
+            TC_Require(!bitset2.any());
+            TC_Require(bitset2.none());
+            TC_RequireEqual(bitset4, bitset1);
+
+            TC_RequireEqual(bitset2 | bitset4, bitset4);
+            TC_RequireEqual(Bitset{62u} & bitset4, Bitset{62u});
+        }
+
+        {
+            PROF_SCOPE("Bitset size 128.");
+
+            static ENT_CONSTEXPR_EXPR u64 SIZE{128u};
+            using Bitset = ent::InfoBitset<SIZE>;
+            TC_RequireEqual(Bitset::size(), SIZE);
+            TC_RequireEqual(sizeof(Bitset), 2 * sizeof(u64));
+            TC_RequireEqual(Bitset::excess(), 0u);
+
+            Bitset bitset1;
+            TC_Require(bitset1.none());
+
+            bitset1.set(SIZE - 1);
+            TC_Require(bitset1.any());
+            TC_RequireEqual(bitset1.count(), 1u);
+            TC_Require(bitset1.test(SIZE - 1));
+
+            bitset1.set();
+            TC_Require(bitset1.all());
+
+            bitset1.reset();
+            TC_Require(!bitset1.all());
+            TC_Require(!bitset1.any());
+            TC_Require(bitset1.none());
+
+            for (u64 iii = 0; iii < SIZE; ++iii)
+            {
+                bitset1.set(iii);
+            }
+            TC_Require(bitset1.all());
+            TC_Require(bitset1.any());
+            TC_Require(!bitset1.none());
+            for (u64 iii = 0; iii < SIZE; ++iii)
+            {
+                TC_Require(bitset1.test(iii));
+            }
+            TC_RequireEqual(bitset1.count(), SIZE);
+
+            static constexpr u64 POS{4};
+            Bitset bitset2{1u << POS};
+            TC_Require(!bitset2.all());
+            TC_Require(bitset2.any());
+            TC_Require(!bitset2.none());
+            TC_Require(bitset2.test(POS));
+
+            TC_RequireNEqual(bitset1, bitset2);
+            TC_RequireNEqual(bitset2, bitset1);
+
+            std::string test(SIZE, '0');
+            test[4] = '1';
+            TC_RequireEqual(bitset2.toString(), test);
+
+            Bitset bitset3(bitset1);
+            TC_Require(bitset3.all());
+            TC_Require(bitset3.any());
+            TC_Require(!bitset3.none());
+
+            TC_RequireEqual(bitset1, bitset3);
+            TC_RequireEqual(bitset3, bitset1);
+
+            bitset2.copy(bitset3);
+            TC_RequireEqual(bitset2, bitset3);
+            TC_RequireEqual(bitset2, bitset1);
+
+            Bitset bitset4;
+            TC_RequireNEqual(bitset4, bitset1);
+
+            bitset2.swap(bitset4);
+            TC_Require(!bitset2.all());
+            TC_Require(!bitset2.any());
+            TC_Require(bitset2.none());
+            TC_RequireEqual(bitset4, bitset1);
+
+            TC_RequireEqual(bitset2 | bitset4, bitset4);
+            TC_RequireEqual(Bitset{62u} & bitset4, Bitset{62u});
+        }
+
+        {
+            PROF_SCOPE("Bitset size 64.");
+
+            static ENT_CONSTEXPR_EXPR u64 SIZE{64u};
+            using Bitset = ent::InfoBitset<SIZE>;
+            TC_RequireEqual(Bitset::size(), SIZE);
+            TC_RequireEqual(sizeof(Bitset), sizeof(u64));
+            TC_RequireEqual(Bitset::excess(), 0u);
+
+            Bitset bitset1;
+            TC_Require(bitset1.none());
+
+            bitset1.set(SIZE - 1);
+            TC_Require(bitset1.any());
+            TC_RequireEqual(bitset1.count(), 1u);
+            TC_Require(bitset1.test(SIZE - 1));
+
+            bitset1.set();
+            TC_Require(bitset1.all());
+
+            bitset1.reset();
+            TC_Require(!bitset1.all());
+            TC_Require(!bitset1.any());
+            TC_Require(bitset1.none());
+
+            for (u64 iii = 0; iii < SIZE; ++iii)
+            {
+                bitset1.set(iii);
+            }
+            TC_Require(bitset1.all());
+            TC_Require(bitset1.any());
+            TC_Require(!bitset1.none());
+            for (u64 iii = 0; iii < SIZE; ++iii)
+            {
+                TC_Require(bitset1.test(iii));
+            }
+            TC_RequireEqual(bitset1.count(), SIZE);
+
+            static constexpr u64 POS{4};
+            Bitset bitset2{1u << POS};
+            TC_Require(!bitset2.all());
+            TC_Require(bitset2.any());
+            TC_Require(!bitset2.none());
+            TC_Require(bitset2.test(POS));
+
+            TC_RequireNEqual(bitset1, bitset2);
+            TC_RequireNEqual(bitset2, bitset1);
+
+            std::string test(SIZE, '0');
+            test[4] = '1';
+            TC_RequireEqual(bitset2.toString(), test);
+
+            Bitset bitset3(bitset1);
+            TC_Require(bitset3.all());
+            TC_Require(bitset3.any());
+            TC_Require(!bitset3.none());
+
+            TC_RequireEqual(bitset1, bitset3);
+            TC_RequireEqual(bitset3, bitset1);
+
+            bitset2.copy(bitset3);
+            TC_RequireEqual(bitset2, bitset3);
+            TC_RequireEqual(bitset2, bitset1);
+
+            Bitset bitset4;
+            TC_RequireNEqual(bitset4, bitset1);
+
+            bitset2.swap(bitset4);
+            TC_Require(!bitset2.all());
+            TC_Require(!bitset2.any());
+            TC_Require(bitset2.none());
+            TC_RequireEqual(bitset4, bitset1);
+
+            TC_RequireEqual(bitset2 | bitset4, bitset4);
+            TC_RequireEqual(Bitset{62u} & bitset4, Bitset{62u});
+        }
+
+        {
+            PROF_SCOPE("Bitset size 32.");
+
+            static ENT_CONSTEXPR_EXPR u64 SIZE{32u};
+            using Bitset = ent::InfoBitset<SIZE>;
+            TC_RequireEqual(Bitset::size(), SIZE);
+            TC_RequireEqual(sizeof(Bitset), sizeof(u64));
+            TC_RequireEqual(Bitset::excess(), 32u);
+
+            Bitset bitset1;
+            TC_Require(bitset1.none());
+
+            bitset1.set(SIZE - 1);
+            TC_Require(bitset1.any());
+            TC_RequireEqual(bitset1.count(), 1u);
+            TC_Require(bitset1.test(SIZE - 1));
+
+            bitset1.set();
+            TC_Require(bitset1.all());
+
+            bitset1.reset();
+            TC_Require(!bitset1.all());
+            TC_Require(!bitset1.any());
+            TC_Require(bitset1.none());
+
+            for (u64 iii = 0; iii < SIZE; ++iii)
+            {
+                bitset1.set(iii);
+            }
+            TC_Require(bitset1.all());
+            TC_Require(bitset1.any());
+            TC_Require(!bitset1.none());
+            for (u64 iii = 0; iii < SIZE; ++iii)
+            {
+                TC_Require(bitset1.test(iii));
+            }
+            TC_RequireEqual(bitset1.count(), SIZE);
+
+            static constexpr u64 POS{4};
+            Bitset bitset2{1u << POS};
+            TC_Require(!bitset2.all());
+            TC_Require(bitset2.any());
+            TC_Require(!bitset2.none());
+            TC_Require(bitset2.test(POS));
+
+            TC_RequireNEqual(bitset1, bitset2);
+            TC_RequireNEqual(bitset2, bitset1);
+
+            std::string test(SIZE, '0');
+            test[4] = '1';
+            TC_RequireEqual(bitset2.toString(), test);
+
+            Bitset bitset3(bitset1);
+            TC_Require(bitset3.all());
+            TC_Require(bitset3.any());
+            TC_Require(!bitset3.none());
+
+            TC_RequireEqual(bitset1, bitset3);
+            TC_RequireEqual(bitset3, bitset1);
+
+            bitset2.copy(bitset3);
+            TC_RequireEqual(bitset2, bitset3);
+            TC_RequireEqual(bitset2, bitset1);
+
+            Bitset bitset4;
+            TC_RequireNEqual(bitset4, bitset1);
+
+            bitset2.swap(bitset4);
+            TC_Require(!bitset2.all());
+            TC_Require(!bitset2.any());
+            TC_Require(bitset2.none());
+            TC_RequireEqual(bitset4, bitset1);
+
+            TC_RequireEqual(bitset2 | bitset4, bitset4);
+            TC_RequireEqual(Bitset{62u} & bitset4, Bitset{62u});
+        }
+    }
+
     TU_Case(List0, "Testing the List class")
     {
+        PROF_SCOPE("List0");
+
         ent::List<u64> list0;
 
         TC_RequireEqual(list0.size(), 0u);
@@ -109,6 +537,8 @@ TU_Begin(EntropyMisc)
 
     TU_Case(List1, "Testing the List class")
     {
+        PROF_SCOPE("List1");
+
         ent::List<ListTester> list1(1000);
 
         TC_RequireEqual(list1.size(), 1000u);
@@ -193,6 +623,8 @@ TU_Begin(EntropyMisc)
 
     TU_Case(List2, "Testing the List class")
     {
+        PROF_SCOPE("List2");
+
         ent::List<u64> list2(1000u, 1u);
 
         ent::List<u64> list21;
@@ -232,11 +664,13 @@ TU_Begin(EntropyMisc)
 
     TU_Case(ListPerformance, "Testing the List performance")
     {
+        PROF_SCOPE("ListPerformance");
+
         using Type = ent::EntityId;
         using List = ent::List<Type>;
         using Vector = std::vector<Type>;
-        static ENT_CONSTEXPR u64 SIZE{1000000};
-        static ENT_CONSTEXPR ent::EntityId VALUE{0};
+        static ENT_CONSTEXPR_EXPR u64 SIZE{1000};
+        static ENT_CONSTEXPR_EXPR ent::EntityId VALUE{0};
 
         {
             PROF_SCOPE("Construct empty");
@@ -352,7 +786,9 @@ TU_Begin(EntropyMisc)
 
     TU_Case(SortedList, "Testing the SortedList class")
     {
-        static constexpr u64 NUM_ELEMENTS{100000};
+        PROF_SCOPE("SortedList");
+
+        static constexpr u64 NUM_ELEMENTS{1000};
         ent::SortedList<u64> list;
 
         for (u64 iii = NUM_ELEMENTS; iii > 0; --iii)

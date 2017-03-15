@@ -100,6 +100,7 @@ namespace ent
             mGM.checkEntity(id);
         }
 
+        mGM.finalizeGroups();
         mChanged.clear();
     }
 
@@ -113,9 +114,12 @@ namespace ent
     template <typename ComponentT>
     inline ComponentT *ActionCache<UT>::addComponent(EntityId id)
     {
+        // Is the component registered?
+        ENT_ASSERT_SLOW(mCM.template registered<ComponentT>());
+
         ComponentT *res{mCM.template add<ComponentT>(id)};
 
-        mChanged.insert(id);
+        mChanged.insertUnique(id);
 
         return res;
     }
@@ -124,7 +128,10 @@ namespace ent
     template <typename ComponentT>
     inline void ActionCache<UT>::removeComponent(EntityId id)
     {
-        mChanged.insert(id);
+        // Is the component registered?
+        ENT_ASSERT_SLOW(mCM.template registered<ComponentT>());
+
+        mChanged.insertUnique(id);
 
         mCM.template remove<ComponentT>(id);
     }

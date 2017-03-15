@@ -10,13 +10,9 @@
 namespace ent
 {
     // EntityHolder implementation.
-    EntityHolder::EntityHolder() :
-        mFirstFree{0},
-        mLastFree{0},
-        mNumFree{0}
+    EntityHolder::EntityHolder()
     {
-        // Create the 0th record, valid Entity indexes start at 1!.
-        mRecords.emplace_back();
+        reset();
     }
 
     void EntityHolder::reset()
@@ -24,7 +20,12 @@ namespace ent
         mNumFree = 0;
         mFirstFree = 0;
         mLastFree = 0;
-        mRecords.clear();
+        mRecords.reclaim();
+
+        mRecords.reserve(ENT_MIN_FREE);
+        // Create the 0th record, valid Entity indexes start at 1!.
+        mRecords.resize(1u);
+        initEntity(0u);
     }
 
     EntityId EntityHolder::create()
@@ -36,20 +37,27 @@ namespace ent
         {
             index = popFreeId();
             ENT_ASSERT_SLOW(index);
+
+            mRecords[index].groups.set(0u);
+            mRecords[index].components.reset();
+
             // Generation is incremented in Entity destroy.
             gen = mRecords[index].generation;
-            mRecords[index].active = true;
-            mRecords[index].components = 0;
-            //mRecords[index].groups = 0;
-        } else
+        }
+        else
         {
             u64 numEntities{mRecords.size()};
             ENT_ASSERT_SLOW(numEntities < EntityId::MAX_ENTITIES);
+
             index = static_cast<EIdType>(mRecords.size());
+
+            /// Create new EntityRecord without initializing it.
+            mRecords.resize(index + 1u);
+            initEntity(index);
+
+            mRecords[index].groups.set(0u);
+            mRecords[index].generation = EntityId::START_GEN;
             gen = EntityId::START_GEN;
-            //mRecords.emplace_back(EntityRecord{true, 0, EntityId::START_GEN});
-            // Create new active Entity
-            mRecords.emplace_back(true);
         }
 
         return EntityId(index, gen);
@@ -63,11 +71,8 @@ namespace ent
         }
 
         EntityRecord &rec(mRecords[id.index()]);
-        rec.active = false;
-        // TODO - Not actually an error?
-        ENT_ASSERT_SLOW(rec.generation < EntityId::MAX_GEN);
-        rec.generation++;
-
+        rec.groups.reset();
+        rec.generation = rec.generation == EntityId::MAX_GEN ? 0u : rec.generation + 1;
         pushFreeId(id.index());
 
         return true;

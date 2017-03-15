@@ -14,7 +14,8 @@ namespace ent
         mFilter{filter},
         mId{groupId}
     {
-
+        mEntities = &mEntityBuffers[0];
+        mEntitiesBack = &mEntityBuffers[1];
     }
     // EntityGroup implementation end.
 } // namespace ent

@@ -16,10 +16,24 @@
 
 #include "Assert.h"
 
-#ifdef _MSC_VER
-#	define ENT_CONSTEXPR const
+#if defined(__GNUC__) || defined(__GNUG__)
+#   define ENT_GCC
+#   define popcount64(var) __builtin_popcountll(var)
+#elif defined(__clang__)
+#   define ENT_CLANG
+#   define popcount64(var) __builtin_popcountll(var)
+#elif defined(_MSC_VER)
+#   define ENT_MSC
+#   include<intrin.h>
+#   define popcount64(var) __popcnt64(var)
+#endif
+
+#ifdef ENT_MSC
+#	define ENT_CONSTEXPR_EXPR const
+#	define ENT_CONSTEXPR_FUN
 #else
-#	define ENT_CONSTEXPR constexpr
+#	define ENT_CONSTEXPR_EXPR constexpr
+#	define ENT_CONSTEXPR_FUN constexpr
 #endif
 
 /// Main Entropy namespace
@@ -61,8 +75,8 @@ namespace ent
     /// Maximum number of component types per Universe.
     static constexpr std::size_t MAX_COMPONENTS{64};
 
-    /// Maximum number of EntityGroups per Universe.
-    static constexpr std::size_t MAX_GROUPS{64};
+    /// Maximum number of EntityGroups per Universe. +1 will be added for the activity flag.
+    static constexpr std::size_t MAX_GROUPS{63};
 
 } // namespace ent
 

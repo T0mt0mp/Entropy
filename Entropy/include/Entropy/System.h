@@ -221,23 +221,14 @@ namespace ent
                       "System has to inherit from ent::System !");
         static_assert(sizeof(SystemT(cArgs...)), "System has to be instantiable!");
 
-        //mSystem<SystemT>.construct(std::forward<CArgTs>(cArgs)...);
         systemGetter<SystemT>().construct(std::forward<CArgTs>(cArgs)...);
         using Extract = RequireRejectExtractor<SystemT>;
-		/*
-        mSystem<SystemT>().setGroup(
-            mGM.template addGetGroup<
-                typename Extract::RequireT,
-                typename Extract::RejectT
-            >());
-		*/
         systemGetter<SystemT>()().setGroup(
             mGM.template addGetGroup<
                 typename Extract::RequireT,
                 typename Extract::RejectT
             >());
 
-        //SystemT *sys{mSystem<SystemT>.ptr()};
         SystemT *sys{systemGetter<SystemT>().ptr()};
 
         mSystemResets.emplace_back([&] () {
