@@ -178,7 +178,7 @@ namespace ent
         /// Universe this System works for.
         UniverseT *mUniverse;
     protected:
-    }; // System
+    }; // class System
 
     // SystemManager implementation.
 	/*

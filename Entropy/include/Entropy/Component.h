@@ -428,6 +428,11 @@ namespace ent
               typename HolderT>
     ComponentT *ComponentManager<UT>::add(EntityId id)
     {
+        if (!registered<ComponentT>())
+        {
+            return nullptr;
+        }
+
         ComponentT *result{getHolder<HolderT>().add(id)};
 
         if (result)
@@ -443,6 +448,11 @@ namespace ent
         typename HolderT>
     inline ComponentT *ComponentManager<UT>::get(EntityId id)
     {
+        if (!registered<ComponentT>())
+        {
+            return nullptr;
+        }
+
         return getHolder<HolderT>().get(id);
     }
 
@@ -451,7 +461,7 @@ namespace ent
         typename HolderT>
     inline bool ComponentManager<UT>::has(EntityId id)
     {
-        return mEM.hasComponent(id, ComponentManager<UT>::id<ComponentT>());
+        return registered<ComponentT>() ? mEM.hasComponent(id, ComponentManager<UT>::id<ComponentT>()) : false;
     }
 
     template <typename UT>
@@ -459,6 +469,11 @@ namespace ent
         typename HolderT>
     inline void ComponentManager<UT>::remove(EntityId id)
     {
+        if (!registered<ComponentT>())
+        {
+            return ;
+        }
+
         mEM.removeComponent(id, ComponentManager<UT>::id<ComponentT>());
 
         return getHolder<HolderT>().remove(id);

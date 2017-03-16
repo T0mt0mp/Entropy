@@ -237,7 +237,7 @@ namespace ent {
          */
         template <typename UT>
         EntityList<UT, EntityListT> foreach(UT *uni)
-        { return EntityList<UT, EntityListT>(uni, *mEntities); }
+        { return EntityList<UT, EntityListT>(uni, *entitiesFront()); }
 
         /**
          * Get foreach iterator object, iterating over added Entities.
@@ -532,98 +532,60 @@ namespace ent {
 
     void EntityGroup::finalize()
     {
+        if (mAdded.size() == 0u && mRemoved.size() == 0u)
+        { // Nothing needs to be done in this case.
+            return;
+        }
+
         std::sort(mAdded.begin(), mAdded.end());
         std::sort(mRemoved.begin(), mRemoved.end());
 
         // Assure the size for the back buffer.
-        entitiesBack()->resize(entitiesFront()->size() + mAdded.size() + mRemoved.size());
+        entitiesBack()->resize(entitiesFront()->size() + mAdded.size());
         // Sort the new list into the back buffer.
-        auto iit1 = mAdded.cbegin();
-        auto ieit1 = mAdded.cend();
-        auto iit2 = mRemoved.cbegin();
-        auto ieit2 = mRemoved.cend();
-        auto iit3 = entitiesFront()->cbegin();
-        auto ieit3 = entitiesFront()->cend();
+        auto ait = mAdded.cbegin();
+        auto aeit = mAdded.cend();
+        auto rit = mRemoved.cbegin();
+        auto reit = mRemoved.cend();
+        auto fit = entitiesFront()->cbegin();
+        auto feit = entitiesFront()->cend();
 
         auto oit = entitiesBack()->begin();
         auto oeit = entitiesBack()->end();
 
         for (;
-             oit != oeit && (iit1 != ieit1 || iit2 != ieit2 || iit3 != ieit3);
+             oit != oeit && (ait != aeit || fit != feit);
              ++oit)
         {
             /*
-             *                   A < B
-             *           T                   F
-             *         A < C               B < C
-             *    T            F    T               F
-             *    |            |    |               |
-             *    A            C    B               C
-             *                 +    +               +
-             *            ?C == A ?B == A         ?C == B
-             *                                    ?B == A
+             * Merge-sort mAdded and entities front buffer, while removing Entities
+             * from the mRemoved list.
+             * All 3 lists are sorted and contain only unique elements.
+             * mAdded and mRemoved do not contain same elements.
+             * mAdded and entities front buffer do not contain same elements.
+             * Each element in mRemoved MUST be in entities front buffer.
              */
 
-            /*
-            // A < B
-            if ((iit1 != ieit1) && ((iit2 != ieit2) || (*iit1 < *iit2)))
-            { // A < B
-                // A < C
-                if ((iit3 != ieit3) || (*iit1 < *iit3))
-                { // A < C
-                    // -> A
-                    *oit = *iit1;
-                    ++iit1;
-                }
-                else
-                { // C <= A
-                    // -> C + ?C == A?
-                    *oit = *iit3;
-                    ++iit3;
-                }
+            // mRemoved should be used up at most at the same time as the entities front buffer.
+            while (rit != reit && (*rit == *fit))
+            { // Eat the elements which should be removed.
+                ++rit;
+                ++fit;
             }
-            else
-            { // B >= A
-                // B < C
-                if ((iit2 != ieit2) && ((iit3 != ieit3) || (*iit2 < *iit3)))
-                { // B < C
-                    // -> B + ?B == A?
-                    *oit = *iit2;
-                    ++iit2;
-                }
-                else
-                { // C >= B >= A
-                    // -> C + ?C == B? + ?B == A?
-                    *oit = *iit3;
-                    ++iit3;
-                }
-            }
-             */
 
-            *oit = (iit1 != ieit1) && ((iit2 == ieit2) || (*iit1 < *iit2)) ?
-                   (iit3 == ieit3) || (*iit1 < *iit3) ?
-                   (*iit1) : (*iit3)
-                                                                           :
-                   (iit2 != ieit2) && ((iit3 == ieit3) || (*iit2 < *iit3)) ?
-                   (*iit2) : (*iit3);
+            if (ait == aeit && fit == feit)
+            { // All lists are used up.
+                break;
+            }
 
-            while ((iit1 != ieit1) && (*iit1 == *oit))
-            {
-                ++iit1;
-            }
-            while ((iit2 != ieit2) && (*iit2 == *oit))
-            {
-                ++iit2;
-            }
-            while ((iit3 != ieit3) && (*iit3 == *oit))
-            {
-                ++iit3;
-            }
+            // *ait != *fit is always true.
+            *oit = (fit == feit) || ((ait != aeit) && (*ait < *fit)) ? *(ait++) : *(fit++);
         }
 
-        ENT_ASSERT_SLOW(iit1 == ieit1);
-        ENT_ASSERT_SLOW(iit2 == ieit2);
-        ENT_ASSERT_SLOW(iit3 == ieit3);
+        // All inputs should be fully used.
+        ENT_ASSERT_SLOW(ait == aeit);
+        ENT_ASSERT_SLOW(rit == reit);
+        ENT_ASSERT_SLOW(fit == feit);
 
         u64 finalSize{static_cast<u64>(oit - entitiesBack()->begin())};
         entitiesBack()->resize(finalSize);

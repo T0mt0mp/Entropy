@@ -709,11 +709,15 @@ namespace ent
         typename Allocator>
     void List<T, Allocator>::resize(size_type size)
     {
+        /*
         if (mInUse < size)
         {
             reserve(size);
             mInUse = size;
         }
+         */
+        reserve(size);
+        mInUse = size;
     }
 
     template <typename T,

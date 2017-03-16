@@ -53,11 +53,17 @@ namespace ent
 
         /// Equal operator.
         ENT_CONSTEXPR_FUN bool operator==(const EntityId &rhs) const
-        { return mId == rhs.mId; }
+        { return index() == rhs.index(); }
 
         /// Compare operator.
         ENT_CONSTEXPR_FUN bool operator<(const EntityId &rhs) const
         { return index() < rhs.index(); }
+        ENT_CONSTEXPR_FUN bool operator<=(const EntityId &rhs) const
+        { return index() <= rhs.index(); }
+        ENT_CONSTEXPR_FUN bool operator>(const EntityId &rhs) const
+        { return index() > rhs.index(); }
+        ENT_CONSTEXPR_FUN bool operator>=(const EntityId &rhs) const
+        { return index() >= rhs.index(); }
 
         /// Print operator.
         friend std::ostream &operator<<(std::ostream &out, const EntityId &id);

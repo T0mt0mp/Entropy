@@ -431,18 +431,18 @@ TU_Begin(EntropyEntity)
         SecondUniverse::UniverseT *un2{reinterpret_cast<SecondUniverse::UniverseT*>(2u)};
         EntityT1 ent11(un1, 1);
         EntityT2 ent21(un2, 2);
-        TC_Require(ent11.universe() == un1 && ent11.id() == 1);
-        TC_Require(ent21.universe() == un2 && ent21.id() == 2);
+        TC_Require(ent11.universe() == un1 && ent11.id().index() == 1);
+        TC_Require(ent21.universe() == un2 && ent21.id().index() == 2);
         EntityT1 ent12(ent11);
         EntityT2 ent22(ent21);
-        TC_Require(ent12.universe() == un1 && ent12.id() == 1);
-        TC_Require(ent22.universe() == un2 && ent22.id() == 2);
+        TC_Require(ent12.universe() == un1 && ent12.id().index() == 1);
+        TC_Require(ent22.universe() == un2 && ent22.id().index() == 2);
         TC_Require(ent12 == ent11);
         TC_Require(ent22 == ent21);
         ent12 = ent21;
         ent22 = ent11;
-        TC_Require(ent12.universe() == un1 && ent12.id() == 2);
-        TC_Require(ent22.universe() == un2 && ent22.id() == 1);
+        TC_Require(ent12.universe() == un1 && ent12.id().index() == 2);
+        TC_Require(ent22.universe() == un2 && ent22.id().index() == 1);
     }
 
     TU_Case(EntityHolder0, "Testing the EntityHolder class")
@@ -670,8 +670,17 @@ TU_Begin(EntropyEntity)
 
         TC_Require(sys->foreach().size() == 0);
 
+        u64 lastSysEnt{0u};
+        u64 sysEnt{0u};
+        u64 sysAdded{0u};
+        u64 sysRemoved{0u};
+
         for (u64 it = 1; it <= NUM_ITERATIONS; ++it)
         {
+            lastSysEnt = sysEnt;
+            sysRemoved = 0u;
+            sysAdded = 0u;
+
             for (u64 iii = 0; iii < NUM_ENTITIES; ++iii)
             {
                 PROF_BLOCK("Creating Entities");
@@ -679,34 +688,51 @@ TU_Begin(EntropyEntity)
                 PROF_BLOCK_END();
                 TC_Require(e.id().index());
                 PROF_BLOCK("Adding Components");
+                sysAdded++;
+                sysEnt++;
                 e.add<Position>();
                 e.add<Velocity>();
                 PROF_BLOCK_END();
             }
 
-            TC_Require(sys->foreach().size() == NUM_ENTITIES * (it - 1u));
+            TC_Require(sys->foreach().size() == lastSysEnt);
 
             PROF_BLOCK("Refresh after adding Entities");
             u.refresh();
             PROF_BLOCK_END();
 
-            TC_RequireEqual(sys->foreachAdded().size(), NUM_ENTITIES);
-            TC_RequireEqual(sys->foreachRemoved().size(), 0u);
-            TC_RequireEqual(sys->foreach().size(), NUM_ENTITIES * it);
+            TC_RequireEqual(sys->foreachAdded().size(), sysAdded);
+            TC_RequireEqual(sys->foreachRemoved().size(), sysRemoved);
+            TC_RequireEqual(sys->foreach().size(), sysEnt);
+
+            sysRemoved = 0u;
+            sysAdded = 0u;
 
             PROF_BLOCK("Iteration over Entities");
             for (auto &e : sys->foreach())
             {
-                UNUSED(e.get<Position>());
-                UNUSED(e.get<Velocity>());
+                if (e.has<Position>() && e.has<Velocity>())
+                {
+                    sysRemoved++;
+                    sysEnt--;
+                    e.remove<Position>();
+                    e.remove<Velocity>();
+                }
+                else
+                {
+                    sysAdded++;
+                    sysEnt++;
+                    e.add<Position>();
+                    e.add<Velocity>();
+                }
             }
             PROF_BLOCK_END();
 
             u.refresh();
 
-            TC_RequireEqual(sys->foreachAdded().size(), 0u);
-            TC_RequireEqual(sys->foreachRemoved().size(), 0u);
-            TC_RequireEqual(sys->foreach().size(), NUM_ENTITIES * it);
+            TC_RequireEqual(sys->foreachAdded().size(), sysAdded);
+            TC_RequireEqual(sys->foreachRemoved().size(), sysRemoved);
+            TC_RequireEqual(sys->foreach().size(), sysEnt);
         }
     }
 

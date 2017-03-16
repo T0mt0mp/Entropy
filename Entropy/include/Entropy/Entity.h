@@ -244,7 +244,7 @@ namespace ent
     template <typename UniverseT>
     bool Entity<UniverseT>::operator==(const Entity &rhs) const
     {
-        return mId == rhs.mId;
+        return mId == rhs.mId && mId.generation() == rhs.mId.generation();
     }
     // Entity implementation end.
 } // namespace ent

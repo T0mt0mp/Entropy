@@ -360,10 +360,11 @@ namespace ent
     template <typename CT>
     CT* ComponentHolderList<CT>::get(EntityId id) noexcept
     {
-        try
+        if (id.index() < mList.size())
         {
-            return &mList.at(id.index());
-        } catch(...)
+            return &mList[id.index()];
+        }
+        else
         {
             return nullptr;
         }
