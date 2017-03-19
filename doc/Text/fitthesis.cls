@@ -794,7 +794,14 @@
 % commands for TODO
 \newcommand{\todo}[1]{\textcolor{red}{\textbf{[[#1]]}}}
 \newcommand{\phony}[1]{\textcolor{gray}{#1}}
-\newcommand{\blind}[1]{\textcolor{gray}{\Blindtext[#1]}}
+\newcommand{\blind}[1][1]{\textcolor{gray}{\Blindtext[#1][1]}}
+
+% TODO image
+\setlength{\fboxsep}{0.005pt}
+\newcommand{\tmpframe}[1]{\fbox{#1}}
+%\newcommand{\tmpframe}[1]{#1}
+
+\graphicspath{{figures/}}
 
 
 % Sloupec zarovnaný vlevo s pevnou šířkou

@@ -7,6 +7,15 @@ ECS-FIT.dir/
 Win32/
 test/
 
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.log
+*.ptc
+*.synctex.gz
+*.toc
+
 # Compiled Object files
 *.slo
 *.lo
