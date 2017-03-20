@@ -1,20 +1,216 @@
 %=========================================================================
 % (c) Michal Bidlo, Bohuslav Křena, 2008
 
+
 \chapter{Úvod}
-\todo{Napsat úvod}
+\todo{Shrnutí cílů}
+\blind[1]
+\todo{Teorie, proč se tím zaobírat}
+\blind[1]
+\todo{Návrh a implementace}
+\blind[1]
+\todo{Vyhodnocení}
+\blind[1]
+
+
+\chapter{Teoretický rozbor}
+\todo{Popis kapitoly}
+\blind[1]
+
+\section{Požadavky na návrh software}
+\todo{Délka, složitost. Potřeba oddělení částí.}
+\blind[2]
+
+\section{Datově orientovaný návrh}
+\todo{Proč se používá, architektura PC.}
+\blind[4]
+
+\section{Reprezentace entit a jejich chování}
+\todo{Co to je entita, chování}
+\blind[2]
+
+\subsection{Objektově orientovaná hierarchie}
+\todo{Popis, příklad, vyhodnocení výhod/nevýhod}
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Příklad objektově orientované hierarchie. \todo{Vytvořit}}
+\end{figure}
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Obsah paměti u objektově orientovaných hierarchií. \todo{Vytvořit}}
+\end{figure}
 \blind[3]
 
+\subsection{Objektově orientovaná kompozice}
+\todo{Popis, příklad, vyhodnocení výhod/nevýhod}
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Příklad objektově orientované kompozice. \todo{Vytvořit}}
+\end{figure}
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Obsah paměti u objektově orientované kompozice. \todo{Vytvořit}}
+\end{figure}
+\blind[3]
+
+\subsection{Datově orientovaná kompozice}
+\todo{Popis, příklad, vyhodnocení výhod/nevýhod}
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Příklad datově orientované kompozice. \todo{Vytvořit}}
+\end{figure}
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Obsah paměti u datově orientované kompozice. \todo{Vytvořit}}
+\end{figure}
+\blind[4]
+
+\section{Komponentní systémy}
+\todo{Zaklad, co to je.}
+\blind[1]
+
+\subsection{Historie vývoje}
+\blind[3]
+
+\subsection{Koncepty}
+\todo{Představení základní architektury návrhového vzoru - entity, komponenty, systémy}
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Entita reprezentována jako řádek v databázi. \todo{Vytvořit}}
+\end{figure}
+\blind[5]
+
+\subsection{Výhody zvolené reprezentace}
+\todo{Lokalita dat, instrukcí. Cache. Dynamičnost, prototypování. Serializace. Embedded skriptovací jazyky.}
+\blind[4]
+
+\section{Paralelizmus}
+\todo{Důležitost, hardware - cache, popis možností paralelizace.}
+\blind[2]
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Paralelizmus uvnitř systémů. \todo{Vytvořit}}
+\end{figure}
+\blind[1]
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Paralelizmus na úrovni systémů. \todo{Vytvořit}}
+\end{figure}
+\blind[1]
+%https://software.intel.com/en-us/articles/designing-the-framework-of-a-parallel-game-engine
+
 \chapter{Návrh komponentního systému}
+\todo{Postup seznámení s návrhem top -> down}
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Návrhový diagram komponentního systému. \todo{Vytvořit}}
+\end{figure}
+\blind[1]
+
+\section{Reprezentace entit}
+\todo{Entita, id, generace. Alternativy a důvody.}
+\blind[3]
+
+\section{Komponenty a jejich nosiče}
+\todo{Komponenta POD. Trivial constructor, copy. Paměť a typy nosičů. Typy komponent - tag, normal.}
+\blind[4]
+
+\section{Systémy a skupiny}
+\todo{Volnost použití systémů. Uživatelem definované chování. Filtry - require, reject. Cache pomocí skupin entit.}
+\blind[5]
+
+\section{Paralelní přístup}
+\todo{Podporované způsoby paralelizace, návrh, zdůvodnění. Entity paralellization. System parallelization. Diskuze na téma, zda je paralelní přístup potřeba.}
+\blind[5]
+
+\section{Přehled komunikace}
+\todo{High-level design, propojení. Universe, action-cache.}
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Přehled návrhu komponentního systému a komunikace mezi jeho částmi. \todo{Vytvořit - HLB diagram}}
+\end{figure}
+\blind[3]
+
+\section{Tok řízení}
+\todo{Popsat předpokládaný tok řízení, jak se bude používat. Registrace. Iterace. Refresh.}
+\begin{figure}[H]
+	\tmpframe{\includegraphics[width=\linewidth]{TODO-image}}
+	\caption{Digram toku řízení komponentního systému. \todo{Vytvořit - Control flow diagram}}
+\end{figure}
+\blind[3]
 
 
 \chapter{Implementace}
+\todo{Shrnutí návrhu, zdůvodnění výběru implementačního jazyku C++}
+\blind[2]
+
+\section{Použité knihovny a přenositelnost}
+\todo{Zdůvodnění nepoužití knihoven. C++14, Linux, Windows.}
+\blind[2]
+
+\section{Správa entit}
+\todo{Potřebné informace, implementace, datové struktury, optimalizace}
+\blind[3]
+
+\section{Komponenty}
+\todo{Rekapitulace vlastností, které komponenta musi splnit. Registrace, generování identifikátorů. Uživatelské nosiče}
+\blind[3]
+
+\section{Systémy a skupiny}
+\todo{Super třída, filtry, přístup - iterace. Přidání systému, volitelná skupina - added/removed.}
+\blind[3]
+
+\section{Obnovovací fáze}
+\todo{Pořadí refresh. Obnovení aktuality skupin.}
+\blind[2]
+
+\section{Podpora paralelizmu}
+\todo{2 způsoby paralelizmu - dělení skupin, change-sety}
+\blind[3]
+
 
 \chapter{Vyhodnocení}
-\todo{Shrnutí, popis bude v této kapitole}
+\todo{Shrnutí, popis co bude v této kapitole}
+\blind[1]
+
 \section{Testování knihovny}
+\todo{Unit testing, benchmarky}
+\blind[2]
+
+\section{Testované sestavy}
+\todo{Hardware sestavy - PC, notebook. Tabulka identifikace}
+\blind[1]
+
 \section{Výkonnostní testy}
+\todo{Výkon při různých zatíženích - procenta přidaných/odebraných. Grafy.}
+\blind[1]
+\todo{Porovnání nosičů komponent. Grafy.}
+\blind[1]
+\todo{Seriové vs paralelní - počet vláken. Grafy.}
+\blind[1]
+
 \section{Porovnání}
+\todo{Výkonostní porovnání oproti jiným ECS knihovnám, Unity? Grafy.}
+\blind[2]
+
+\section{Demo hra}
+\todo{Důvod, typ hry}
+\blind[1]
+
+\subsection{Návrh}
+\todo{Popis principů hry}
+\blind[1]
+\todo{Komponentní návrh}
+\blind[1]
+
+\subsection{Implementace}
+\todo{Použité knihovny, základní popis implementace}
+\blind[2]
+
+\subsection{Výsledek}
+\todo{Poznatky a výsledky získané ze hry. Grafy?}
+\blind[2]
+
 
 \chapter{Závěr}
 \todo{Využití komponentních systémů a aktuální stav} 
