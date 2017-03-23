@@ -10,6 +10,7 @@
 #include "Types.h"
 #include "Util.h"
 #include "SortedList.h"
+#include "EntityId.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -18,7 +19,6 @@ namespace ent
      * Temporary Entity which will be returned by parallel createEntity.
      * @tparam UniverseT Type of the Universe.
      */
-    template <typename UniverseT>
     class TemporaryEntity
     {
     public:
@@ -26,25 +26,56 @@ namespace ent
     protected:
     };
 
+    struct EntityChange
+    {
+        EntityId id;
+        ComponentBitset removedComponents;
+    };
+
+    /**
+     * Holds information about newly crated Component.
+     * @tparam ComponentT Type of the Component
+     */
+    template <typename ComponentT>
+    struct ComponentChange
+    {
+        ComponentT comp;
+        EntityId id;
+    };
+
     /**
      * Container for the changes.
      * @tparam UniverseT Type of the Universe.
      */
-    template <typename UniverseT>
     class ActionContainer
     {
     public:
         template <typename ComponentT>
-        using ComponentSet = ent::List<ComponentT>;
-
+        using ComponentSet = ent::List<ComponentChange<ComponentT>>;
         using EntitySet = ent::List<TemporaryEntity>;
     private:
         template <typename ComponentT>
-        ComponentSet<ComponentT> &components()
+        ComponentSet<ComponentT> &components(u64 componentId)
         {
-            static thread_local ComponentSet<ComponentT> compSet;
-            return compSet;
+            void *result{nullptr};
+
+            if (mComponentSets.size() <= componentId)
+            { // Resize the list of ComponentSets.
+                mComponentSets.resize(componentId + 1u, nullptr);
+            }
+
+            result = mComponentSets[componentId];
+            if (result == nullptr)
+            { // ComponentSet has not been created yet.
+                result = new ComponentSet<ComponentT>;
+                mComponentSets[componentId] = result;
+            }
+
+            return *static_cast<ComponentSet<ComponentT>*>(result);
         }
+
+        ent::List<void *> mComponentSets;
+        EntitySet mEntities;
     protected:
     }; // class ActionContainer
 

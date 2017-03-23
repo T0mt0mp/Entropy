@@ -72,7 +72,7 @@ namespace ent
          * Default constructor.
          * @param entityMgr Entity manager withing the same Universe.
          */
-        ComponentManager(EntityManager<UniverseT> &entityMgr);
+        ComponentManager();
 
         /// Destructor.
         ~ComponentManager();
@@ -211,9 +211,6 @@ namespace ent
         template <typename ComponentT>
         inline void initId();
 
-        /// Entity manager from the same Universe.
-        EntityManager<UniverseT> &mEM;
-
         /**
          * Holder instance.
          * @tparam HolderT Type of the Holder.
@@ -274,6 +271,9 @@ namespace ent
 
         /// List of reset functions for Component registration.
         std::vector<std::function<void()>> mComponentResets;
+
+        /// List of refresh function for Component holders.
+        std::vector<std::function<void()>> mHolderRefreshes;
 
         /// Counter for Component IDs.
         static u64 sComponentIdCounter;
@@ -348,8 +348,7 @@ namespace ent
     u64 ComponentManager<UT>::sComponentIdCounter{0};
 
     template <typename UT>
-    ComponentManager<UT>::ComponentManager(EntityManager<UT> &entityMgr) :
-        mEM(entityMgr)
+    ComponentManager<UT>::ComponentManager()
     {
     }
 
@@ -362,17 +361,22 @@ namespace ent
     template <typename UT>
     void ComponentManager<UT>::refresh()
     {
-        ENT_WARNING("ComponentManager::refresh() is not finished yet!");
+        for (auto &f : mHolderRefreshes)
+        { // Refresh all the Component holders.
+            f();
+        }
     }
 
     template <typename UT>
     void ComponentManager<UT>::reset()
     {
-        for (auto &l : mComponentResets)
+        for (auto &f : mComponentResets)
         {
-            l();
+            f();
         }
         mComponentResets.clear();
+
+        mHolderRefreshes.clear();
 
         resetComponentIdCounter();
     }
@@ -403,6 +407,10 @@ namespace ent
             maskGetter<ComponentT>().reset();
             idGetter<ComponentT>() = 0;
             registeredGetter<ComponentT>() = false;
+        });
+
+        mHolderRefreshes.emplace_back([] () {
+            holderGetter<HolderT>()().refresh();
         });
 
         return cId;
@@ -450,6 +458,7 @@ namespace ent
     {
         if (!registered<ComponentT>())
         {
+            ENT_WARNING("Unknown Component type being added!");
             return nullptr;
         }
 
@@ -471,6 +480,7 @@ namespace ent
     {
         if (!registered<ComponentT>())
         {
+            ENT_WARNING("Unknown Component type being removed!");
             return ;
         }
 

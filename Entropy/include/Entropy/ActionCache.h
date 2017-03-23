@@ -17,6 +17,7 @@ namespace ent
     /**
      * Cache is used for holding information about actions performed
      * on the ECS.
+     * TODO - refactor into Universe.
      * @tparam UniverseT Type of the Universe.
      */
     template <typename UniverseT>
@@ -66,15 +67,6 @@ namespace ent
         template <typename ComponentT>
         inline void removeComponent(EntityId id);
     private:
-        /// Entity manager from the same Universe.
-        EntityManager<UniverseT> &mEM;
-        /// Component manager from the same Universe.
-        ComponentManager<UniverseT> &mCM;
-        /// Group manager from the same Universe.
-        GroupManager<UniverseT> &mGM;
-        /// System manager from the same Universe.
-        SystemManager<UniverseT> &mSM;
-
         /// List of changed Entities since the last refresh.
         SortedList<EntityId> mChanged;
     protected:

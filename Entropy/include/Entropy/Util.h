@@ -403,6 +403,84 @@ namespace ent
     }; // ClassIdGenerator
 #endif
 
+#ifdef ENT_STATS_ENABLED
+#   ifdef ENT_STATS_ASSERT
+#       define CHECK_STATS(stats) ENT_ASSERT_SLOW(testValid)
+#   else
+#       define CHECK_STATS(_)
+#endif
+
+    /**
+     * Statistics about Universe.
+     */
+    struct UniverseStats
+    {
+        /// Print user redable information.
+        void print(std::ostream &out) const
+        {
+            out << "Universe " << univId << "\n"
+                << "\tInitialized: " << univInits
+                << "; Resets: " << univResets << "\n"
+                << "\tEntities (active/total [created/destroyed): "
+                << entActive << "/" << entTotal
+                << " [" << entCreated << "/" << entDestroyed << "]\n"
+                << "\tComponents: " << compRegistered << "\n"
+                << "\tSystems (active [added/removed]): "
+                << sysActive << " [" << sysAdded
+                << "/" << sysRemoved << "]\n"
+                << "\tGroups (active [added/removed]): "
+                << grpActive << " [" << grpAdded
+                << "/" << grpRemoved << "]" << std::endl;
+        }
+
+        /// Test if all the data are valid.
+        bool testValid() const
+        {
+            return univId != 0u &&
+                   entActive <= entTotal &&
+                   entCreated >= entDestroyed &&
+                   (entCreated - entDestroyed) == entTotal &&
+                   sysAdded >= sysRemoved &&
+                   (sysAdded - sysRemoved) == sysActive &&
+                   grpAdded >= grpRemoved &&
+                   (grpAdded - grpRemoved) == grpActive;
+        }
+
+        /// ID unique between Universes.
+        u64 univId{0};
+        /// How many times has the Universe been initialized.
+        u64 univInits{0};
+        /// How many times has the Universe been reset.
+        u64 univResets{0};
+
+        /// Number of active Entities.
+        u64 entActive{0};
+        /// Total number of Entities.
+        u64 entTotal{0};
+        /// Total number of Entities created.
+        u64 entCreated{0};
+        /// Total number of Entities destroyed.
+        u64 entDestroyed{0};
+
+        /// Number of Component types registered in this Universe.
+        u64 compRegistered{0};
+
+        /// Number of currently registered Systems.
+        u64 sysActive{0};
+        /// Number of added Systems.
+        u64 sysAdded{0};
+        /// Number of removed Systems.
+        u64 sysRemoved{0};
+
+        /// Number of currently active EntityGroups.
+        u64 grpActive{0};
+        /// Number of added EntityGroups.
+        u64 grpAdded{0};
+        /// Number of removed EntityGroups.
+        u64 grpRemoved{0};
+    };
+#endif
+
     /**
      * Bitset, where each bit represents information about presence of something.
      * The bitset is guaranteed to be contiguous and all memory used is inside the object.

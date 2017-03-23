@@ -36,6 +36,10 @@
 #	define ENT_CONSTEXPR_FUN constexpr
 #endif
 
+#if !defined(NDEBUG) && !defined(ENT_NO_STATS) && !defined(ENT_STATS_ENABLED)
+#   define ENT_STATS_ENABLED
+#endif
+
 /// Main Entropy namespace
 namespace ent
 {

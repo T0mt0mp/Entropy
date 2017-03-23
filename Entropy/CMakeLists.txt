@@ -48,6 +48,7 @@ set(ENTROPY_HEADERS
         ${ENTROPY_INCLUDE_DIR}/Entropy/Memory.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/ComponentStorage.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Component.h
+        ${ENTROPY_INCLUDE_DIR}/Entropy/ChangeSet.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/ActionCache.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Entity.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/EntityId.h

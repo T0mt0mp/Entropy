@@ -27,6 +27,9 @@ namespace ent
         using CompRef = CompT&;
         using CompPtr = CompT*;
 
+        BaseComponentHolder() {};
+        virtual ~BaseComponentHolder() {};
+
         /**
          * Add Component for given EntityId, if the Component
          * already exists, nothing happens.
@@ -43,18 +46,17 @@ namespace ent
         virtual CompPtr get(EntityId id) noexcept = 0;
 
         /**
-         * Does given Entity have a Component associated with it?
-         * @param id Id of the Entity.
-         * @return Returns true, if there IS a Component associated.
-         */
-        virtual bool has(EntityId id) const noexcept = 0;
-
-        /**
          * Remove Component for given Entity. If the Entity does not have
          * Component associated with it, nothing happens.
          * @param id Id of the Entity.
          */
         virtual void remove(EntityId id) noexcept = 0;
+
+        /**
+         * Refresh the Component holder.
+         * Called during the Universe refresh.
+         */
+        virtual inline void refresh() noexcept = 0;
     private:
     protected:
     }; // class BaseComponentHolder
@@ -86,28 +88,27 @@ namespace ent
          * @param id Id of the Entity.
          * @return Returns pointer to the Component.
          */
-        virtual inline CompPtr add(EntityId id) noexcept;
+        virtual inline CompPtr add(EntityId id) noexcept override;
 
         /**
          * Get Component belonging to given EntityId.
          * @param id Id of the Entity.
          * @return Returns pointer to the Component, or nullptr, if it does not exist.
          */
-        virtual inline CompPtr get(EntityId id) noexcept;
-
-        /**
-         * Does given Entity have an Component associated with it?
-         * @param id Id of the Entity.
-         * @return Returns true, if there IS an Component associated.
-         */
-        virtual inline bool has(EntityId id) const noexcept;
+        virtual inline CompPtr get(EntityId id) noexcept override;
 
         /**
          * Remove Component for given Entity. If the Entity does not have
          * Component associated with it, nothing happens.
          * @param id Id of the Entity.
          */
-        virtual inline void remove(EntityId id) noexcept;
+        virtual inline void remove(EntityId id) noexcept override;
+
+        /**
+         * Refresh the Component holder.
+         * Called during the Universe refresh.
+         */
+        virtual inline void refresh() noexcept override;
     private:
         /// Mapping from EntityId to Component.
         std::map<EntityId, CompT> mMap;
@@ -140,31 +141,32 @@ namespace ent
          * @param id Id of the Entity.
          * @return Returns pointer to the Component.
          */
-        virtual inline CompPtr add(EntityId id) noexcept;
+        virtual inline CompPtr add(EntityId id) noexcept override;
 
         /**
          * Get Component belonging to given EntityId.
          * @param id Id of the Entity.
          * @return Returns pointer to the Component, or nullptr, if it does not exist.
          */
-        virtual inline CompPtr get(EntityId id) noexcept;
-
-        /**
-         * Does given Entity have an Component associated with it?
-         * @param id Id of the Entity.
-         * @return Returns true, if there IS an Component associated.
-         */
-        virtual inline bool has(EntityId id) const noexcept;
+        virtual inline CompPtr get(EntityId id) noexcept override;
 
         /**
          * Remove Component for given Entity. If the Entity does not have
          * Component associated with it, nothing happens.
          * @param id Id of the Entity.
          */
-        virtual inline void remove(EntityId id) noexcept;
+        virtual inline void remove(EntityId id) noexcept override;
+
+        /**
+         * Refresh the Component holder.
+         * Called during the Universe refresh.
+         */
+        virtual inline void refresh() noexcept override;
     private:
         /// Mapping from EntityId to index in the List.
-        std::map<EntityId, u64> mMap;
+        std::map<EntityId, u64> mMapping;
+        /// List of free IDs.
+        List<u64> mFreeIds;
         /// List containing the components.
         List<ComponentT> mList;
     protected:
@@ -206,23 +208,20 @@ namespace ent
         virtual inline CompPtr get(EntityId id) noexcept;
 
         /**
-         * Does given Entity have an Component associated with it?
-         * @param id Id of the Entity.
-         * @return Returns true, if there IS an Component associated.
-         */
-        virtual inline bool has(EntityId id) const noexcept;
-
-        /**
          * Remove Component for given Entity. If the Entity does not have
          * Component associated with it, nothing happens.
          * @param id Id of the Entity.
          */
         virtual inline void remove(EntityId id) noexcept;
+
+        /**
+         * Refresh the Component holder.
+         * Called during the Universe refresh.
+         */
+        virtual inline void refresh() noexcept override;
     private:
         /// List containing the components.
         List<ComponentT> mList;
-        /// Last index used.
-        u64 mMaxUsed;
     protected:
     }; // ComponentHolderMapList
 
@@ -260,9 +259,8 @@ namespace ent
     }
 
     template <typename ComponentT>
-    bool ComponentHolder<ComponentT>::has(EntityId id) const noexcept
+    void ComponentHolder<ComponentT>::refresh() noexcept
     {
-        return (mMap.find(id) != mMap.end());
     }
 
     template <typename ComponentT>
@@ -288,58 +286,62 @@ namespace ent
     template <typename CT>
     CT* ComponentHolderMapList<CT>::add(EntityId id) noexcept
     {
-        decltype(mMap.begin()) findIt{mMap.find(id)};
-        if (findIt != mMap.end())
-        {
-            return &mList[findIt->second];
-        }
-        else
-        {
-            mMap[id] = mList.size();
-            mList.pushBack();
-            return &mList.back();
+        try {
+            u64 &index{mMapping[id]};
+
+            if (index == 0)
+            {
+                if (mFreeIds.size() != 0)
+                { // There is a free ID.
+                    index = mFreeIds.back();
+                    mFreeIds.popBack();
+                }
+                else
+                { // There are no free IDs.
+                    index = mList.size();
+                    mList.pushBack();
+                }
+            }
+
+            return &mList[index];
+        } catch (...) {
+            return nullptr;
         }
     }
 
     template <typename CT>
     CT* ComponentHolderMapList<CT>::get(EntityId id) noexcept
     {
-        decltype(mMap.begin()) findIt{mMap.find(id)};
-        if (findIt != mMap.end())
-        {
-            return &mList[findIt->second];
+        try {
+            return &mList.at(mMapping.at(id.index()));
+        } catch (...) {
+            return nullptr;
         }
-
-        return nullptr;
     }
 
     template <typename CT>
-    bool ComponentHolderMapList<CT>::has(EntityId id) const noexcept
+    void ComponentHolderMapList<CT>::refresh() noexcept
     {
-        decltype(mMap.begin()) findIt{mMap.find(id)};
-        if (findIt != mMap.end())
-        {
-            return true;
-        }
-
-        return false;
     }
 
     template <typename CT>
     void ComponentHolderMapList<CT>::remove(EntityId id) noexcept
     {
-        decltype(mMap.begin()) findIt{mMap.find(id)};
-        if (findIt != mMap.end())
-        {
-            mMap.erase(findIt);
+        try {
+            u64 &index = mMapping.at(id.index());
+
+            mFreeIds.pushBack(index);
+
+            index = 0;
+        } catch (...) {
+            return;
         }
     }
     // ComponentHolderMapList implementation end.
 
     // ComponentHolderList implementation.
     template <typename CT>
-    ComponentHolderList<CT>::ComponentHolderList() :
-        mMaxUsed{0}
+    ComponentHolderList<CT>::ComponentHolderList()
     { }
 
     template <typename CT>
@@ -349,12 +351,16 @@ namespace ent
     template <typename CT>
     CT* ComponentHolderList<CT>::add(EntityId id) noexcept
     {
-        if (!has(id))
+        if (id.index() >= mList.size())
         {
-            mList.resize(id.index() + 1);
+            try {
+                mList.resize(id.index() + 1);
+            } catch(...) {
+                return nullptr;
+            }
         }
 
-        return get(id);
+        return &mList[id.index()];
     }
 
     template <typename CT>
@@ -371,9 +377,8 @@ namespace ent
     }
 
     template <typename CT>
-    bool ComponentHolderList<CT>::has(EntityId id) const noexcept
+    void ComponentHolderList<CT>::refresh() noexcept
     {
-        return id.index() < mList.size();
     }
 
     template <typename CT>

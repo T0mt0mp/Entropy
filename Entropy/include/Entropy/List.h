@@ -236,6 +236,15 @@ namespace ent
         inline void resize(size_type size);
 
         /**
+         * Resize the List to given size.
+         * Sets the new elements to given value.
+         * TODO - special case for 0 and 1 initialization?
+         * @param size New size of the List.
+         * @param val New elements will be copied from this value.
+         */
+        inline void resize(size_type size, const_reference val);
+
+        /**
          * Shrink this List to find the number of used elements.
          */
         inline void shrinkToFit();
@@ -709,15 +718,24 @@ namespace ent
         typename Allocator>
     void List<T, Allocator>::resize(size_type size)
     {
-        /*
-        if (mInUse < size)
-        {
-            reserve(size);
-            mInUse = size;
-        }
-         */
         reserve(size);
         mInUse = size;
+    }
+
+    template <typename T,
+              typename Allocator>
+    void List<T, Allocator>::resize(size_type newSize, const_reference val)
+    {
+        reserve(newSize);
+
+        if (newSize <= size())
+        { // No new elements.
+            mInUse = newSize;
+            return;
+        }
+
+        size_type newElements{newSize - size()};
+        setImpl(useEndPtr(), useEndPtr() + newElements, val);
     }
 
     template <typename T,

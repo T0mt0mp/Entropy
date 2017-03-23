@@ -7,18 +7,18 @@
 #include "Tests.h"
 
 // Sizes in bytes.
-static constexpr u64 ITER_NUM{1};
+static constexpr u64 ITER_NUM{4};
 static constexpr u64 EMPTY_NUM{100000};
 template <typename T>
-using SmallContainer = ent::ComponentHolderMapList<T>;
+using SmallContainer = ent::ComponentHolderList<T>;
 static constexpr u64 SMALL_SIZE{4};
 static constexpr u64 SMALL_NUM{100000};
 template <typename T>
-using MediumContainer = ent::ComponentHolderMapList<T>;
+using MediumContainer = ent::ComponentHolderList<T>;
 static constexpr u64 MEDIUM_SIZE{20};
 static constexpr u64 MEDIUM_NUM{100000};
 template <typename T>
-using LargeContainer = ent::ComponentHolderMapList<T>;
+using LargeContainer = ent::ComponentHolderList<T>;
 static constexpr u64 LARGE_SIZE{40};
 static constexpr u64 LARGE_NUM{100000};
 
@@ -179,7 +179,6 @@ TU_Begin(EntropyPerformance)
             universe.refresh();
         }
 
-        std::cout << "In empty system: " << emptySystem->foreach().size() << std::endl;
         for (Universe::EntityT &e : emptySystem->foreach())
         {
             e.add<SmallComponent>();
@@ -190,22 +189,10 @@ TU_Begin(EntropyPerformance)
         {
             for (u64 iii = 0; iii < ITER_NUM; ++iii)
             {
-                std::cout << iii << std::endl;
-                std::cout << "Small system: " << smallSystem->foreach().size() << " "
-                          << smallSystem->foreachAdded().size() << " "
-                          << smallSystem->foreachRemoved().size() << std::endl;
-                std::cout << "Medium system: " << mediumSystem->foreach().size() << " "
-                          << mediumSystem->foreachAdded().size() << " "
-                          << mediumSystem->foreachRemoved().size() << std::endl;
-                std::cout << "Large system: " << largeSystem->foreach().size() << " "
-                          << largeSystem->foreachAdded().size() << " "
-                          << largeSystem->foreachRemoved().size() << std::endl;
                 PROF_SCOPE("Iteration");
 
-                std::cout << "Small system actual: " << smallSystem->foreach().size() << " "
-                          << smallSystem->foreachAdded().size() << " "
-                          << smallSystem->foreachRemoved().size() << std::endl;
                 PROF_BLOCK("Small system");
+                std::cout << "Small: " << smallSystem->foreach().size() << std::endl;
                 for (Universe::EntityT &e : smallSystem->foreach())
                 {
                     e.remove<SmallComponent>();
@@ -213,10 +200,8 @@ TU_Begin(EntropyPerformance)
                 }
                 PROF_BLOCK_END();
 
-                std::cout << "Medium system actual: " << mediumSystem->foreach().size() << " "
-                          << mediumSystem->foreachAdded().size() << " "
-                          << mediumSystem->foreachRemoved().size() << std::endl;
                 PROF_BLOCK("Medium system");
+                std::cout << "Medium: " << mediumSystem->foreach().size() << std::endl;
                 for (Universe::EntityT &e : mediumSystem->foreach())
                 {
                     e.remove<MediumComponent>();
@@ -224,10 +209,8 @@ TU_Begin(EntropyPerformance)
                 }
                 PROF_BLOCK_END();
 
-                std::cout << "Large system actual: " << largeSystem->foreach().size() << " "
-                          << largeSystem->foreachAdded().size() << " "
-                          << largeSystem->foreachRemoved().size() << std::endl;
                 PROF_BLOCK("Large system");
+                std::cout << "Large: " << largeSystem->foreach().size() << std::endl;
                 for (Universe::EntityT &e : largeSystem->foreach())
                 {
                     e.remove<LargeComponent>();

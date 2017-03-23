@@ -39,7 +39,7 @@ namespace ent
          * Construct the System manager for given Universe.
          * @param groupMgr Group manager from the same Universe.
          */
-        SystemManager(GroupManager<UniverseT> &groupMgr);
+        SystemManager();
 
         /**
          * Destruct the System manager and all System within.
@@ -98,8 +98,6 @@ namespace ent
 
         /// List of reset lambdas.
         std::vector<std::function<void()>> mSystemResets;
-        /// Group manager from the same Universe.
-        GroupManager<UniverseT> &mGM;
     protected:
     }; // SystemManager
 

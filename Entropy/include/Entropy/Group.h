@@ -194,11 +194,6 @@ namespace ent {
          */
         EntityGroup(const ComponentFilter &filter, u64 groupId);
 
-        /**
-         * Reset this group to default state.
-         */
-        inline void reset();
-
         /// Filter getter.
         const ComponentFilter &filter() const
         { return mFilter; }
@@ -206,28 +201,6 @@ namespace ent {
         /// Group ID getter.
         u64 id() const
         { return mId; }
-
-        /**
-         * Add given Entity ID to this group.
-         * @param id ID of the Entity.
-         */
-        inline void add(EntityId id);
-
-        /**
-         * Remove given Entity ID from this group.
-         * @param id ID of the Entity.
-         */
-        inline void remove(EntityId id);
-
-        /**
-         * Refresh this Group - clear added/removed lists.
-         */
-        inline void refresh();
-
-        /**
-         * Finalize adding and removing of Entities.
-         */
-        inline void finalize();
 
         /**
          * Get foreach iterator object, iterating over Entities.
@@ -259,6 +232,33 @@ namespace ent {
         EntityList<UT, RemovedListT> foreachRemoved(UT *uni)
         { return EntityList<UT, RemovedListT>(uni, mRemoved); }
     private:
+        /**
+         * Reset this group to default state.
+         */
+        inline void reset();
+
+        /**
+         * Add given Entity ID to this group.
+         * @param id ID of the Entity.
+         */
+        inline void add(EntityId id);
+
+        /**
+         * Remove given Entity ID from this group.
+         * @param id ID of the Entity.
+         */
+        inline void remove(EntityId id);
+
+        /**
+         * Refresh this Group - clear added/removed lists.
+         */
+        inline void refresh();
+
+        /**
+         * Finalize adding and removing of Entities.
+         */
+        inline void finalize();
+
         /// Get the front Entity buffer.
         EntityListT *entitiesFront()
         { return mEntities; }
@@ -342,7 +342,7 @@ namespace ent {
          * @param entityMgr Entity manager from the same Universe.
          * @param compMgr Component manager from the same Universe.
          */
-        GroupManager(EntityManager<UniverseT> &entityMgr, ComponentManager<UniverseT> &compMgr);
+        GroupManager();
 
         /**
          * Resets the Group manager.
@@ -493,11 +493,6 @@ namespace ent {
 			static ConstructionHandler<EntityGroup> group;
 			return group;
 		}
-
-        /// Entity manager from the same Universe.
-        EntityManager<UniverseT> &mEM;
-        /// Component manager from the same Universe.
-        ComponentManager<UniverseT> &mCM;
     protected:
     }; // GroupManager
 
