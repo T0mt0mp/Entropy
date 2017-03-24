@@ -9,7 +9,7 @@
 
 #include "Types.h"
 #include "Util.h"
-#include "Group.h"
+#include "EntityGroup.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -73,22 +73,89 @@ namespace ent
 
         /**
          * Get System with given type.
-         * !!System has to be added first!!
          * @tparam SystemT Type of the System.
          * @return Returns ptr to the System object, or nullptr
          *   if the System has not been added.
          */
         template <typename SystemT>
         SystemT *getSystem() const;
+
+        /**
+         * Remove System with given type and decrement the
+         * usage counter within its group.
+         * @tparam SystemT Type of the System.
+         * @return Returns true, if the System has been
+         *   removed successfully.
+         */
+        template <typename SystemT>
+        bool removeSystem();
+
+        /**
+         * Add Entity group with Required and Rejected Components.
+         * The pointer is guaranteed to be valid as long as the
+         * SystemManager is instantiated - the Group will not be
+         * moved around.
+         * @tparam RequireT List of required Component types.
+         * @tparam RejectT List of rejected Component types.
+         * @param f Filter corresponding to the template parameters.
+         * @return Returns ptr to the requested Entity Group.
+         */
+        template<typename RequireT,
+            typename RejectT>
+        EntityGroup *addGroup(ComponentFilter &f);
+
+        /**
+         * Is there an EntityGroup with given filter?
+         * @tparam RequireT List of required Component types.
+         * @tparam RejectT List of rejected Component types.
+         * @param f Filter corresponding to the template parameters.
+         * @return Returns true, if such Group exists.
+         */
+        template<typename RequireT,
+            typename RejectT>
+        bool hasGroup(ComponentFilter &f);
+
+        /**
+         * Get already existing EntityGroup.
+         * The pointer is guaranteed to be valid as long as the
+         * SystemManager is instantiated - the Group will not be
+         * moved around.
+         * @tparam RequireT List of required Component types.
+         * @tparam RejectT List of rejected Component types.
+         * @param f Filter corresponding to the template parameters.
+         * @return Returns ptr to the requested EntityGroup, or
+         *   nullptr, if such group does not exist.
+         */
+        template<typename RequireT,
+            typename RejectT>
+        EntityGroup *getGroup(ComponentFilter &f);
+
+        /**
+         * Decrement the usage counter for given EntityGroup.
+         * @tparam RequireT List of required Component types.
+         * @tparam RejectT List of rejected Component types.
+         * @param f Filter corresponding to the template parameters.
+         * @return Returns true for the first time the counter
+         *   reaches zero.
+         */
+        template<typename RequireT,
+            typename RejectT>
+        bool abandonGroup(ComponentFilter &f);
+
+        /**
+         * Test all Entities on the changed list, if they should
+         * be added/removed from any groups.
+         * @param changed List of changed Entities since last refresh.
+         * @param em EntityManager used for getting information about
+         *   the Entities and write back Group changes.
+         */
+        void checkEntities(const ent::SortedList<EntityId> &changed,
+                           EntityManager &em);
     private:
         /**
          * Container for the System.
          * @tparam SystemT Type of the System.
          */
-		/*
-        template <typename SystemT>
-        static ConstructionHandler<SystemT> mSystem;
-		*/
         template <typename SystemT>
 		static ConstructionHandler<SystemT> &systemGetter()
 		{
@@ -197,7 +264,10 @@ namespace ent
     template <typename UT>
     void SystemManager<UT>::refresh()
     {
-        ENT_WARNING("SystemManager::refresh() is not finished yet!");
+        for (auto *grp : mGroupId)
+        {
+            grp->refresh();
+        }
     }
 
     template <typename UT>
@@ -208,6 +278,14 @@ namespace ent
             l();
         }
         mSystemResets.clear();
+
+        for (auto &r : mGroupResets)
+        {
+            r();
+        }
+        mGroupResets.clear();
+
+        mGroupId.clear();
     }
 
     template <typename UT>

@@ -15,6 +15,88 @@
 /// Main Entropy namespace
 namespace ent
 {
+    /// Record about state of a single Entity
+    struct EntityRecord
+    {
+        /// Is the Entity active?
+        bool active() const
+        { return groups.test(0u); }
+
+        union {
+            /// Present Components bitset.
+            ComponentBitset components;
+            /// Next ID in the chain of free IDs.
+            EIdType nextFree;
+        };
+
+        /// Presence in EntityGroups, lowest significance bit represents information about activity of Entity.
+        GroupBitset groups;
+
+        /// Current generation number.
+        EIdType generation;
+    };
+
+    /**
+     * Iterator for iterating over all active Entities
+     * within EntityHolder.
+     */
+    class ActiveEntityIterator
+    {
+    public:
+        /**
+         * Create iterator with given pointer.
+         * @param ptr Pointer to the EntityRecord list.
+         */
+        inline ActiveEntityIterator(const EntityRecord *ptr, u64 size);
+
+        /**
+         * Get ID for the current Entity.
+         * @return ID of the current Entity.
+         */
+        EntityId id() const
+        { return EntityId(mIndex, mPtr->generation); }
+
+        /**
+         * Get Groups bitset for the current Entity.
+         * @return Groups bitset of the current Entity.
+         */
+        const GroupBitset &groups() const
+        { return mPtr->groups; }
+
+        /**
+         * Get Components bitset for the current Entity.
+         * @return Components bitset of the current Entity.
+         */
+        const ComponentBitset &components() const
+        { return mPtr->components; }
+
+        /**
+         * Move the Iterator to the next valid Entity.
+         * @return
+         */
+        void operator++()
+        { increment(); }
+
+        /**
+         * Is this iterator on a valid EntityRecord?
+         * @return Returns true, if this iterator is
+         *   safe to use.
+         */
+        bool isValid() const
+        { return mIndex < mSize; }
+    private:
+        /// Increment this iterator.
+        inline void increment();
+
+        /// Index counter.
+        u64 mIndex;
+        /// Size of the EntityRecord list.
+        const u64 mSize;
+        /// Internal pointer.
+        const EntityRecord *mPtr;
+    protected:
+    };
+
     /**
      * Wrapper around Entity management implementation.
      */
@@ -170,24 +252,13 @@ namespace ent
          * @param groupId ID of the group. Starting at 0 - up to MAX_GROUPS.
          */
         inline void resetGroup(EntityId id, u64 groupId);
+
+        /**
+         * Get iterator for all active Entities.
+         * @return Iterator for all active Entities.
+         */
+        inline ActiveEntityIterator activeEntities() const;
     private:
-        /// Record about state of a single Entity
-        struct EntityRecord
-        {
-            union {
-                /// Present Components bitset.
-                ComponentBitset components;
-                /// Next ID in the chain of free IDs.
-                EIdType nextFree;
-            };
-
-            /// Presence in EntityGroups, lowest significance bit represents information about activity of Entity.
-            GroupBitset groups;
-
-            /// Current generation number.
-            EIdType generation;
-        };
-
         /**
          * Initialize Entity on given index to 0 values.
          * @param index Index of the Entity.
@@ -200,7 +271,7 @@ namespace ent
          * @param index
          */
         bool activeImpl(EIdType index) const
-        { return mRecords[index].groups.test(0u); }
+        { return mRecords[index].active(); }
 
         /**
          * Check for validity of given index and generation number.
@@ -405,6 +476,13 @@ namespace ent
          */
         void resetGroup(EntityId id, u64 groupId)
         { mEntities.resetGroup(id, groupId); }
+
+        /**
+         * Get iterator for all active Entities.
+         * @return Iterator for all active Entities.
+         */
+        ActiveEntityIterator activeEntities()
+        { return mEntities.activeEntities(); }
     private:
     protected:
         /// Container for the Entities.
@@ -440,110 +518,8 @@ namespace ent
     private:
     protected:
     };// EntityManager
-
-    // EntityHolder implementation.
-    void EntityHolder::addComponent(EntityId id, u64 index)
-    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].components.set(index); }
-
-    void EntityHolder::removeComponent(EntityId id, u64 index)
-    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].components.reset(index); }
-
-    bool EntityHolder::hasComponent(EntityId id, u64 index) const
-    { return valid(id) && mRecords[id.index()].components.test(index); }
-
-    void EntityHolder::activate(EntityId id)
-    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].groups.set(0u); }
-
-    void EntityHolder::deactivate(EntityId id)
-    { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].groups.reset(0u); }
-
-    bool EntityHolder::active(EntityId id) const
-    { return valid(id) && activeImpl(id.index()); }
-
-    bool EntityHolder::valid(EntityId id) const
-    { return validImpl(id.index(), id.generation()); }
-
-    const ComponentBitset &EntityHolder::components(EntityId id) const
-    { ENT_ASSERT_SLOW(valid(id)); return mRecords[id.index()].components; }
-
-    const GroupBitset &EntityHolder::groups(EntityId id)
-    { ENT_ASSERT_SLOW(valid(id)); return mRecords[id.index()].groups; }
-
-    void EntityHolder::setGroup(EntityId id, u64 groupId)
-    { ENT_ASSERT_SLOW(valid(id) && groupId > 0u && groupId < MAX_GROUPS); mRecords[id.index()].groups.set(groupId); }
-
-    void EntityHolder::resetGroup(EntityId id, u64 groupId)
-    { ENT_ASSERT_SLOW(valid(id) && groupId > 0u && groupId < MAX_GROUPS); mRecords[id.index()].groups.reset(groupId); }
-
-    void EntityHolder::initEntity(EIdType index)
-    {
-        std::memset(&mRecords[index], 0u, sizeof(EntityRecord));
-
-        /*
-        EntityRecord &rec = mRecords[index];
-        rec.generation = EntityId::START_GEN;
-
-        if (sizeof(ComponentBitset) > sizeof(EIdType))
-        {
-            rec.components.reset();
-        }
-        else
-        {
-            rec.nextFree = 0u;
-        }
-
-        rec.groups.reset();
-         */
-    }
-
-    void EntityHolder::pushFreeId(EIdType index)
-    {
-        EntityRecord &recNew = mRecords[index];
-        EntityRecord &recOld = mRecords[mLastFree];
-
-        if (mLastFree)
-        { // If there is at least one element in the list, add the new one.
-            recOld.nextFree = index;
-        }
-        else
-        { // Else, we need to init the list.
-            mFirstFree = index;
-        }
-
-        recNew.nextFree = 0;
-        mLastFree = index;
-
-        mNumFree++;
-    }
-
-    inline EIdType EntityHolder::popFreeId()
-    {
-        EIdType result{mFirstFree};
-
-        mFirstFree = mRecords[result].nextFree;
-
-        // If the result ID is 0, then there are no more IDs available.
-        mNumFree = result ? mNumFree - 1 : 0;
-
-        return result;
-    }
-    // EntityHolder implementation end.
-
-    // EntityManager implementation.
-    template <typename UT>
-    EntityManager<UT>::EntityManager()
-    { }
-
-    template <typename UT>
-    EntityManager<UT>::~EntityManager()
-    { }
-
-    template <typename UT>
-    void EntityManager<UT>::refresh()
-    {
-        ENT_WARNING("EntityManager::refresh() is not finished yet!");
-    }
-    // EntityManager implementation end.
 } // namespace ent
+
+#include "EntityManager.inl"
 
 #endif //ECS_FIT_ENTITYMANAGER_H

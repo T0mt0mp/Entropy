@@ -4,7 +4,7 @@
  * @brief Group represents a group of Entities which pass the same ComponentFilter.
  */
 
-#include "Entropy/Group.h"
+#include "Entropy/EntityGroup.h"
 
 /// Main Entropy namespace
 namespace ent

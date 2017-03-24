@@ -40,10 +40,19 @@ namespace ent
 
         /**
          * Get Component belonging to given EntityId.
+         * Returns a pointer o read-write Component.
          * @param id Id of the Entity.
          * @return Returns pointer to the Component, or nullptr, if it does not exist.
          */
         virtual CompPtr get(EntityId id) noexcept = 0;
+
+        /**
+         * Get Component belonging to given EntityId.
+         * Returns a pointer o read-only Component!
+         * @param id Id of the Entity.
+         * @return Returns pointer to the Component, or nullptr, if it does not exist.
+         */
+        virtual const CompPtr get(EntityId id) const noexcept = 0;
 
         /**
          * Remove Component for given Entity. If the Entity does not have

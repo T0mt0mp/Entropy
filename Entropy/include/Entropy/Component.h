@@ -112,6 +112,7 @@ namespace ent
 
         /**
          * Get Component of given Entity.
+         * Returns pointer to read-write Component.
          * @tparam ComponentT Component type.
          * @tparam HolderT Type of the holder, deduced from Component type.
          * @param id Id of the Entity.
@@ -120,6 +121,18 @@ namespace ent
         template <typename ComponentT,
                   typename HolderT = typename HolderExtractor<ComponentT>::type>
         inline ComponentT *get(EntityId id);
+
+        /**
+         * Get Component of given Entity.
+         * Returns pointer to read-only Component!
+         * @tparam ComponentT Component type.
+         * @tparam HolderT Type of the holder, deduced from Component type.
+         * @param id Id of the Entity.
+         * @return Returns pointer to the added Component.
+         */
+        template <typename ComponentT,
+            typename HolderT = typename HolderExtractor<ComponentT>::type>
+        inline const ComponentT *get(EntityId id) const;
 
         /**
          * Does given Entity have a Component?
@@ -136,10 +149,11 @@ namespace ent
          * Remove Component of given Entity.
          * @tparam ComponentT Component type.
          * @tparam HolderT Type of the holder, deduced from Component type.
+         * @return Returns true, if the Component has been removed.
          */
         template <typename ComponentT,
                   typename HolderT = typename HolderExtractor<ComponentT>::type>
-        inline void remove(EntityId id);
+        inline bool remove(EntityId id);
 
         /**
          * Get ID for given Component type.
@@ -147,7 +161,7 @@ namespace ent
          * @return ID of the Component type.
          */
         template <typename ComponentT>
-        inline u64 id();
+        inline u64 id() const;
 
         /**
          * Get bitset mask for given Component type.
@@ -418,7 +432,7 @@ namespace ent
 
     template <typename UT>
     template <typename ComponentT>
-    u64 ComponentManager<UT>::id()
+    u64 ComponentManager<UT>::id() const
     {
         return idGetter<ComponentT>();
     }
@@ -458,7 +472,21 @@ namespace ent
     {
         if (!registered<ComponentT>())
         {
-            ENT_WARNING("Unknown Component type being added!");
+            ENT_WARNING("Unknown Component type!");
+            return nullptr;
+        }
+
+        return getHolder<HolderT>().get(id);
+    }
+
+    template <typename UT>
+    template <typename ComponentT,
+        typename HolderT>
+    inline const ComponentT *ComponentManager<UT>::get(EntityId id) const
+    {
+        if (!registered<ComponentT>())
+        {
+            ENT_WARNING("Unknown Component type!");
             return nullptr;
         }
 
@@ -476,12 +504,12 @@ namespace ent
     template <typename UT>
     template <typename ComponentT,
         typename HolderT>
-    inline void ComponentManager<UT>::remove(EntityId id)
+    inline bool ComponentManager<UT>::remove(EntityId id)
     {
         if (!registered<ComponentT>())
         {
             ENT_WARNING("Unknown Component type being removed!");
-            return ;
+            return false;
         }
 
         mEM.removeComponent(id, ComponentManager<UT>::id<ComponentT>());

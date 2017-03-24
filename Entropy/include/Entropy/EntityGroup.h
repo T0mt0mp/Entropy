@@ -1,11 +1,11 @@
 /**
- * @file Entropy/Group.h
+ * @file Entropy/EntityGroup.h
  * @author Tomas Polasek
  * @brief Group represents a group of Entities which pass the same ComponentFilter.
  */
 
-#ifndef ECS_FIT_GROUP_H
-#define ECS_FIT_GROUP_H
+#ifndef ECS_FIT_ENTITYGROUP_H
+#define ECS_FIT_ENTITYGROUP_H
 
 #include "Types.h"
 #include "Memory.h"
@@ -611,22 +611,11 @@ namespace ent {
     template <typename UT>
     void GroupManager<UT>::refresh()
     {
-        for (auto *grp : mGroupId)
-        {
-            grp->refresh();
-        }
     }
 
     template <typename UT>
     void GroupManager<UT>::reset()
     {
-        for (auto &r : mGroupResets)
-        {
-            r();
-        }
-        mGroupResets.clear();
-
-        mGroupId.clear();
     }
 
     template <typename UT>

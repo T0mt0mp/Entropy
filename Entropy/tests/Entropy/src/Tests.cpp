@@ -734,6 +734,29 @@ TU_Begin(EntropyEntity)
             TC_RequireEqual(sys->foreachRemoved().size(), sysRemoved);
             TC_RequireEqual(sys->foreach().size(), sysEnt);
         }
+
+        TC_RequireEqual(u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach().size(), 0u);
+        TC_RequireEqual(u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach().size(), 0u);
+
+        u.refresh();
+
+        TC_RequireEqual(u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach().size(), sysRemoved);
+        TC_RequireEqual(u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach().size(), sysEnt);
+
+        for (auto &e : u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach())
+        {
+            e.destroy();
+        }
+
+        for (auto &e : u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach())
+        {
+            e.destroy();
+        }
+
+        u.refresh();
+
+        TC_RequireEqual(u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach().size(), 0u);
+        TC_RequireEqual(u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach().size(), 0u);
     }
 
     TU_Case(UniverseDestruction, "Testing correct destruction of Universe instance.")

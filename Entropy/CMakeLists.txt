@@ -49,17 +49,19 @@ set(ENTROPY_HEADERS
         ${ENTROPY_INCLUDE_DIR}/Entropy/ComponentStorage.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Component.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/ChangeSet.h
-        ${ENTROPY_INCLUDE_DIR}/Entropy/ActionCache.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Entity.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/EntityId.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/EntityManager.h
+        ${ENTROPY_INCLUDE_DIR}/Entropy/EntityManager.inl
         ${ENTROPY_INCLUDE_DIR}/Entropy/System.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Universe.h
+        ${ENTROPY_INCLUDE_DIR}/Entropy/Universe.inl
         ${ENTROPY_INCLUDE_DIR}/Entropy/Types.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Entropy.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Assert.h
-        ${ENTROPY_INCLUDE_DIR}/Entropy/Group.h
+        ${ENTROPY_INCLUDE_DIR}/Entropy/EntityGroup.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Util.h
+        ${ENTROPY_INCLUDE_DIR}/Entropy/Util.inl
         )
 
 set(ENTROPY_SOURCES
@@ -69,7 +71,7 @@ set(ENTROPY_SOURCES
         ${ENTROPY_SOURCE_DIR}/Entropy/EntityManager.cpp
         ${ENTROPY_SOURCE_DIR}/Entropy/System.cpp
         ${ENTROPY_SOURCE_DIR}/Entropy/Universe.cpp
-        ${ENTROPY_SOURCE_DIR}/Entropy/Group.cpp
+        ${ENTROPY_SOURCE_DIR}/Entropy/EntityGroup.cpp
         ${ENTROPY_SOURCE_DIR}/Entropy/Types.cpp
         ${ENTROPY_SOURCE_DIR}/Entropy/Util.cpp
         )

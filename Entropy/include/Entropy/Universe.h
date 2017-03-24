@@ -12,7 +12,7 @@
 #include "Component.h"
 #include "Entity.h"
 #include "EntityManager.h"
-#include "Group.h"
+#include "EntityGroup.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -60,6 +60,7 @@ namespace ent
          * // Optionally add Systems - only after Components!
          * u.init();
          * @endcode
+         * @remarks Not thread-safe!
          */
         void init();
 
@@ -75,6 +76,7 @@ namespace ent
         /**
          * Reset the managers.
          * All Components/Systems will have to be added again.
+         * @remarks Not thread-safe!
          */
         void reset();
 
@@ -144,6 +146,23 @@ namespace ent
         EntityGroup *addGetGroup();
 
         /**
+         * Decrease the usage counter for given EntityGroup.
+         * If the counter reached zero, the Group will be
+         * removed on next refresh.
+         * @tparam RequireT List of required Component types.
+         * @tparam RejectT List of rejected Component types.
+         * @return Returns true, if the group reached zero, on
+         *   then usage counter. Returns true, only the first
+         *   time zero is reached, any following calls have no effect.
+         * @remarks Is only thread-safe for EntityGroups created
+         *   using addGetGroup, which are also not in used
+         *   by any Systems.
+         */
+        template <typename RequireT,
+            typename RejectT>
+        bool abandonGroup();
+
+        /**
          * Register given Component and its ComponentHolder.
          * @tparam ComponentT Type of the Component.
          * @tparam CArgTs ComponentHolder constructor argument types.
@@ -185,6 +204,12 @@ namespace ent
          * @remarks Not thread-safe! If thread-safety is required, use addComponentD.
          * @remarks Changes Entity metadata!
          * @remarks All pointers to Components of the same type may be invalidated!
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
          */
         template <typename ComponentT,
                   typename... CArgTs>
@@ -213,8 +238,12 @@ namespace ent
          * @tparam ComponentT Type of the Component
          * @param id Id of the Component
          * @return Returns pointer to the Component.
-         * @remarks Not thread-safe in case of write access! If threa-safety
+         * @remarks Not thread-safe in case of write access! If thread-safety
          *   is required, use getComponentD.
+         * @remarks Default behavior, if Component doesn't exist, is returning
+         *   nullptr. Method can throw exception instead, if ENT_COMP_EXCEPT
+         *   macro is defined. Exception of type std::runtime_error is thrown in
+         *   that case.
          */
         template <typename ComponentT>
         inline ComponentT *getComponent(EntityId id);
@@ -228,6 +257,10 @@ namespace ent
          * @return Returns pointer to the Component.
          * @remarks Is thread-safe for cases, when on other thread
          *   has write access to the same Component.
+         * @remarks Default behavior, if Component doesn't exist, is returning
+         *   nullptr. Method can throw exception instead, if ENT_COMP_EXCEPT
+         *   macro is defined. Exception of type std::runtime_error is thrown in
+         *   that case.
          */
         template <typename ComponentT>
         inline const ComponentT *getComponent(EntityId id) const;
@@ -262,11 +295,18 @@ namespace ent
          * Operation is performed immediately.
          * @tparam ComponentT Type of the Component
          * @param id Id of the Component
+         * @return Returns true, if the Component has been successfully removed.
          * @remarks Not thread-safe!
          * @remarks Changes Entity metadata!
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
          */
         template <typename ComponentT>
-        inline void removeComponent(EntityId id);
+        inline bool removeComponent(EntityId id);
 
         /**
          * Remove Component from given Entity.
@@ -284,6 +324,10 @@ namespace ent
          * @return Handle to newly created Entity.
          * @remarks Not thread-safe!
          * @remarks Changes Entity metadata.
+         * @remarks Default behavior, if Entity could not be created, is
+         *   returning invalid Entity (Entity.valid() == false). Method can
+         *   also throw exception of type std::runtime_error, if such
+         *   result is require, macro ENT_ENTITY_EXCEPT should be defined.
          */
         inline EntityT createEntity();
 
@@ -297,6 +341,8 @@ namespace ent
          * @remarks Is thread-safe.
          */
         inline TempEntityT createEntityD();
+
+#ifdef ENT_NOT_USED
 
         /**
          * Try to create Entity with given ID (without generation), if
@@ -334,13 +380,20 @@ namespace ent
          */
         inline EntityHolder::SequenceRecord createSequentialEntities(EIdType startId, u64 size);
 
+#endif
+
         /**
          * Activate given Entity.
          * Action is performed immediately.
          * @param id ID of the Entity.
-         * @remarks Does NOT check index bounds!
          * @remarks Not thread-safe!
          * @remarks Changes Entity metadata.
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
          */
         inline void activateEntity(EntityId id);
 
@@ -356,9 +409,14 @@ namespace ent
          * Deactivate given Entity.
          * Action is performed immediately.
          * @param id ID of the Entity.
-         * @remarks Does NOT check index bounds!
          * @remarks Not thread-safe!
          * @remarks Changes Entity metadata.
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
          */
         inline void deactivateEntity(EntityId id);
 
@@ -374,7 +432,8 @@ namespace ent
          * Destroy given Entity.
          * Action is performed immediately.
          * @param id ID of the Entity.
-         * @return Returns false, if the Entity does not exist.
+         * @return Returns false, if the Entity could not
+         *   be destroyed.
          * @remarks Not thread-safe!
          * @remarks Changes Entity metadata.
          */
@@ -410,6 +469,19 @@ namespace ent
          */
         inline bool entityActive(EntityId id) const;
     private:
+        /**
+         * Reset parts of this Universe.
+         * @remarks Not thread-safe!
+         */
+        void resetSelf();
+
+        /**
+         * Called, when an Entity has changed and its membership
+         * in groups should be rechecked.
+         * @param id ID of the Entity.
+         * @remarks Not thread-safe!
+         */
+        void entityChanged(EntityId id);
 
 #ifdef ENT_STATS_ENABLED
         /// Statistics for this Universe.
@@ -422,138 +494,13 @@ namespace ent
         ComponentManager<UniverseT> mCM;
         /// Used for managing Systems and Groups.
         SystemManager<UniverseT> mSM;
+
+        /// List of changed Entities since the last refresh.
+        SortedList<EntityId> mChanged;
     protected:
     }; // Universe
 
-    template <typename T>
-    template <typename ASystemT,
-              typename... CArgTs>
-    ASystemT *Universe<T>::addSystem(CArgTs... args)
-    {
-        static_assert(std::is_base_of<SystemT, ASystemT>::value,
-                      "The System has to inherit from ent::System!");
-        static_assert(std::is_constructible<ASystemT, CArgTs...>::value,
-                      "Unable to construct System with given constructor parameters!");
-
-        ASystemT *system{mSM.template addSystem<ASystemT>(this, std::forward<CArgTs>(args)...)};
-
-        if (LOG_STATS)
-        {
-            mStats.sysActive++;
-            mStats.sysAdded++;
-            CHECK_STATS(mStats);
-        }
-
-        return system;
-    }
-
-    template <typename T>
-    template <typename ASystemT>
-    ASystemT *Universe<T>::getSystem()
-    {
-        return mSM.template getSystem<ASystemT>();
-    }
-
-    template <typename T>
-    template<typename ASystemT>
-    bool Universe<T>::removeSystem()
-    {
-        static_assert(std::is_base_of<SystemT, ASystemT>::value, "The System has to inherit from ent::System!");
-
-        bool removed{mSM.template removeSystem<ASystemT>()};
-
-        if (LOG_STATS && removed)
-        {
-            mStats.sysActive--;
-            mStats.sysRemoved++;
-            CHECK_STATS(mStats);
-        }
-
-        return removed;
-    }
-
-    template <typename T>
-    template <typename RequireT,
-              typename RejectT>
-    EntityGroup *Universe<T>::addGetGroup()
-    {
-        if (!mSM.template hasGroup<RequireT, RejectT>())
-        {
-            mSM.template addGroup<RequireT, RejectT>();
-            if (LOG_STATS)
-            {
-                mStats.grpActive--;
-                mStats.grpRemoved++;
-                CHECK_STATS(mStats);
-            }
-        }
-
-        return mSM.template getGroup<RequireT, RejectT>();
-    }
-
-    template <typename T>
-    template <typename ComponentT,
-              typename... CArgTs>
-    u64 Universe<T>::registerComponent(CArgTs... args)
-    {
-        // Check for multiple calls for single Component.
-        if (mCM.template registered<ComponentT>())
-        {
-            ENT_WARNING("registerComponent called multiple times!");
-            return mCM.template id<ComponentT>();
-        }
-
-        u64 cId{mCM.template registerComponent<ComponentT>(std::forward<CArgTs>(args)...)};
-
-        if (LOG_STATS)
-        {
-            mStats.compRegistered++;
-            CHECK_STATS(mStats);
-        }
-
-        return cId;
-    }
-
-    template <typename T>
-    Universe<T>::Universe() :
-        mEM(), mCM(), mSM()
-    { }
-
-    template <typename T>
-    Universe<T>::~Universe()
-    { }
-
-    template <typename T>
-    void Universe<T>::init()
-    {
-        refresh();
-    }
-
-    template <typename T>
-    void Universe<T>::refresh()
-    {
-        /*
-         * GroupManager:
-         *  Empty added/removed lists.
-         * ActionCache:
-         *  Execute operations.
-         *  Notify Groups with changed Entity IDs.
-         * TODO - Order, refresh?
-         */
-        mEM.refresh();
-        mCM.refresh();
-        mSM.refresh();
-    }
-
-    template <typename T>
-    void Universe<T>::reset()
-    {
-        mSM.reset();
-        mEM.reset();
-        mCM.reset();
-    }
-
-#ifdef OLD_UNUSED
+#ifdef ENT_OLD_UNUSED
     template <typename T>
     template <typename ComponentT>
     ComponentT *Universe<T>::addComponent(EntityId id)
@@ -610,5 +557,7 @@ namespace ent
 #endif
 
 } // namespace ent
+
+#include "Universe.inl"
 
 #endif //ECS_FIT_UNIVERSE_H

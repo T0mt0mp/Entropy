@@ -67,8 +67,6 @@ namespace ent
         template <typename ComponentT>
         inline void removeComponent(EntityId id);
     private:
-        /// List of changed Entities since the last refresh.
-        SortedList<EntityId> mChanged;
     protected:
     }; // class ActionCache
 
