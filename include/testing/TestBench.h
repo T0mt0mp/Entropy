@@ -144,7 +144,7 @@
 
 #define TC_Check(EXP) \
             do { \
-                decltype(EXP) temp{EXP}; \
+                decltype((EXP)) temp{(EXP)}; \
                 if (temp) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
                 else \
@@ -153,7 +153,7 @@
 
 #define TC_CheckMessage(EXP, MSG) \
             do { \
-                decltype(EXP) temp{EXP}; \
+                decltype((EXP)) temp{(EXP)}; \
                 if (temp) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, MSG); } \
                 else \
@@ -162,8 +162,8 @@
 
 #define TC_CheckEqual(EXP1, EXP2) \
             do { \
-                decltype(EXP1) temp1{EXP1}; \
-                decltype(EXP2) temp2{EXP2}; \
+                decltype((EXP1)) temp1{(EXP1)}; \
+                decltype((EXP2)) temp2{(EXP2)}; \
                 if (temp1 == temp2) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
                 else \
@@ -172,8 +172,8 @@
 
 #define TC_CheckNEqual(EXP1, EXP2) \
             do { \
-                decltype(EXP1) temp1{EXP1}; \
-                decltype(EXP2) temp2{EXP2}; \
+                decltype((EXP1)) temp1{(EXP1)}; \
+                decltype((EXP2)) temp2{(EXP2)}; \
                 if (temp1 != temp2) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP1 " != " #EXP2, tb::TestResult::PASSED, temp1 << " != " << temp2); } \
                 else \
@@ -215,8 +215,8 @@
 
 #define TC_CheckConstexprEqual(EXP1, EXP2) \
             do { \
-                constexpr decltype(EXP1) temp1{EXP1}; \
-                constexpr decltype(EXP2) temp2{EXP2}; \
+                constexpr decltype((EXP1)) temp1{(EXP1)}; \
+                constexpr decltype((EXP2)) temp2{(EXP2)}; \
                 if (temp1 == temp2) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
                 else \
@@ -225,7 +225,7 @@
 
 #define TC_CheckConstexpr(EXP) \
             do { \
-                constexpr decltype(EXP) temp{EXP}; \
+                constexpr decltype((EXP)) temp{(EXP)}; \
                 if (temp) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
                 else \
@@ -234,7 +234,7 @@
 
 #define TC_Require(EXP) \
             do { \
-                const decltype(EXP) temp{EXP}; \
+                const decltype((EXP)) temp{(EXP)}; \
                 if (temp) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
                 else \
@@ -243,7 +243,7 @@
 
 #define TC_RequireMessage(EXP, MSG) \
             do { \
-                decltype(EXP) temp{EXP}; \
+                decltype((EXP)) temp{(EXP)}; \
                 if (temp) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, MSG); } \
                 else \
@@ -252,8 +252,8 @@
 
 #define TC_RequireEqual(EXP1, EXP2) \
             do { \
-                decltype(EXP1) temp1{EXP1}; \
-                decltype(EXP2) temp2{EXP2}; \
+                decltype((EXP1)) temp1{(EXP1)}; \
+                decltype((EXP2)) temp2{(EXP2)}; \
                 if (temp1 == temp2) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
                 else \
@@ -262,8 +262,8 @@
 
 #define TC_RequireNEqual(EXP1, EXP2) \
             do { \
-                decltype(EXP1) temp1{EXP1}; \
-                decltype(EXP2) temp2{EXP2}; \
+                decltype((EXP1)) temp1{(EXP1)}; \
+                decltype((EXP2)) temp2{(EXP2)}; \
                 if (temp1 != temp2) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP1 " != " #EXP2, tb::TestResult::PASSED, temp1 << " != " << temp2); } \
                 else \
@@ -272,8 +272,8 @@
 
 #define TC_RequireConstexprEqual(EXP1, EXP2) \
             do { \
-                constexpr decltype(EXP1) temp1{EXP1}; \
-                constexpr decltype(EXP2) temp2{EXP2}; \
+                constexpr decltype((EXP1)) temp1{(EXP1)}; \
+                constexpr decltype((EXP2)) temp2{(EXP2)}; \
                 if (temp1 == temp2) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP1 " == " #EXP2, tb::TestResult::PASSED, temp1 << " == " << temp2); } \
                 else \
@@ -282,7 +282,7 @@
 
 #define TC_RequireConstexpr(EXP) \
             do { \
-                constexpr decltype(EXP) temp{EXP}; \
+                constexpr decltype((EXP)) temp{(EXP)}; \
                 if (temp) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
                 else \
