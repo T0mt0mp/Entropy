@@ -38,11 +38,11 @@ namespace ent
             index = popFreeId();
             ENT_ASSERT_SLOW(index);
 
-            mRecords[index].groups.set(0u);
-            mRecords[index].components.reset();
+            mRecords[index].setGrp(MAX_GROUPS);
+            mRecords[index].comp().reset();
 
             // Generation is incremented in Entity destroy.
-            gen = mRecords[index].generation;
+            gen = mRecords[index].gen();
         }
         else
         {
@@ -55,8 +55,8 @@ namespace ent
             mRecords.resize(index + 1u);
             initEntity(index);
 
-            mRecords[index].groups.set(0u);
-            mRecords[index].generation = EntityId::START_GEN;
+            mRecords[index].setGrp(MAX_GROUPS);
+            mRecords[index].gen() = EntityId::START_GEN;
             gen = EntityId::START_GEN;
         }
 
@@ -71,8 +71,8 @@ namespace ent
         }
 
         EntityRecord &rec(mRecords[id.index()]);
-        rec.groups.reset();
-        rec.generation = rec.generation == EntityId::MAX_GEN ? 0u : rec.generation + 1;
+        rec.grp().reset();
+        rec.gen() = (rec.gen() == EntityId::MAX_GEN) ? 0u : rec.gen() + 1u;
         pushFreeId(id.index());
 
         return true;

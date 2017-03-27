@@ -24,10 +24,12 @@ public:
     { return nullptr; }
     ComponentT* get(ent::EntityId id) noexcept override
     { return nullptr; }
-    bool has(ent::EntityId id) const noexcept override
-    { return false; }
-    void remove(ent::EntityId id) noexcept override
-    { return; }
+    const ComponentT* get(ent::EntityId id) const noexcept override
+    { return nullptr; }
+    bool remove(ent::EntityId id) noexcept override
+    { return true; }
+    void refresh() noexcept override
+    { }
 };
 
 template <typename ComponentT,
@@ -223,25 +225,28 @@ struct DestructionHolder : public ent::BaseComponentHolder<T>
         sDestructed++;
     }
 
-    virtual T* add(ent::EntityId id) noexcept
+    virtual T* add(ent::EntityId id) noexcept override
     {
         return &mInst;
     }
 
-    virtual T* get(ent::EntityId id) noexcept
+    virtual T* get(ent::EntityId id) noexcept override
     {
         return &mInst;
     }
 
-    virtual bool has(ent::EntityId id) const noexcept
+    virtual const T* get(ent::EntityId id) const noexcept override
+    {
+        return &mInst;
+    }
+
+    virtual bool remove(ent::EntityId id) noexcept override
     {
         return true;
     }
 
-    virtual void remove(ent::EntityId id) noexcept
-    {
-
-    }
+    virtual void refresh() noexcept override
+    { }
 
     T mInst;
 
@@ -735,28 +740,28 @@ TU_Begin(EntropyEntity)
             TC_RequireEqual(sys->foreach().size(), sysEnt);
         }
 
-        TC_RequireEqual(u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach().size(), 0u);
-        TC_RequireEqual(u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach().size(), 0u);
+        TC_RequireEqual((u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach(&u).size()), 0u);
+        TC_RequireEqual((u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach(&u).size()), 0u);
 
         u.refresh();
 
-        TC_RequireEqual(u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach().size(), sysRemoved);
-        TC_RequireEqual(u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach().size(), sysEnt);
+        TC_RequireEqual((u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach(&u).size()), sysRemoved);
+        TC_RequireEqual((u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach(&u).size()), sysEnt);
 
-        for (auto &e : u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach())
+        for (auto &e : u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach(&u))
         {
             e.destroy();
         }
 
-        for (auto &e : u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach())
+        for (auto &e : u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach(&u))
         {
             e.destroy();
         }
 
         u.refresh();
 
-        TC_RequireEqual(u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach().size(), 0u);
-        TC_RequireEqual(u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach().size(), 0u);
+        TC_RequireEqual((u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach(&u).size()), 0u);
+        TC_RequireEqual((u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach(&u).size()), 0u);
     }
 
     TU_Case(UniverseDestruction, "Testing correct destruction of Universe instance.")

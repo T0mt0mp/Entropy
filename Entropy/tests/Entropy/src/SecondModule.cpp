@@ -25,10 +25,12 @@ public:
     { return nullptr; }
     ComponentT* get(ent::EntityId id) noexcept override
     { return nullptr; }
-    bool has(ent::EntityId id) const noexcept override
-    { return false; }
-    void remove(ent::EntityId id) noexcept override
-    { return; }
+    const ComponentT* get(ent::EntityId id) const noexcept override
+    { return nullptr; }
+    bool remove(ent::EntityId id) noexcept override
+    { return true; }
+    void refresh() noexcept override
+    { }
 };
 
 template <typename ComponentT,

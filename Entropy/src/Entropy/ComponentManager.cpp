@@ -5,7 +5,7 @@
  *        each type of Component.
  */
 
-#include "Entropy/Component.h"
+#include "Entropy/ComponentManager.h"
 
 /// Main Entropy namespace
 namespace ent

@@ -7,12 +7,10 @@
 #ifndef ECS_FIT_UNIVERSE_H
 #define ECS_FIT_UNIVERSE_H
 
-#include "ActionCache.h"
-#include "System.h"
-#include "Component.h"
-#include "Entity.h"
 #include "EntityManager.h"
-#include "EntityGroup.h"
+#include "ComponentManager.h"
+#include "GroupManager.h"
+#include "SystemManager.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -30,7 +28,7 @@ namespace ent
     public:
         using UniverseT = Universe<T>;
         using EntityT = Entity<UniverseT>;
-        using TempEntityT = TemporaryEntity;
+        using TempEntityT = void; // TODO - TemporaryEntity
         using SystemT = System<UniverseT>;
 
         friend class Entity<UniverseT>;
@@ -140,6 +138,11 @@ namespace ent
          * @tparam RejectT List of rejected Component types.
          * @return Returns ptr to the requested Entity Group.
          * @remarks Not thread-safe!
+         * @remarks Each time this method is called the corresponding
+         *   Group usage counter is incremented, which can result
+         *   in Group existing even after destruction of its System.
+         *   To remedy this, after each "addGetGroup" call there should
+         *   be also "abandon" call on the returned Group.
          */
         template <typename RequireT,
             typename RejectT>
@@ -489,9 +492,11 @@ namespace ent
 #endif
 
         /// Used for managing Entities and metadata.
-        EntityManager<UniverseT> mEM;
+        EntityManager mEM;
         /// Used for managing Components and their Holders.
         ComponentManager<UniverseT> mCM;
+        /// Used for Entity Group management.
+        GroupManager<UniverseT> mGM;
         /// Used for managing Systems and Groups.
         SystemManager<UniverseT> mSM;
 
@@ -499,63 +504,6 @@ namespace ent
         SortedList<EntityId> mChanged;
     protected:
     }; // Universe
-
-#ifdef ENT_OLD_UNUSED
-    template <typename T>
-    template <typename ComponentT>
-    ComponentT *Universe<T>::addComponent(EntityId id)
-    { return mAC.template addComponent<ComponentT>(id); }
-
-    template <typename T>
-    template <typename ComponentT>
-    ComponentT *Universe<T>::getComponent(EntityId id)
-    { return mCM.template get<ComponentT>(id); }
-
-    template <typename T>
-    template <typename ComponentT>
-    bool Universe<T>::hasComponent(EntityId id)
-    { return mCM.template has<ComponentT>(id); }
-
-    template <typename T>
-    template <typename ComponentT>
-    void Universe<T>::removeComponent(EntityId id)
-    { mAC.template removeComponent<ComponentT>(id); }
-
-    template <typename T>
-    template <typename ComponentT>
-    const ComponentBitset &Universe<T>::componentMask()
-    { return mCM.template mask<ComponentT>(); }
-
-    template <typename T>
-    template <typename ComponentT>
-    bool Universe<T>::componentRegistered()
-    { return mCM.template registered<ComponentT>(); }
-
-    template <typename T>
-    auto Universe<T>::createEntity() -> EntityT
-    { return EntityT(this, mEM.create()); }
-
-    template <typename T>
-    void Universe<T>::activateEntity(EntityId id)
-    { mEM.activate(id); }
-
-    template <typename T>
-    void Universe<T>::deactivateEntity(EntityId id)
-    { mEM.deactivate(id); }
-
-    template <typename T>
-    bool Universe<T>::destroyEntity(EntityId id)
-    { return mEM.destroy(id); }
-
-    template <typename T>
-    bool Universe<T>::entityValid(EntityId id) const
-    { return mEM.valid(id); }
-
-    template <typename T>
-    bool Universe<T>::entityActive(EntityId id) const
-    { return mEM.active(id); }
-#endif
-
 } // namespace ent
 
 #include "Universe.inl"

@@ -124,9 +124,10 @@ namespace ent
          * If there is no Component of this type associated with
          * the Entity, nothing happens.
          * @tparam ComponentT Type of the Component.
+         * @return Returns true, if the Component has been successfully removed.
          */
         template <typename ComponentT>
-        void remove()
+        bool remove()
         { return mUniverse->template removeComponent<ComponentT>(mId); }
 
         /**
@@ -192,61 +193,8 @@ namespace ent
         EntityId mId;
     protected:
     }; // Entity
-
-    // Entity implementation.
-    template <typename UniverseT>
-    Entity<UniverseT>::Entity(UniverseT *uni, EntityId id) :
-        mUniverse{uni}, mId{id}
-    { }
-
-    template <typename UniverseT>
-    Entity<UniverseT>::Entity(const Entity &rhs)
-    {
-        copy(rhs);
-    }
-
-    template <typename UniverseT>
-    Entity<UniverseT>::Entity(Entity &&rhs)
-    {
-        copy(rhs);
-    }
-
-    template <typename UniverseT>
-    template <typename UniverseT2>
-    Entity<UniverseT> &Entity<UniverseT>::operator=(const Entity<UniverseT2> &rhs)
-    {
-        copy(rhs);
-        return *this;
-    }
-
-    template <typename UniverseT>
-    template <typename UniverseT2>
-    Entity<UniverseT> &Entity<UniverseT>::operator=(Entity<UniverseT2> &&rhs)
-    {
-        copy(rhs);
-        return *this;
-    }
-
-    template <typename UniverseT>
-    template <typename UniverseT2>
-    void Entity<UniverseT>::copy(const Entity<UniverseT2> &rhs)
-    {
-        mId = rhs.mId;
-    }
-
-    template <typename UniverseT>
-    void Entity<UniverseT>::copy(const Entity<UniverseT> &rhs)
-    {
-        mId = rhs.mId;
-        mUniverse = rhs.mUniverse;
-    }
-
-    template <typename UniverseT>
-    bool Entity<UniverseT>::operator==(const Entity &rhs) const
-    {
-        return mId == rhs.mId && mId.generation() == rhs.mId.generation();
-    }
-    // Entity implementation end.
 } // namespace ent
+
+#include "Entity.inl"
 
 #endif //ECS_FIT_ENTITY_H

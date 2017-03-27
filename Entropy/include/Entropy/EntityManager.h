@@ -16,12 +16,47 @@
 namespace ent
 {
     /// Record about state of a single Entity
-    struct EntityRecord
+    class EntityRecord
     {
-        /// Is the Entity active?
-        bool active() const
-        { return groups.test(0u); }
+    public:
+        /// Reset all the metadata to 0.
+        inline void reset();
 
+        /// Is the Entity active?
+        inline bool active() const;
+        /// Activate this Entity.
+        inline void activate();
+        /// Deactivate this Entity.
+        inline void deactivate();
+
+        /// Set metadata for given Component.
+        inline void setComp(u64 index);
+        /// Reset metadata for given Component.
+        inline void resetComp(u64 index);
+        /// Test for given Component.
+        inline bool testComp(u64 index) const;
+        /// Components getter.
+        inline const ComponentBitset &comp() const;
+        inline ComponentBitset &comp();
+
+        /// Set metadata for given Group.
+        inline void setGrp(u64 index);
+        /// Reset metadata for given Group.
+        inline void resetGrp(u64 index);
+        /// Test for given Group.
+        inline bool testGrp(u64 index) const;
+        /// Group getter.
+        inline const GroupBitset &grp() const;
+        inline GroupBitset &grp();
+
+        /// Generation getter.
+        inline EIdType &gen();
+        inline const EIdType &gen() const;
+
+        /// Next free getter.
+        inline EIdType &next();
+        inline const EIdType &next() const;
+    private:
         union {
             /// Present Components bitset.
             ComponentBitset components;
@@ -29,11 +64,12 @@ namespace ent
             EIdType nextFree;
         };
 
-        /// Presence in EntityGroups, lowest significance bit represents information about activity of Entity.
+        /// Presence in EntityGroups, most significant bit represents information about activity of Entity.
         GroupBitset groups;
 
         /// Current generation number.
         EIdType generation;
+    protected:
     };
 
     /**
@@ -47,43 +83,30 @@ namespace ent
          * Create iterator with given pointer.
          * @param ptr Pointer to the EntityRecord list.
          */
-        inline ActiveEntityIterator(const EntityRecord *ptr, u64 size);
+        inline ActiveEntityIterator(EntityRecord *ptr, u64 size);
 
         /**
          * Get ID for the current Entity.
          * @return ID of the current Entity.
          */
-        EntityId id() const
-        { return EntityId(mIndex, mPtr->generation); }
+        inline EntityId id() const;
 
-        /**
-         * Get Groups bitset for the current Entity.
-         * @return Groups bitset of the current Entity.
-         */
-        const GroupBitset &groups() const
-        { return mPtr->groups; }
-
-        /**
-         * Get Components bitset for the current Entity.
-         * @return Components bitset of the current Entity.
-         */
-        const ComponentBitset &components() const
-        { return mPtr->components; }
+        /// Get the current record.
+        inline EntityRecord &record();
+        inline const EntityRecord &record() const;
 
         /**
          * Move the Iterator to the next valid Entity.
          * @return
          */
-        void operator++()
-        { increment(); }
+        inline void operator++();
 
         /**
          * Is this iterator on a valid EntityRecord?
          * @return Returns true, if this iterator is
          *   safe to use.
          */
-        bool isValid() const
-        { return mIndex < mSize; }
+        inline bool valid() const;
     private:
         /// Increment this iterator.
         inline void increment();
@@ -93,7 +116,7 @@ namespace ent
         /// Size of the EntityRecord list.
         const u64 mSize;
         /// Internal pointer.
-        const EntityRecord *mPtr;
+        EntityRecord *mPtr;
     protected:
     };
 
@@ -257,7 +280,13 @@ namespace ent
          * Get iterator for all active Entities.
          * @return Iterator for all active Entities.
          */
-        inline ActiveEntityIterator activeEntities() const;
+        inline ActiveEntityIterator activeEntities();
+
+        /**
+         * Apply andMask to the Group metadata.
+         * @param andMask AND mask applied to the Group metadata.
+         */
+        inline void resetGroups(const GroupBitset &andMask);
     private:
         /**
          * Initialize Entity on given index to 0 values.
@@ -270,8 +299,7 @@ namespace ent
          * Does NOT check index bounds by itself.
          * @param index
          */
-        bool activeImpl(EIdType index) const
-        { return mRecords[index].active(); }
+        inline bool activeImpl(EIdType index) const;
 
         /**
          * Check for validity of given index and generation number.
@@ -279,16 +307,14 @@ namespace ent
          * @param gen Generation of the Entity.
          * @return Returns true, if the Entity is valid.
          */
-        bool validImpl(EIdType index, EIdType gen) const
-        { return indexValid(index) && genValid(index, gen); }
+        inline bool validImpl(EIdType index, EIdType gen) const;
 
         /**
          * Check if given index is valid.
          * @param index Index of the Entity.
          * @return Returns true, if the index is valid.
          */
-        bool indexValid(EIdType index) const
-        { return index && index < mRecords.size(); }
+        inline bool indexValid(EIdType index) const;
 
         /**
          * Check if given generation corresponds to the index.
@@ -297,8 +323,7 @@ namespace ent
          * @param gen Generation of the Entity.
          * @return Returns true, if the generation number is current.
          */
-        bool genValid(EIdType index, EIdType gen) const
-        { return mRecords[index].generation == gen; }
+        inline bool genValid(EIdType index, EIdType gen) const;
 
         /**
          * Free Entity on given ID, no checks are performed!
@@ -324,9 +349,13 @@ namespace ent
     };
 
     /**
-     * EntityManager base class containing code which does not need to be templated.
+     * EntityManager is a part of Entropy ECS Universe.
+     * Contains lists of Entities, their status and
+     * currently used generation for given index.
+     * Contains methods for adding/removing entities and
+     * their refresh.
      */
-    class EntityManagerBase : NonCopyable
+    class EntityManager final : NonCopyable
     {
     public:
         /**
@@ -483,38 +512,17 @@ namespace ent
          */
         ActiveEntityIterator activeEntities()
         { return mEntities.activeEntities(); }
+
+        /**
+         * Apply andMask to the Group metadata.
+         * @param andMask AND mask applied to the Group metadata.
+         */
+        void resetGroups(const GroupBitset &andMask)
+        { mEntities.resetGroups(andMask); }
     private:
     protected:
         /// Container for the Entities.
         EntityHolder mEntities;
-    }; // EntityManagerBase
-
-    /**
-     * EntityManager is a part of Entropy ECS Universe.
-     * Contains lists of Entities, their status and
-     * currently used generation for given index.
-     * Contains methods for adding/removing entities and
-     * their refresh.
-     * @tparam UniverseT Type of the Universe, where this class is being used.
-     */
-    template <typename UniverseT>
-    class EntityManager final : public EntityManagerBase
-    {
-    public:
-        /**
-         * Default EntityManger constructor.
-         */
-        EntityManager();
-
-        /**
-         * Destruct the Entity manager and the Entities.
-         */
-        ~EntityManager();
-
-        /**
-         * TODO - EntityManager refresh.
-         */
-        void refresh();
     private:
     protected:
     };// EntityManager

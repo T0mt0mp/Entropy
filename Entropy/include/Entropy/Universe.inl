@@ -1,5 +1,5 @@
 /**
- * @file Entropy/Universe.h
+ * @file Entropy/Universe.inl
  * @author Tomas Polasek
  * @brief Universe is the wrapper around all other parts of the Entropy ECS.
  */
@@ -12,7 +12,7 @@ namespace ent
     // Universe implementation.
     template <typename T>
     Universe<T>::Universe() :
-        mEM(), mCM(), mSM()
+        mEM(), mCM(), mGM(), mSM()
     { }
 
     template <typename T>
@@ -36,9 +36,8 @@ namespace ent
          *  Notify Groups with changed Entity IDs.
          * TODO - Order, refresh?
          */
-        mEM.refresh();
         mCM.refresh();
-        mSM.refresh();
+        mGM.refresh(mChanged, mEM);
     }
 
     template <typename T>
@@ -60,7 +59,7 @@ namespace ent
         static_assert(std::is_constructible<ASystemT, CArgTs...>::value,
                       "Unable to construct System with given constructor parameters!");
 
-        ASystemT *system{mSM.template addSystem<ASystemT>(this, std::forward<CArgTs>(args)...)};
+        ASystemT *system{mSM.template addSystem<ASystemT>(this, mCM, mGM, std::forward<CArgTs>(args)...)};
 
         if (LOG_STATS)
         {
@@ -102,9 +101,9 @@ namespace ent
         typename RejectT>
     EntityGroup *Universe<T>::addGetGroup()
     {
-        if (!mSM.template hasGroup<RequireT, RejectT>())
+        if (!mGM.template hasGroup<RequireT, RejectT>())
         {
-            mSM.template addGroup<RequireT, RejectT>();
+            mGM.template addGroup<RequireT, RejectT>(mGM.template buildFilter<RequireT, RejectT>(mCM));
             if (LOG_STATS)
             {
                 mStats.grpActive++;
@@ -113,7 +112,7 @@ namespace ent
             }
         }
 
-        return mSM.template getGroup<RequireT, RejectT>();
+        return mGM.template getGroup<RequireT, RejectT>();
     }
 
     template <typename T>
@@ -121,7 +120,7 @@ namespace ent
         typename RejectT>
     bool Universe<T>::abandonGroup()
     {
-        bool result{mSM.template abandonGroup<RequireT, RejectT>()};
+        bool result{mGM.template abandonGroup<RequireT, RejectT>()};
 
         if (LOG_STATS && result)
         {
@@ -182,11 +181,11 @@ namespace ent
 
         if (result)
         { // Check, if the add operation returned success.
-            bool alreadyPresent{mEM.template hasComponent<ComponentT>(id, mCM.template id<ComponentT>())};
+            bool alreadyPresent{mEM.hasComponent(id, mCM.template id<ComponentT>())};
             if (!alreadyPresent)
             { // Check, if the Component has been added previously.
                 entityChanged(id);
-                mEM.template addComponent(id, mCM.template id<ComponentT>());
+                mEM.addComponent(id, mCM.template id<ComponentT>());
             }
         }
 
@@ -198,14 +197,14 @@ namespace ent
     ComponentT *Universe<T>::getComponent(EntityId id)
     {
 #ifdef ENT_COMP_EXCEPT
-        ComponentT *result{mCM.template get(id)};
+        ComponentT *result{mCM.template get<ComponentT>(id)};
         if (result == nullptr)
         {
             throw std::runtime_exception("Component for given Entity does not exist!");
         }
         return result;
 #else
-        return mCM.template get(id);
+        return mCM.template get<ComponentT>(id);
 #endif
     }
 
@@ -214,21 +213,21 @@ namespace ent
     const ComponentT *Universe<T>::getComponent(EntityId id) const
     {
 #ifdef ENT_COMP_EXCEPT
-        ComponentT *result{mCM.template get(id)};
+        ComponentT *result{mCM.template get<ComponentT>(id)};
         if (result == nullptr)
         {
             throw std::runtime_exception("Component for given Entity does not exist!");
         }
         return result;
 #else
-        return mCM.template get(id);
+        return mCM.template get<ComponentT>(id);
 #endif
     }
 
     template <typename T>
     template <typename ComponentT>
     bool Universe<T>::hasComponent(EntityId id) const
-    { return mCM.template registered<ComponentT>() && mEM.template hasComponent(id, mCM.template id<ComponentT>()); }
+    { return mCM.template registered<ComponentT>() && mEM.hasComponent(id, mCM.template id<ComponentT>()); }
 
     template <typename T>
     template <typename ComponentT>
@@ -245,16 +244,16 @@ namespace ent
         if (result)
         {
             entityChanged(id);
-            mEM.template removeComponent(id, mCM.template id<ComponentT>());
+            mEM.removeComponent(id, mCM.template id<ComponentT>());
         }
 
         return result;
     }
 
     template <typename T>
-    EntityT Universe<T>::createEntity()
+    auto Universe<T>::createEntity() -> EntityT
     {
-        EntityId newId{mEM.template create()};
+        EntityId newId{mEM.create()};
 
 #ifdef ENT_ENTITY_EXCEPT
         if (newId.index() == 0)

@@ -9,11 +9,6 @@
 /// Main Entropy namespace
 namespace ent
 {
-    /**
-     * Get the next higher or equal number, which is power of two.
-     * @param value Value.
-     * @return Returns a number >= value, which is power of two.
-     */
     static ENT_CONSTEXPR_FUN u64 pow2RoundUp(u64 value)
     {
         --value;
@@ -94,6 +89,17 @@ namespace ent
     }
 
     template <u64 N>
+    auto InfoBitset<N>::operator&=(const InfoBitset &rhs) -> InfoBitset&
+    {
+        for (u64 block = 0u; block < NUM_BLOCKS; ++block)
+        {
+            getBlock(block) &= rhs.getBlock(block);
+        }
+
+        return *this;
+    }
+
+    template <u64 N>
     auto InfoBitset<N>::operator|(const InfoBitset &rhs) const -> InfoBitset
     {
         InfoBitset result;
@@ -104,6 +110,17 @@ namespace ent
         }
 
         return result;
+    }
+
+    template <u64 N>
+    auto InfoBitset<N>::operator|=(const InfoBitset &rhs) -> InfoBitset&
+    {
+        for (u64 block = 0u; block < NUM_BLOCKS; ++block)
+        {
+            getBlock(block) &= rhs.getBlock(block);
+        }
+
+        return *this;
     }
 
     template <u64 N>

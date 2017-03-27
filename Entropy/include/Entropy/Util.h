@@ -11,6 +11,7 @@
 #include <utility>
 #include <memory>
 #include <string>
+#include <iostream>
 // CHAR_BIT
 #include <climits>
 // memcpy
@@ -77,18 +78,31 @@ namespace ent
     }; // OnceInstantiable
 
     /**
+     * Base class for the ConstructionHandler.
+     */
+    class ConstructionHandlerBase
+    {
+    public:
+        /// Default constructor, does nothing.
+        ConstructionHandlerBase() {}
+
+        virtual void destruct() = 0;
+        virtual bool constructed() const = 0;
+    };
+
+    /**
      * Allows the allocation of memory for given type, without calling the constructor on it.
      * @tparam T Type which will be contained within.
      */
     template <typename T>
-    class alignas(T) ConstructionHandler
+    class alignas(T) ConstructionHandler : public ConstructionHandlerBase
     {
     public:
         /// Default constructor, does nothing.
         ConstructionHandler() {}
 
         /// Destructor, calls destructor on inner class iff it was constructed.
-        ~ConstructionHandler()
+        virtual ~ConstructionHandler()
         {
             if (constructed())
             {
@@ -111,7 +125,7 @@ namespace ent
         /**
          * Explicit destruct the inner object.
          */
-        void destruct()
+        virtual void destruct()
         { mHandler.reset(nullptr); }
 
         /**
@@ -668,9 +682,11 @@ namespace ent
 
         /// Binary AND operator.
         InfoBitset operator&(const InfoBitset &rhs) const;
+        InfoBitset &operator&=(const InfoBitset &rhs);
 
         /// Binary OR operator.
         InfoBitset operator|(const InfoBitset &rhs) const;
+        InfoBitset &operator|=(const InfoBitset &rhs);
 
         /// Comparison operator.
         bool operator==(const InfoBitset &rhs) const;
@@ -759,6 +775,13 @@ namespace ent
 
     /// Bitset, where each bit represents Entity presence in a group. +1 for the activity flag.
     using GroupBitset = InfoBitset<MAX_GROUPS + 1>;
+
+    /**
+     * Get the next higher or equal number, which is power of two.
+     * @param value Value.
+     * @return Returns a number >= value, which is power of two.
+     */
+    static ENT_CONSTEXPR_FUN u64 pow2RoundUp(u64 value);
 } // namespace ent
 
 #include "Util.inl"
