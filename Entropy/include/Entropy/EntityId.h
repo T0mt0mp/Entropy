@@ -31,25 +31,25 @@ namespace ent
          * @param index Index part of this EID.
          * @param generation Generation part of this EID.
          */
-        ENT_CONSTEXPR_FUN EntityId(EIdType index = 0, EIdType generation = START_GEN);
+        inline ENT_CONSTEXPR_FUN EntityId(EIdType index = 0, EIdType generation = START_GEN);
 
         /**
          * Get the packed ID of this EID.
          * @return Packed ID of this EID.
          */
-        ENT_CONSTEXPR_FUN EIdType id() const;
+        inline ENT_CONSTEXPR_FUN EIdType id() const;
 
         /**
          * Get the index part of this EID
          * @return Index starting at the LSb.
          */
-        ENT_CONSTEXPR_FUN EIdType index() const;
+        inline ENT_CONSTEXPR_FUN EIdType index() const;
 
         /**
          * Get the generation part of this EID.
          * @return Generation starting at the LSb.
          */
-        ENT_CONSTEXPR_FUN EIdType generation() const;
+        inline ENT_CONSTEXPR_FUN EIdType generation() const;
 
         /// Equal operator.
         ENT_CONSTEXPR_FUN bool operator==(const EntityId &rhs) const
@@ -74,7 +74,7 @@ namespace ent
          * @param rGen Generation aligned to the right.
          * @return Generation aligned to the left.
          */
-        static ENT_CONSTEXPR_FUN EIdType rGenToLGen(EIdType rGen);
+        inline static ENT_CONSTEXPR_FUN EIdType rGenToLGen(EIdType rGen);
 
         /**
          * Take generation number aligned to the left (most significant bits) and
@@ -82,21 +82,21 @@ namespace ent
          * @param lGen Generation aligned to the left.
          * @return Generation aligned to the right.
          */
-        static ENT_CONSTEXPR_FUN EIdType lGenToRGen(EIdType lGen);
+        inline static ENT_CONSTEXPR_FUN EIdType lGenToRGen(EIdType lGen);
 
         /**
          * Take packed ID and extract the index part of it.
          * @param packedId Packed entity identifier containing generation and index.
          * @return Index part of the identifier aligned to the right.
          */
-        static ENT_CONSTEXPR_FUN EIdType indexPart(EIdType packedId);
+        inline static ENT_CONSTEXPR_FUN EIdType indexPart(EIdType packedId);
 
         /**
          * Take packed ID and extract the generation part of it
          * @param packedId Packed entity identifier containing generation and index.
          * @return Generation part of the identifier alighed to the right.
          */
-        static ENT_CONSTEXPR_FUN EIdType genPart(EIdType packedId);
+        inline static ENT_CONSTEXPR_FUN EIdType genPart(EIdType packedId);
 
         /**
          * Take generation aligned to the left and index aligned to the right and
@@ -105,7 +105,7 @@ namespace ent
          * @param index Index number aligned to the right
          * @return Packed identifier combining the 2 parts.
          */
-        static ENT_CONSTEXPR_FUN EIdType combineGenIndex(EIdType lGen, EIdType index);
+        inline static ENT_CONSTEXPR_FUN EIdType combineGenIndex(EIdType lGen, EIdType index);
 
         /**
          * Packed Entity identifier:

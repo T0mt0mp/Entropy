@@ -11,6 +11,7 @@
 #include <utility>
 #include <memory>
 #include <string>
+#include <functional>
 #include <iostream>
 // CHAR_BIT
 #include <climits>
@@ -504,10 +505,10 @@ namespace ent
         using BMBType = u64;
         /// Number of chars (probably bytes) in one base memory block.
         static ENT_CONSTEXPR_EXPR u64 BLOCK_IN_CHARS{sizeof(BMBType) / sizeof(char)};
-        static_assert((BLOCK_IN_CHARS * sizeof(char)) == sizeof(BMBType));
+        static_assert((BLOCK_IN_CHARS * sizeof(char)) == sizeof(BMBType), "Testing for uncommon char size.");
         /// Size of the base memory block type in bits.
         static ENT_CONSTEXPR_EXPR u64 BITS_IN_BLOCK{BLOCK_IN_CHARS * CHAR_BIT};
-        static_assert(BITS_IN_BLOCK != 0u);
+        static_assert(BITS_IN_BLOCK != 0u, "Testing for uncommon char size.");
         /// Number of base memory blocks to get required number of bits.
         static ENT_CONSTEXPR_EXPR u64 NUM_BLOCKS{(N / BITS_IN_BLOCK) + ((N % BITS_IN_BLOCK) == 0u ? 0u : 1u)};
         /// Number of base memory blocks which are completely used by bitset bits.
