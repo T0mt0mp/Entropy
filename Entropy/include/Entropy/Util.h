@@ -78,40 +78,14 @@ namespace ent
     }; // OnceInstantiable
 
     /**
-     * Base class for the ConstructionHandler.
-     */
-    class ConstructionHandlerBase
-    {
-    public:
-        /// Default constructor, does nothing.
-        ConstructionHandlerBase() { }
-
-        virtual ~ConstructionHandlerBase() { }
-
-        virtual void destruct() = 0;
-        virtual bool constructed() const = 0;
-    };
-
-    /**
      * Allows the allocation of memory for given type, without calling the constructor on it.
+     * TODO - Might be better to use std::optional?
      * @tparam T Type which will be contained within.
      */
     template <typename T>
-    class alignas(T) ConstructionHandler : public ConstructionHandlerBase
+    class alignas(T) ConstructionHandler : NonCopyable
     {
     public:
-        /// Default constructor, does nothing.
-        ConstructionHandler() {}
-
-        /// Destructor, calls destructor on inner class iff it was constructed.
-        virtual ~ConstructionHandler()
-        {
-            if (constructed())
-            {
-                destruct();
-            }
-        }
-
         /**
          * Construct the inner object. If there is constructed object inside,
          * it will be destructed before constructing the new one.
@@ -121,21 +95,34 @@ namespace ent
         template <typename... CArgTs>
         void construct(CArgTs... args)
         {
-            mHandler.reset(new (mObjectMem) T(std::forward<CArgTs>(args)...));
+            destruct();
+            mPtr = new (mObjectMem) T(std::forward<CArgTs>(args)...);
         }
 
         /**
          * Explicit destruct the inner object.
          */
-        virtual void destruct()
-        { mHandler.reset(nullptr); }
+        void destruct()
+        {
+            if (constructed())
+            {
+                destructImpl();
+            }
+        }
+
+        std::function<void()> destructLater()
+        {
+            return [&] () {
+                this->destruct();
+            };
+        }
 
         /**
          * Is the inner object constructed?
          * @return Returns true, if the inner object has been constructed.
          */
         bool constructed() const
-        { return mHandler.get() != nullptr; }
+        { return mPtr != nullptr; }
 
         /**
          * Reference getter. The inner object should be
@@ -143,7 +130,7 @@ namespace ent
          * @return Returns reference to the inner object.
          */
         T &operator()()
-        { return (*mHandler); }
+        { return (*mPtr); }
 
         /**
          * Pointer getter, if the inner object is not
@@ -152,18 +139,25 @@ namespace ent
          *   if the inner object is not constructed.
          */
         T *ptr()
-        { return mHandler.get(); }
+        { return mPtr; }
     private:
-        /// Functor acting as a deletion function called by unique_ptr
         struct Destructor
         {
-            void operator()(T *ptr) const
-            { ptr->~T(); }
+            void operator()(T *ptr)
+            {
+                ptr->~T();
+            }
         };
+        /// Call destructor on the inner object.
+        void destructImpl()
+        {
+            Destructor{}((T*)mObjectMem);
+            mPtr = nullptr;
+        }
         /// Memory for the inner object.
         alignas(T) u8 mObjectMem[sizeof(T)];
-        /// Memory handler.
-        std::unique_ptr<T, Destructor> mHandler{nullptr};
+        /// Pointer to the object.
+        T* mPtr{nullptr};
     protected:
     };
 
@@ -420,7 +414,7 @@ namespace ent
 #endif
 
 #if defined(ENT_STATS_ENABLED) && defined(ENT_STATS_ASSERT)
-#   define CHECK_STATS(stats) ENT_ASSERT_SLOW(stats.testValid())
+#   define CHECK_STATS(stats) (stats.testValid())
 #else
 #   define CHECK_STATS(_)
 #endif
@@ -433,7 +427,7 @@ namespace ent
         /// Print user readable information.
         void print(std::ostream &out) const
         {
-            out << "Universe " << univId << "\n"
+            out << "Universe stats:\n"
                 << "\tInitialized: " << univInits
                 << "; Resets: " << univResets << "\n"
                 << "\tEntities (active/total [created/destroyed): "
@@ -449,20 +443,17 @@ namespace ent
         }
 
         /// Test if all the data are valid.
-        bool testValid() const
+        void testValid() const
         {
-            return univId != 0u &&
-                   entActive <= entTotal &&
-                   entCreated >= entDestroyed &&
-                   (entCreated - entDestroyed) == entTotal &&
-                   sysAdded >= sysRemoved &&
-                   (sysAdded - sysRemoved) == sysActive &&
-                   grpAdded >= grpRemoved &&
-                   (grpAdded - grpRemoved) == grpActive;
+            ENT_ASSERT_SLOW(entActive <= entTotal);
+            ENT_ASSERT_SLOW(entCreated >= entDestroyed);
+            ENT_ASSERT_SLOW((entCreated - entDestroyed) == entTotal);
+            ENT_ASSERT_SLOW(sysAdded >= sysRemoved);
+            ENT_ASSERT_SLOW((sysAdded - sysRemoved) == sysActive);
+            ENT_ASSERT_SLOW(grpAdded >= grpRemoved);
+            ENT_ASSERT_SLOW((grpAdded - grpRemoved) == grpActive);
         }
 
-        /// ID unique between Universes.
-        u64 univId{0};
         /// How many times has the Universe been initialized.
         u64 univInits{0};
         /// How many times has the Universe been reset.
@@ -527,7 +518,7 @@ namespace ent
         /// Byte value, where all bits are set to '0'.
         static ENT_CONSTEXPR_EXPR u8 BYTE_ZERO{0u};
         /// Byte value, where all bits are set to '1'.
-        static ENT_CONSTEXPR_EXPR u8 BYTE_ONE{~BYTE_ZERO};
+        static ENT_CONSTEXPR_EXPR u8 BYTE_ONE{static_cast<u8>(~BYTE_ZERO)};
         /// Block value, where all bits are set to '0'.
         static ENT_CONSTEXPR_EXPR BMBType BLOCK_ZERO{0u};
         /// Block value, where all bits are set to '1'.

@@ -7,6 +7,7 @@
 #ifndef ECS_FIT_TESTUNIVERSE_H
 #define ECS_FIT_TESTUNIVERSE_H
 
+#define ENT_STATS_ASSERT
 #include "Entropy/Entropy.h"
 
 class FirstUniverse : public ent::Universe<FirstUniverse>

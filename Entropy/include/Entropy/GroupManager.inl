@@ -35,7 +35,7 @@ namespace ent
 
         for (auto &h : mDestructOnReset)
         {
-            h->destruct();
+            h();
         }
         mDestructOnReset.clear();
     }
@@ -310,7 +310,7 @@ namespace ent
         mNewGroups.emplace_back(group<RequireT, RejectT>().ptr());
 
         // Register reset handle.
-        mDestructOnReset.emplace_back(&group<RequireT, RejectT>());
+        mDestructOnReset.emplace_back(group<RequireT, RejectT>().destructLater());
     }
 
     template <typename UT>

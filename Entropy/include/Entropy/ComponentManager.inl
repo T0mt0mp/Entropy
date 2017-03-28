@@ -16,14 +16,11 @@ namespace ent
 
     template <typename UT>
     ComponentManager<UT>::ComponentManager()
-    {
-    }
+    { reset(); }
 
     template <typename UT>
     ComponentManager<UT>::~ComponentManager()
-    {
-        reset();
-    }
+    { reset(); }
 
     template <typename UT>
     void ComponentManager<UT>::refresh()
@@ -39,7 +36,7 @@ namespace ent
     {
         for (auto &h : mDestructOnReset)
         {
-            h->destruct();
+            h();
         }
         mDestructOnReset.clear();
 
@@ -87,7 +84,8 @@ namespace ent
         mRefreshHolders.emplace_back(regInfo.holder.ptr());
 
         // Register the registered component to destruct on system reset.
-        mDestructOnReset.emplace_back(&(componentInfo<ComponentT>()));
+        mDestructOnReset.emplace_back(regInfo.holder.destructLater());
+        mDestructOnReset.emplace_back(componentInfo<ComponentT>().destructLater());
 
         return cId;
     }

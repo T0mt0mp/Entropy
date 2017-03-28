@@ -98,7 +98,7 @@ namespace ent
 		}
 
         /// List of things to destruct, when system reset occurs.
-        std::vector<ConstructionHandlerBase*> mDestructOnReset;
+        std::vector<std::function<void()>> mDestructOnReset;
     protected:
     }; // SystemManager
 

@@ -222,7 +222,7 @@ namespace ent
         std::vector<BaseComponentHolderBase*> mRefreshHolders;
 
         /// List of things to destruct on reset.
-        std::vector<ConstructionHandlerBase*> mDestructOnReset;
+        std::vector<std::function<void()>> mDestructOnReset;
 
         /// Counter for Component IDs.
         static u64 sComponentIdCounter;

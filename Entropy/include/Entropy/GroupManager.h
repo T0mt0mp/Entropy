@@ -211,7 +211,7 @@ namespace ent
         std::vector<EntityGroup*> mNewGroups;
 
         /// List of things to destruct on reset.
-        std::vector<ConstructionHandlerBase*> mDestructOnReset;
+        std::vector<std::function<void()>> mDestructOnReset;
     protected:
     }; // class GroupManager
 } // namespace ent

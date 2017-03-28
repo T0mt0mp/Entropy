@@ -14,7 +14,6 @@ public:
     TestComponentHolder(u32 num)
     {
         mNum = num;
-        std::cout << "TestComponentHolder : " << mNum << " " << mInstantiated << std::endl;
         mInstantiated++;
     }
     static u32 mNum;
@@ -90,7 +89,6 @@ struct TestComponent1
 
     TestComponent1()
     {
-        std::cout << "TestComponent1" << std::endl;
     }
     u32 x, y;
 };
@@ -101,7 +99,6 @@ struct TestComponent2
 
     TestComponent2()
     {
-        std::cout << "TestComponent1" << std::endl;
     }
     u32 x, y;
 };

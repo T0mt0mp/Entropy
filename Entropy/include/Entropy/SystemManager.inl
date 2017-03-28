@@ -23,7 +23,7 @@ namespace ent
     {
         for (auto &h : mDestructOnReset)
         {
-            h->destruct();
+            h();
         }
         mDestructOnReset.clear();
     }
@@ -65,7 +65,7 @@ namespace ent
             )
         );
 
-        mDestructOnReset.emplace_back(&system<SystemT>());
+        mDestructOnReset.emplace_back(system<SystemT>().destructLater());
 
         system<SystemT>()().setUniverse(uni);
         return system<SystemT>().ptr();
