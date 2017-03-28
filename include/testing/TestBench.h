@@ -234,7 +234,7 @@
 
 #define TC_Require(EXP) \
             do { \
-                const decltype((EXP)) temp{(EXP)}; \
+                decltype((EXP)) temp{(EXP)}; \
                 if (temp) \
                 { TC_DEBUGGER_SUCC; BTC_Record(#EXP, tb::TestResult::PASSED, "\"" << #EXP << "\" is true"); } \
                 else \
