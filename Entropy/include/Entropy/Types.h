@@ -77,11 +77,9 @@ namespace ent
                   "Number of INDEX and GENERATION bits cannot be 0!");
 
     /// Maximum number of component types per Universe.
-    static constexpr std::size_t MAX_COMPONENTS{64};
-
-    /// Maximum number of EntityGroups per Universe. +1 will be added for the activity flag.
-    static constexpr std::size_t MAX_GROUPS{63};
-
+    static constexpr std::size_t ENT_MAX_COMPONENTS{64};
+    /// Maximum number of EntityGroups per Universe. +1 will be added for Entity flags.
+    static constexpr std::size_t ENT_MAX_GROUPS{63};
 } // namespace ent
 
 #endif //ECS_FIT_TYPES_H

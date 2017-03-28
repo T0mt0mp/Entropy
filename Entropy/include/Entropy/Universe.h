@@ -486,10 +486,8 @@ namespace ent
          */
         void entityChanged(EntityId id);
 
-#ifdef ENT_STATS_ENABLED
         /// Statistics for this Universe.
         UniverseStats mStats;
-#endif
 
         /// Used for managing Entities and metadata.
         EntityManager mEM;

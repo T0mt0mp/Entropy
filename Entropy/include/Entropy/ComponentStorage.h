@@ -23,6 +23,8 @@ namespace ent
     class BaseComponentHolderBase
     {
     public:
+        virtual ~BaseComponentHolderBase() { }
+
         /**
          * Refresh the Component holder.
          * Called during the Universe refresh.

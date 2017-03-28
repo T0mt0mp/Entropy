@@ -136,14 +136,14 @@ namespace ent
          * @return Returns true, if the EntityId has been set to valid (not null) value.
          */
         bool created() const
-        { return mId.index() != 0; }
+        { return mId.index() != 0 && mUniverse != nullptr; }
 
         /**
          * Check if this Entity is valid within its Universe.
          * @return Returns true, if it exists within its universe.
          */
         bool valid() const
-        { return mUniverse->entityValid(mId); }
+        { return created() && mUniverse->entityValid(mId); }
 
         /**
          * Activate this Entity, if it's already active, nothing happens.

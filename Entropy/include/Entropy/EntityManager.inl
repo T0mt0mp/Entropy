@@ -14,11 +14,11 @@ namespace ent
     { std::memset(this, 0u, sizeof(EntityRecord)); }
 
     bool EntityRecord::active() const
-    { return groups.test(MAX_GROUPS); }
+    { return groups.test(ENT_ACTIVITY_BIT); }
     void EntityRecord::activate()
-    { groups.set(MAX_GROUPS); }
+    { groups.set(ENT_ACTIVITY_BIT); }
     void EntityRecord::deactivate()
-    { groups.reset(MAX_GROUPS); }
+    { groups.reset(ENT_ACTIVITY_BIT); }
 
     void EntityRecord::setComp(u64 index)
     { components.set(index); }
@@ -55,9 +55,14 @@ namespace ent
 
     // ActiveEntityIterator implementation.
     ActiveEntityIterator::ActiveEntityIterator(EntityRecord *ptr,
-                                               u64 size) :
+                                               EIdType size) :
         mIndex{0u}, mSize{size}, mPtr{ptr}
-    { }
+    {
+        if (!mPtr->active())
+        { // We started on non-active Entity record.
+            increment();
+        }
+    }
 
     EntityId ActiveEntityIterator::id() const
     { return EntityId(mIndex, mPtr->gen()); }
@@ -73,13 +78,23 @@ namespace ent
     bool ActiveEntityIterator::valid() const
     { return mIndex < mSize; }
 
+    bool ActiveEntityIterator::active() const
+    { return valid() && mPtr->active(); }
+
     void ActiveEntityIterator::increment()
     {
-        while (valid() && !mPtr->active())
+        if (valid())
         {
-            mPtr++;
-            mIndex++;
+            do {
+                moveNext();
+            } while (valid() && !mPtr->active());
         }
+    }
+
+    void ActiveEntityIterator::moveNext()
+    {
+        mPtr++;
+        mIndex++;
     }
     // ActiveEntityIterator implementation end.
 
@@ -109,19 +124,16 @@ namespace ent
     { ENT_ASSERT_SLOW(valid(id)); return mRecords[id.index()].comp(); }
 
     const GroupBitset &EntityHolder::groups(EntityId id)
-    { ENT_ASSERT_SLOW(valid(id)); return mRecords[id.index()].grp(); }
+    { ENT_ASSERT_SLOW(indexValid(id.index())); return mRecords[id.index()].grp(); }
 
     void EntityHolder::setGroup(EntityId id, u64 groupId)
-    { ENT_ASSERT_SLOW(valid(id) && groupId < MAX_GROUPS); mRecords[id.index()].setGrp(groupId); }
+    { ENT_ASSERT_SLOW(valid(id) && groupId < ENT_MAX_GROUPS); mRecords[id.index()].setGrp(groupId); }
 
     void EntityHolder::resetGroup(EntityId id, u64 groupId)
-    { ENT_ASSERT_SLOW(valid(id) && groupId < MAX_GROUPS); mRecords[id.index()].setGrp(groupId); }
+    { ENT_ASSERT_SLOW(indexValid(id.index()) && groupId < ENT_MAX_GROUPS); mRecords[id.index()].resetGrp(groupId); }
 
     ActiveEntityIterator EntityHolder::activeEntities()
-    {
-        // Skip the first one...
-        return ActiveEntityIterator(mRecords.begin() + 1u, mRecords.size() - 1u);
-    }
+    { return ActiveEntityIterator(mRecords.begin(), mRecords.size()); }
 
     void EntityHolder::resetGroups(const GroupBitset &andMask)
     {

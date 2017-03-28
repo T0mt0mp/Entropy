@@ -31,14 +31,17 @@ namespace ent
     EntityId EntityHolder::create()
     {
         EIdType index{0};
-        EIdType gen{0};
+        EIdType gen{EntityId::START_GEN};
 
         if (mNumFree >= ENT_MIN_FREE)
         {
             index = popFreeId();
             ENT_ASSERT_SLOW(index);
 
-            mRecords[index].setGrp(MAX_GROUPS);
+            ENT_ASSERT_SLOW(!mRecords[index].active());
+            ENT_ASSERT_SLOW(mRecords[index].grp().none());
+
+            mRecords[index].activate();
             mRecords[index].comp().reset();
 
             // Generation is incremented in Entity destroy.
@@ -46,18 +49,24 @@ namespace ent
         }
         else
         {
-            u64 numEntities{mRecords.size()};
-            ENT_ASSERT_SLOW(numEntities < EntityId::MAX_ENTITIES);
-
             index = static_cast<EIdType>(mRecords.size());
+
+            if (index >= EntityId::MAX_ENTITIES)
+            {
+                ENT_WARNING("Unable to create more Entities, increase EntityId size!");
+                return EntityId(0u, 0u);
+            }
 
             /// Create new EntityRecord without initializing it.
             mRecords.resize(index + 1u);
             initEntity(index);
 
-            mRecords[index].setGrp(MAX_GROUPS);
+            ENT_ASSERT_SLOW(!mRecords[index].active());
+            ENT_ASSERT_SLOW(mRecords[index].grp().none());
+
+            mRecords[index].activate();
             mRecords[index].gen() = EntityId::START_GEN;
-            gen = EntityId::START_GEN;
+            //gen = EntityId::START_GEN;
         }
 
         return EntityId(index, gen);
@@ -71,7 +80,8 @@ namespace ent
         }
 
         EntityRecord &rec(mRecords[id.index()]);
-        rec.grp().reset();
+        // Entity Groups still need to know, if the Entity is within.
+        rec.deactivate();
         rec.gen() = (rec.gen() == EntityId::MAX_GEN) ? 0u : rec.gen() + 1u;
         pushFreeId(id.index());
 

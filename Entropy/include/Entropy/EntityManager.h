@@ -64,7 +64,10 @@ namespace ent
             EIdType nextFree;
         };
 
-        /// Presence in EntityGroups, most significant bit represents information about activity of Entity.
+        /**
+         * Presence in EntityGroups.
+         * The most significant bit is '1' if the Entity is active, else it is '0'.
+         */
         GroupBitset groups;
 
         /// Current generation number.
@@ -83,7 +86,7 @@ namespace ent
          * Create iterator with given pointer.
          * @param ptr Pointer to the EntityRecord list.
          */
-        inline ActiveEntityIterator(EntityRecord *ptr, u64 size);
+        inline ActiveEntityIterator(EntityRecord *ptr, EIdType size);
 
         /**
          * Get ID for the current Entity.
@@ -107,14 +110,23 @@ namespace ent
          *   safe to use.
          */
         inline bool valid() const;
+
+        /**
+         * Is the current Entity record acive?
+         * @return Returns true, if the current Entity is active.
+         */
+        inline bool active() const;
     private:
         /// Increment this iterator.
         inline void increment();
 
+        /// Move to the next Entity record.
+        inline void moveNext();
+
         /// Index counter.
-        u64 mIndex;
+        EIdType mIndex;
         /// Size of the EntityRecord list.
-        const u64 mSize;
+        const EIdType mSize;
         /// Internal pointer.
         EntityRecord *mPtr;
     protected:
@@ -233,6 +245,8 @@ namespace ent
 
         /**
          * Checks validity of given Entity.
+         * Does not check for activity, or if the Entity
+         * is created.
          * @param id ID of the Entity.
          * @return Returns true, if the Entity exists.
          */

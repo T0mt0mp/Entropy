@@ -69,7 +69,7 @@ namespace ent
         auto &regInfo = componentInfo<ComponentT>()();
 
         // Check, if there is enough space for one more Component.
-        ENT_ASSERT_FAST(sComponentIdCounter < MAX_COMPONENTS);
+        ENT_ASSERT_FAST(sComponentIdCounter < ENT_MAX_COMPONENTS);
         // Assign unique ID to the new Component.
         regInfo.id = compIdInc();
         const u64 cId{id<ComponentT>()};

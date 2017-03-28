@@ -376,7 +376,7 @@ TU_Begin(EntropyEntity)
         ent::ComponentBitset cbs;
         TC_Require(!cbs.any());
         TC_Require(cbs.none());
-        TC_Require(cbs.size() == ent::MAX_COMPONENTS);
+        TC_Require(cbs.size() == ent::ENT_MAX_COMPONENTS);
         cbs.set(0);
         TC_Require(cbs.test(0) == true && cbs.any());
         TC_Require(cbs.all() == false);
@@ -745,17 +745,18 @@ TU_Begin(EntropyEntity)
 
         u.refresh();
 
-        TC_RequireEqual((u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach(&u).size()), sysRemoved);
+        TC_RequireEqual((u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach(&u).size()),
+                        NUM_ITERATIONS * NUM_ENTITIES);
         TC_RequireEqual((u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach(&u).size()), sysEnt);
 
         for (auto &e : u.addGetGroup<ent::Require<>, ent::Reject<>>()->foreach(&u))
         {
-            e.destroy();
+            TC_Require(e.destroy());
         }
 
         for (auto &e : u.addGetGroup<ent::Require<Position>, ent::Reject<>>()->foreach(&u))
         {
-            e.destroy();
+            TC_Require(!e.destroy());
         }
 
         u.refresh();

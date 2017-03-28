@@ -20,6 +20,7 @@ namespace ent
     template <typename UT>
     void GroupManager<UT>::refresh(const ent::SortedList<EntityId> &changed, EntityManager &em)
     {
+        refreshGroups();
         checkGroups(em);
         checkEntities(changed, em);
         finalizeGroups();
@@ -135,6 +136,15 @@ namespace ent
     }
 
     template <typename UT>
+    void GroupManager<UT>::refreshGroups()
+    {
+        for (EntityGroup *grp : mActiveGroups)
+        {
+            grp->refresh();
+        }
+    }
+
+    template <typename UT>
     void GroupManager<UT>::checkGroups(EntityManager &em)
     {
         // TODO - Unit test.
@@ -178,29 +188,48 @@ namespace ent
     void GroupManager<UT>::checkEntities(const ent::SortedList<EntityId> &changed,
                               EntityManager &em)
     {
-        for (const EntityId &id : changed)
+        if (!mActiveGroups.empty())
         {
-            const ComponentBitset &components(em.components(id));
-            const GroupBitset &groups(em.groups(id));
-
-            for (EntityGroup *grp : mActiveGroups)
+            for (const EntityId &id : changed)
             {
-                // Test, if the Entity matches Group filter.
-                bool entityMatch{grp->filter().match(components)};
-                // Test, if the Entity is withing this Group already.
-                bool groupTest{groups.test(grp->id())};
-                if (!groupTest && entityMatch)
-                { // Entity is entering the Group.
-                    em.setGroup(id, grp->id());
-                    grp->add(id);
-                }
-                else if (groupTest && !entityMatch)
-                { // Entity is leaving the Group.
-                    em.resetGroup(id, grp->id());
-                    grp->remove(id);
+                // TODO - Rewrite, parallelize.
+                if (!em.valid(id))
+                { // Destroyed Entity.
+                    const GroupBitset &groups(em.groups(id));
+                    for (EntityGroup *grp : mActiveGroups)
+                    {
+                        if (groups.test(grp->id()))
+                        { // Entity is leaving the Group.
+                            em.resetGroup(id, grp->id());
+                            grp->remove(id);
+                        }
+                    }
                 }
                 else
-                { /* Nothing needs to be done. */ }
+                { // Entity with changed Components/activity.
+                    const ComponentBitset &components(em.components(id));
+                    const GroupBitset &groups(em.groups(id));
+
+                    for (EntityGroup *grp : mActiveGroups)
+                    {
+                        // Test, if the Entity matches Group filter.
+                        bool entityMatch{grp->filter().match(components)};
+                        // Test, if the Entity is withing this Group already.
+                        bool groupTest{groups.test(grp->id())};
+                        if (!groupTest && entityMatch)
+                        { // Entity is entering the Group.
+                            em.setGroup(id, grp->id());
+                            grp->add(id);
+                        }
+                        else if (groupTest && !entityMatch)
+                        { // Entity is leaving the Group.
+                            em.resetGroup(id, grp->id());
+                            grp->remove(id);
+                        }
+                        else
+                        { /* Nothing needs to be done. */ }
+                    }
+                }
             }
         }
 
@@ -214,7 +243,7 @@ namespace ent
         if (!mNewGroups.empty())
         {
             for (ActiveEntityIterator it = em.activeEntities();
-                 it.valid(); ++it)
+                 it.active(); ++it)
             { // Over all active Entities.
                 for (EntityGroup *grp : mNewGroups)
                 { // Over all new Groups.
@@ -244,7 +273,6 @@ namespace ent
         for (EntityGroup *grp : mActiveGroups)
         {
             grp->finalize();
-            grp->refresh();
         }
     }
 
@@ -267,7 +295,7 @@ namespace ent
         }
 #endif
         u64 grpId{nextGroupId()};
-        if (grpId >= MAX_GROUPS)
+        if (grpId >= ENT_MAX_GROUPS)
         { // No more Groups can be created.
             ENT_WARNING("No more Entity Groups can be created, increase the "
                             "MAX_GROUPS number in \"Types.h\".");

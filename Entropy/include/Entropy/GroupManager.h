@@ -127,6 +127,11 @@ namespace ent
         struct FilterBuilder;
 
         /**
+         * Call refresh on all active Groups.
+         */
+        inline void refreshGroups();
+
+        /**
          * Check EntityGroups, if they are still in use. If there is any
          * Group, which is not in use, it will be removed.
          * @param em Used for changing Group metadata of Entities.

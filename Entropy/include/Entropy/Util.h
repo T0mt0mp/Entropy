@@ -84,7 +84,9 @@ namespace ent
     {
     public:
         /// Default constructor, does nothing.
-        ConstructionHandlerBase() {}
+        ConstructionHandlerBase() { }
+
+        virtual ~ConstructionHandlerBase() { }
 
         virtual void destruct() = 0;
         virtual bool constructed() const = 0;
@@ -417,11 +419,10 @@ namespace ent
     }; // ClassIdGenerator
 #endif
 
-#ifdef ENT_STATS_ENABLED
-#   ifdef ENT_STATS_ASSERT
-#       define CHECK_STATS(stats) ENT_ASSERT_SLOW(testValid)
-#   else
-#       define CHECK_STATS(_)
+#if defined(ENT_STATS_ENABLED) && defined(ENT_STATS_ASSERT)
+#   define CHECK_STATS(stats) ENT_ASSERT_SLOW(stats.testValid())
+#else
+#   define CHECK_STATS(_)
 #endif
 
     /**
@@ -429,7 +430,7 @@ namespace ent
      */
     struct UniverseStats
     {
-        /// Print user redable information.
+        /// Print user readable information.
         void print(std::ostream &out) const
         {
             out << "Universe " << univId << "\n"
@@ -493,7 +494,6 @@ namespace ent
         /// Number of removed EntityGroups.
         u64 grpRemoved{0};
     };
-#endif
 
     /**
      * Bitset, where each bit represents information about presence of something.
@@ -771,10 +771,11 @@ namespace ent
     }; // InfoBitset
 
     /// Bitset, where each bit represents either a present, or absent Component.
-    using ComponentBitset = InfoBitset<MAX_COMPONENTS>;
+    using ComponentBitset = InfoBitset<ENT_MAX_COMPONENTS>;
 
     /// Bitset, where each bit represents Entity presence in a group. +1 for the activity flag.
-    using GroupBitset = InfoBitset<MAX_GROUPS + 1>;
+    using GroupBitset = InfoBitset<ENT_MAX_GROUPS + 1u>;
+    static constexpr u64 ENT_ACTIVITY_BIT{ENT_MAX_GROUPS};
 
     /**
      * Get the next higher or equal number, which is power of two.
