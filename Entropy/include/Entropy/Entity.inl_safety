@@ -1,0 +1,153 @@
+/**
+ * @file Entropy/Entity.inl
+ * @author Tomas Polasek
+ * @brief Entity is an object within the Entropy ECS Universe.
+ */
+
+#include "Entity.h"
+
+/// Main Entropy namespace
+namespace ent
+{
+    // Entity implementation.
+    template <typename UniverseT>
+    Entity<UniverseT, true>::Entity(UniverseT *uni, EntityId id) :
+        mUniverse{uni}, mId{id}
+    {
+        if (!uni)
+        {
+            throw std::runtime_error("Entity(uni, id) - Universe ptr cannot be nullptr!");
+        }
+    }
+
+    template <typename UniverseT>
+    Entity<UniverseT, false>::Entity(UniverseT *uni, EntityId id, void*) :
+        mUniverse{uni}, mId{id}
+    { ENT_ASSERT_SLOW(uni != nullptr); }
+
+    template <typename UniverseT>
+    Entity<UniverseT, true>::Entity(const Entity &rhs)
+    { copy(rhs); }
+
+    template <typename UniverseT>
+    Entity<UniverseT, true>::Entity(Entity &&rhs)
+    { copy(rhs); }
+
+    template <typename UniverseT>
+    template <typename UniverseT2,
+              bool Unsafe>
+    auto Entity<UniverseT, true>::operator=(const Entity<UniverseT2, Unsafe> &rhs) -> EntityT&
+    {
+        copy(rhs);
+        return *this;
+    }
+
+    template <typename UniverseT>
+    template <typename UniverseT2,
+              bool Unsafe>
+    auto Entity<UniverseT, true>::operator=(Entity<UniverseT2, Unsafe> &&rhs) -> EntityT&
+    {
+        copy(rhs);
+        return *this;
+    }
+
+    template <typename UniverseT>
+    template <typename UniverseT2,
+              bool Unsafe>
+    void Entity<UniverseT, true>::copy(const Entity<UniverseT2, Unsafe> &rhs)
+    { mId = rhs.id(); }
+
+    template <typename UniverseT>
+    template <bool Unsafe>
+    void Entity<UniverseT, true>::copy(const Entity<UniverseT, Unsafe> &rhs)
+    {
+        mId = rhs.id();
+        mUniverse = rhs.mUniverse;
+    }
+
+    template <typename UniverseT,
+              bool Unsafe>
+    bool Entity<UniverseT, Unsafe>::operator==(const Entity &rhs) const
+    { return mId == rhs.mId && mId.generation() == rhs.mId.generation(); }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    template <typename ComponentT>
+    bool Entity<UniverseT, Unsafe>::has() const
+    { checkSafety(); return mUniverse->template hasComponent<ComponentT>(mId); }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    template <typename ComponentT>
+    const ComponentT *Entity<UniverseT, Unsafe>::get() const
+    { checkSafety(); return mUniverse->template getComponent<ComponentT>(mId); }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    template <typename ComponentT>
+    ComponentT *Entity<UniverseT, Unsafe>::get()
+    { checkSafety(); return mUniverse->template getComponent<ComponentT>(mId); }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    template <typename ComponentT>
+    const ComponentT *Entity<UniverseT, Unsafe>::add() const
+    { checkSafety(); return mUniverse->template addComponent<ComponentT>(mId); }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    template <typename ComponentT>
+    ComponentT *Entity<UniverseT, Unsafe>::add()
+    { checkSafety(); return mUniverse->template addComponent<ComponentT>(mId); }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    template <typename ComponentT>
+    bool Entity<UniverseT, Unsafe>::remove()
+    { checkSafety(); return mUniverse->template removeComponent<ComponentT>(mId); }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    bool Entity<UniverseT, Unsafe>::created() const
+    { return mId.index() != 0 && mUniverse != nullptr; }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    inline bool Entity<UniverseT, Unsafe>::valid() const
+    { return created() && mUniverse->entityValid(mId); }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    void Entity<UniverseT, Unsafe>::activate()
+    { checkSafety(); mUniverse->activateEntity(mId); }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    void Entity<UniverseT, Unsafe>::deactivate()
+    { checkSafety(); mUniverse->deactivateEntity(mId); }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    bool Entity<UniverseT, Unsafe>::active() const
+    { checkSafety(); return mUniverse->entityActive(mId); }
+
+    template <typename UniverseT,
+              bool Unsafe>
+    bool Entity<UniverseT, Unsafe>::destroy()
+    {
+        bool result{mUniverse->destroyEntity(mId)};
+        mId = 0;
+        return result;
+    }
+
+    template <typename UniverseT,
+        bool Unsafe>
+    void Entity<UniverseT, Unsafe>::checkSafety() const
+    {
+        if (!valid())
+        {
+            throw std::runtime_error("Entity is not valid!");
+        }
+    }
+    // Entity implementation end.
+} // namespace ent

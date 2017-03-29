@@ -1,0 +1,245 @@
+/**
+ * @file Entropy/Entity.h
+ * @author Tomas Polasek
+ * @brief Entity is an object within the Entropy ECS Universe.
+ */
+
+#ifndef ECS_FIT_ENTITY_H
+#define ECS_FIT_ENTITY_H
+
+#include "Types.h"
+#include "EntityId.h"
+
+/// Main Entropy namespace
+namespace ent
+{
+    /**
+     * @brief Entity is composed of ID and Universe ptr, where it resides.
+     * Entity class should not be used as the primary way to access
+     * Components. EntityGroup + System combination should be used.
+     * @tparam UniverseT Type of the Universe.
+     * @tparam Unsafe Entities marked as "unsafe" check validity of
+     *   inner Entity ID each time an action is performed.
+     */
+    template <typename UniverseT,
+              bool Unsafe>
+    class Entity
+    {
+    public:
+        template <typename UT, bool U>
+        friend class Entity;
+
+        /// Is this Entity "unsafe"?
+        static constexpr bool IS_UNSAFE{Unsafe};
+        /// This type.
+        using EntityT = Entity<UniverseT, Unsafe>;
+
+        /**
+         * Create Entity which resides in given Universe and
+         * has specified ID.
+         * Entity constructed using this constructor must be
+         * marked as "unsafe" and all actions used on it
+         * will check, whether it's safe to use it.
+         * @param uni Universe pointer.
+         * @param id ID of the Entity.
+         */
+        inline Entity(std::enable_if<IS_UNSAFE, UniverseT*>::type uni, EntityId id = {});
+
+        /**
+         * Copy constructor.
+         * Can be used only to create "unsafe" copies.
+         * @param rhs Entity to copy.
+         */
+        template <bool UnsafeCopy>
+        inline Entity(std::enable_if<IS_UNSAFE, const Entity<UniverseT, UnsafeCopy>&>::type rhs);
+
+        /**
+         * Move constructor.
+         * Can be used only to move "unsafe" Entities.
+         * @param rhs Entity to move.
+         */
+        inline Entity(std::enable_if<IS_UNSAFE, Entity<UniverseT, true>&&>::type rhs);
+
+        /**
+         * Copy-assignment operator.
+         * Can be only used to create "unsafe" copies.
+         * @tparam UT If the UniverseT of the copied Entity is the same the
+         *   Universe pointer is copied too, else only ID is copied.
+         * @tparam UnsafeCopy Allow copying of both "safe" and "unsafe" Entities.
+         * @param rhs Entity to copy.
+         */
+        template <typename UT,
+                  bool UnsafeCopy>
+        inline EntityT &operator=(std::enable_if<IS_UNSAFE, const Entity<UT, UnsafeCopy>&>::type rhs);
+
+        /**
+         * Move-assignment operator.
+         * Can be only used to move "unsafe" Entities.
+         * @tparam UT If the UniverseT of the moved Entity is the same the
+         *   Universe pointer is moved too, else only ID is moved.
+         * @param rhs Entity to move.
+         */
+        template <typename UT>
+        inline EntityT &operator=(std::enable_if<IS_UNSAFE, Entity<UT, true>&&>::type rhs);
+
+        /**
+         * Copy helper method. Copy Given Entity ID, if the
+         * Can be only used to create "unsafe" copies.
+         * @tparam UT Universe type.
+         * @tparam UnsafeCopy Allow copying of both "safe" and "unsafe" Entities.
+         * @param rhs Copy this Entity.
+         */
+        template <typename UT,
+                  bool UnsafeCopy>
+        inline void copy(std::enable_if<IS_UNSAFE, const Entity<UT, UnsafeCopy>&>::type rhs);
+
+        /**
+         * Copy helper method for Entities from the same Universe.
+         * Copy Given Entity ID and the Universe ptr.
+         * Can be only used to create "unsafe" copies.
+         * @tparam UnsafeCopy Allow copying of both "safe" and "unsafe" Entities.
+         * @param rhs Copy this Entity.
+         */
+        template <bool UnsafeCopy>
+        inline void copy(std::enable_if<IS_UNSAFE, const Entity<UniverseT, UnsafeCopy>&>::type rhs);
+
+        /**
+         * Comparison operator, compares ID and generation.
+         * @param rhs Second operand.
+         * @return Returns true, if the IDs are the same.
+         */
+        inline bool operator==(const Entity &rhs) const;
+
+        /**
+         * Does this Entity have Component of given type
+         * associated with it?
+         * If the Entity is "unsafe" and the check for validity
+         * has failed, std::runtime_error will be thrown.
+         * @tparam ComponentT Type of Component.
+         * @return Returns true, if such Component is associated.
+         */
+        template <typename ComponentT>
+        inline bool has() const;
+
+        /**
+         * Get the Component of given type associated with
+         * this Entity.
+         * If the Entity is "unsafe" and the check for validity
+         * has failed, std::runtime_error will be thrown.
+         * @tparam ComponentT Type of the Component.
+         * @return Returns ptr to the Component, or nullptr if this
+         *   Entity does not have such Component.
+         */
+        template <typename ComponentT>
+        inline const ComponentT *get() const;
+        template <typename ComponentT>
+        inline ComponentT *get();
+
+        /**
+         * Add Component of given type to this Entity. If there already
+         * is Component of this type associated with this Entity, nothing
+         * happens.
+         * If the Entity is "unsafe" and the check for validity
+         * has failed, std::runtime_error will be thrown.
+         * @tparam ComponentT Type of the Component.
+         * @return Returns ptr to new Component, or already existing one.
+         */
+        template <typename ComponentT>
+        inline const ComponentT *add() const;
+        template <typename ComponentT>
+        inline ComponentT *add();
+
+        /**
+         * Remove Component of given type from this Entity.
+         * If there is no Component of this type associated with
+         * the Entity, nothing happens.
+         * If the Entity is "unsafe" and the check for validity
+         * has failed, std::runtime_error will be thrown.
+         * @tparam ComponentT Type of the Component.
+         * @return Returns true, if the Component has been successfully removed.
+         */
+        template <typename ComponentT>
+        inline bool remove();
+
+        /**
+         * Check if this Entity contains valid EntityId.
+         * @return Returns true, if the EntityId has been set to valid (not null) value.
+         */
+        inline bool created() const;
+
+        /**
+         * Check if this Entity is valid within its Universe.
+         * @return Returns true, if it exists within its universe.
+         */
+        inline bool valid() const;
+
+        /**
+         * Activate this Entity, if it's already active, nothing happens.
+         * If the Entity is "unsafe" and the check for validity
+         * has failed, std::runtime_error will be thrown.
+         */
+        inline void activate();
+
+        /**
+         * Deactivate this Entity, if it's already inactive, nothing happens.
+         * If the Entity is "unsafe" and the check for validity
+         * has failed, std::runtime_error will be thrown.
+         */
+        inline void deactivate();
+
+        /**
+         * Is this Entity active?
+         * If the Entity is "unsafe" and the check for validity
+         * has failed, std::runtime_error will be thrown.
+         * @return Returns true, if this Entity is active.
+         */
+        inline bool active() const;
+
+        /**
+         * Destroy this Entity. Resets ID of the Entity to 0.
+         * If the Entity is "unsafe" and the check for validity
+         * has failed, std::runtime_error will be thrown.
+         * @return Returns false, if this Entity did not exist.
+         */
+        inline bool destroy();
+
+        /// Universe ptr getter.
+        const UniverseT *universe() const
+        { return mUniverse; }
+
+        /// EntityId getter.
+        const EntityId &id() const
+        { return mId; }
+
+        /**
+         * Check safety of using this Entity.
+         * If the Entity is not safe, throws
+         * std::runtime_error.
+         */
+        inline void checkSafety() const;
+    private:
+        /**
+         * Create Entity which resides in given Universe and
+         * has specified ID.
+         * Constructor used by Universe to create "safe"
+         * Entities.
+         * @param uni Universe pointer.
+         * @param id ID of the Entity.
+         */
+        Entity(UniverseT *uni, EntityId id, std::enable_if<!IS_UNSAFE>::type* = nullptr);
+
+        /// EntityId setter.
+        void setId(EntityId id)
+        { mId = id; }
+
+        /// Universe this Entity lives in.
+        UniverseT *mUniverse;
+        /// ID this Entity represents.
+        EntityId mId;
+    protected:
+    }; // Entity
+} // namespace ent
+
+#include "Entity.inl"
+
+#endif //ECS_FIT_ENTITY_H
