@@ -12,6 +12,7 @@
 #include "testing/Testing.h"
 
 #define NO_ENT_WARNING
+#define NDEBUG
 #include <Entropy/Entropy.h>
 
 class Universe : public ent::Universe<Universe>

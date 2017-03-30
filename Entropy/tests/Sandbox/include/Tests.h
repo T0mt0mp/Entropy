@@ -8,6 +8,7 @@
 #define Tests_H
 
 #include <iostream>
+#include <random>
 
 #include "testing/Testing.h"
 

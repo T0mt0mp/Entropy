@@ -193,7 +193,7 @@ namespace ent
             for (const EntityId &id : changed)
             {
                 // TODO - Rewrite, parallelize.
-                if (!em.valid(id))
+                if (!em.active(id))
                 { // Destroyed Entity.
                     const GroupBitset &groups(em.groups(id));
                     for (EntityGroup *grp : mActiveGroups)

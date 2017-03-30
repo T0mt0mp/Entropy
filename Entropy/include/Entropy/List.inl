@@ -203,6 +203,8 @@ namespace ent
 
         size_type newElements{newSize - size()};
         setImpl(useEndPtr(), useEndPtr() + newElements, val);
+
+        mInUse = newSize;
     }
 
     template <typename T,
@@ -246,7 +248,17 @@ namespace ent
     }
 
     template <typename T,
-        typename Allocator>
+              typename Allocator>
+    void List<T, Allocator>::reserveOne()
+    {
+        if (size() == capacity())
+        {
+            reserveImpl(pow2RoundUp(size() + 1u));
+        }
+    }
+
+    template <typename T,
+              typename Allocator>
     void List<T, Allocator>::copy(const List &other)
     {
         reserveImpl(other.size());
@@ -278,7 +290,15 @@ namespace ent
     }
 
     template <typename T,
-        typename Allocator>
+              typename Allocator>
+    template <typename... CArgTs>
+    void List<T, Allocator>::constructImpl(iterator it, CArgTs... cArgs)
+    {
+        new (it) T(std::forward<CArgTs>(cArgs)...);
+    }
+
+    template <typename T,
+              typename Allocator>
     void List<T, Allocator>::setImpl(iterator it, const T &val)
     {
         std::memcpy(it, &val, sizeof(T));
@@ -392,22 +412,27 @@ namespace ent
     }
 
     template <typename T,
-        typename Allocator>
+              typename Allocator>
     void List<T, Allocator>::rCopyData(pointer from, pointer to, size_type size) noexcept
     {
         std::memmove(to, from, size * sizeof(T));
     }
 
     template <typename T,
-        typename Allocator>
+              typename Allocator>
     void List<T, Allocator>::pushBack(const value_type &val)
     {
-        if (size() == capacity())
-        {
-            reserveImpl(pow2RoundUp(size() + 1));
-        }
-
+        reserveOne();
         pushBackImpl(val);
+    }
+
+    template <typename T,
+              typename Allocator>
+    template <typename... CArgTs>
+    void List<T, Allocator>::emplaceBack(CArgTs... cArgs)
+    {
+        reserveOne();
+        emplaceBackImpl(std::forward<CArgTs>(cArgs)...);
     }
 
     template <typename T,
@@ -415,6 +440,15 @@ namespace ent
     void List<T, Allocator>::pushBackImpl(const value_type &val)
     {
         setImpl(useEndPtr(), val);
+        ++mInUse;
+    }
+
+    template <typename T,
+              typename Allocator>
+    template <typename... CArgTs>
+    void List<T, Allocator>::emplaceBackImpl(CArgTs... cArgs)
+    {
+        constructImpl(useEndPtr(), std::forward<CArgTs>(cArgs)...);
         ++mInUse;
     }
 

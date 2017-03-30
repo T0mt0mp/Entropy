@@ -125,6 +125,8 @@ namespace ent
     public:
         /// Maximum value for generation.
         static constexpr EIdType MAX_GEN{((~ZERO) >> EID_INDEX_BITS)};
+        /// Generation number for temporary Entities.
+        static constexpr EIdType TEMP_ENTITY_GEN{MAX_GEN};
         /// Maximum value for index.
         static constexpr EIdType MAX_INDEX{INDEX_MASK};
         /// Maximum number of generations per index.

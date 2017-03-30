@@ -44,16 +44,20 @@
 
 #ifndef NDEBUG
 /// Equals true, if NDEBUG is NOT set.
-#   define IS_DEBUG_BOOL true
+#   define ENT_IS_DEBUG_BOOL true
+/// Choose first, if debug is on, else choose second.
+#   define ENT_CHOOSE_DEBUG(first, second) first
 /// If NDEBUG is not defined, the command in brackets will be present.
-#   define DO_IF_DEBUG(cmd) cmd
+#   define ENT_DO_IF_DEBUG(cmd) cmd
 /// Flag for Entropy debugging.
 #   define ENT_DEBUG
 #else
 /// Equals true, if NDEBUG is NOT set.
-#   define IS_DEBUG_BOOL false
+#   define ENT_IS_DEBUG_BOOL false
+/// Choose first, if debug is on, else choose second.
+#   define ENT_CHOOSE_DEBUG(first, second) second
 /// If NDEBUG is not defined, the command in brackets will be present.
-#   define DO_IF_DEBUG(_)
+#   define ENT_DO_IF_DEBUG(_)
 #endif
 
 // Assert used in places, where the performance hit is not too big.

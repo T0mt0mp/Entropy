@@ -11,6 +11,7 @@
 #include "ComponentManager.h"
 #include "GroupManager.h"
 #include "SystemManager.h"
+#include "ChangeSet.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -272,6 +273,8 @@ namespace ent
          * Get temporary Component, which can be safely
          * used for write access. The operation will be
          * finished on refresh.
+         * Each call returns a new Component.
+         * Returned Component will be default constructed.
          * @tparam ComponentT Type of the Component
          * @param id Id of the Component
          * @return Returns pointer to the temporary Component.

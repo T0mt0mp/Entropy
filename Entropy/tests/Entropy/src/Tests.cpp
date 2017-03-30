@@ -853,6 +853,19 @@ TU_Begin(EntropyEntity)
         }
     }
 
+    TU_Case(Parallel0, "Testing parallel access")
+    {
+        ent::ActionsContainer<RealUniverse3> actionsContainer;
+        actionsContainer.activateEntity(ent::EntityId{});
+        actionsContainer.deactivateEntity(ent::EntityId{});
+        actionsContainer.destroyEntity(ent::EntityId{});
+        actionsContainer.addComponent<int>(0, ent::EntityId{});
+        actionsContainer.addComponent<double>(1, ent::EntityId{});
+        actionsContainer.removeComponent<int>(0, ent::EntityId{});
+        actionsContainer.removeComponent<double>(1, ent::EntityId{});
+        actionsContainer.sendActions(nullptr);
+    }
+
 TU_End(EntropyEntity)
 
 int main(int argc, char* argv[])

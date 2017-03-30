@@ -261,6 +261,17 @@ namespace ent
         { pushBack(val); }
 
         /**
+         * Perform inplace construction of a new object
+         * at the end of the List, passing given constructor
+         * parameters.
+         * !Destructor call is not assured!
+         * @tparam CArgTs Constructor argument types.
+         * @param cArgs Constructor arguments.
+         */
+        template <typename... CArgTs>
+        inline void emplaceBack(CArgTs... cArgs);
+
+        /**
          * Pop the element from the back of the List.
          * Destructor will NOT be called!
          * Behavior is undefined, if the List is empty.
@@ -369,7 +380,12 @@ namespace ent
          * method does nothing.
          * @param newCapacity Requested new capacity.
          */
-        void reserveImpl(size_type newCapacity);
+        inline void reserveImpl(size_type newCapacity);
+
+        /**
+         * Reserve space for one more element, if needed.
+         */
+        inline void reserveOne();
 
         /**
          * Copy values from given List to this one.
@@ -382,6 +398,15 @@ namespace ent
          * @param size Requested size of the array.
          */
         inline void initSize(size_type size);
+
+        /**
+         * Construct element inplace.
+         * @param it Position, which element should be constructed.
+         * @tparam CArgTs Constructor argument types.
+         * @param cArgs Constructor arguments.
+         */
+        template <typename... CArgTs>
+        inline void constructImpl(iterator it, CArgTs... cArgs);
 
         /**
          * Set element on given position to the value.
@@ -443,6 +468,16 @@ namespace ent
          * @param val Value to push back.
          */
         inline void pushBackImpl(const value_type &val);
+
+        /**
+         * Construct new element with given constructor
+         * arguments at the end of the List.
+         * Does NOT check for enough space!
+         * @tparam CArgTs Constructor argument types.
+         * @param cArgs Constructor arguments.
+         */
+        template <typename... CArgTs>
+        inline void emplaceBackImpl(CArgTs... cArgs);
 
         /**
          * Copy range between iterators into this List.

@@ -73,7 +73,8 @@ namespace ent
          * Remove Component for given Entity. If the Entity does not have
          * Component associated with it, nothing happens.
          * @param id Id of the Entity.
-         * @return Returns true, if the operation has successfully deleted a Component.
+         * @return Returns true, if there are no more Components of this type
+         *   for given Entity.
          */
         virtual bool remove(EntityId id) noexcept = 0;
     private:
@@ -117,7 +118,8 @@ namespace ent
          * Remove Component for given Entity. If the Entity does not have
          * Component associated with it, nothing happens.
          * @param id Id of the Entity.
-         * @return Returns true, if the operation has successfully deleted a Component.
+         * @return Returns true, if there are no more Components of this type
+         *   for given Entity.
          */
         virtual inline bool remove(EntityId id) noexcept override;
 
@@ -168,7 +170,8 @@ namespace ent
          * Remove Component for given Entity. If the Entity does not have
          * Component associated with it, nothing happens.
          * @param id Id of the Entity.
-         * @return Returns true, if the operation has successfully deleted a Component.
+         * @return Returns true, if there are no more Components of this type
+         *   for given Entity.
          */
         virtual inline bool remove(EntityId id) noexcept override;
 
@@ -223,7 +226,8 @@ namespace ent
          * Remove Component for given Entity. If the Entity does not have
          * Component associated with it, nothing happens.
          * @param id Id of the Entity.
-         * @return Returns true, if the operation has successfully deleted a Component.
+         * @return Returns true, if there are no more Components of this type
+         *   for given Entity.
          */
         virtual inline bool remove(EntityId id) noexcept;
 

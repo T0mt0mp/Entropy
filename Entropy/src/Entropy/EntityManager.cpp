@@ -82,7 +82,7 @@ namespace ent
         EntityRecord &rec(mRecords[id.index()]);
         // Entity Groups still need to know, if the Entity is within.
         rec.deactivate();
-        rec.gen() = (rec.gen() == EntityId::MAX_GEN) ? 0u : rec.gen() + 1u;
+        rec.gen() = (rec.gen() + 1u == EntityId::MAX_GEN) ? 0u : rec.gen() + 1u;
         pushFreeId(id.index());
 
         return true;

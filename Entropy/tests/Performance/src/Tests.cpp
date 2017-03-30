@@ -8,19 +8,19 @@
 
 // Sizes in bytes.
 static constexpr u64 ITER_NUM{4};
-static constexpr u64 EMPTY_NUM{100000};
+static constexpr u64 EMPTY_NUM{10000};
 template <typename T>
 using SmallContainer = ent::ComponentHolderList<T>;
 static constexpr u64 SMALL_SIZE{4};
-static constexpr u64 SMALL_NUM{100000};
+static constexpr u64 SMALL_NUM{10000};
 template <typename T>
 using MediumContainer = ent::ComponentHolderList<T>;
 static constexpr u64 MEDIUM_SIZE{20};
-static constexpr u64 MEDIUM_NUM{100000};
+static constexpr u64 MEDIUM_NUM{10000};
 template <typename T>
 using LargeContainer = ent::ComponentHolderList<T>;
 static constexpr u64 LARGE_SIZE{40};
-static constexpr u64 LARGE_NUM{100000};
+static constexpr u64 LARGE_NUM{10000};
 
 struct SmallComponent
 {
