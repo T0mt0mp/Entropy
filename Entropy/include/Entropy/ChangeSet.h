@@ -27,22 +27,6 @@ namespace ent
     protected:
     }; // class TemporaryEntity
 
-    class UniverseActionsSender
-    {
-    public:
-
-    private:
-    protected:
-    };
-
-    template <typename UniverseT>
-    class UniverseActionsSenderSpec : public UniverseActionsSender
-    {
-    public:
-    private:
-    protected:
-    };
-
     /**
      * Holds information about newly crated Component.
      * @tparam ComponentT Type of the Component
@@ -50,6 +34,26 @@ namespace ent
     template <typename ComponentT>
     struct ComponentChange
     {
+        /**
+         * Used as comparation functor.
+         */
+        struct ComponentChangeCmp
+        {
+            /// Comparison operator.
+            inline bool operator()(const EntityId &id, const ComponentChange<ComponentT> &cc);
+            inline bool operator()(const ComponentChange<ComponentT> &cc, const EntityId &id);
+            inline bool operator()(const ComponentChange<ComponentT> &cc1, const ComponentChange<ComponentT> &cc2);
+        };
+
+        /**
+         * Construct ComponentChange.
+         * @tparam CArgTs Component constructor argument types.
+         * @param id ID of the Entity.
+         * @param cArgs Component constructor arguments.
+         */
+        template <typename... CArgTs>
+        ComponentChange(EntityId id, CArgTs... cArgs);
+
         /// ID of the Entity, to which will own this Component.
         EntityId id;
         /// Component instance.
@@ -68,11 +72,8 @@ namespace ent
     class ComponentActions
     {
     public:
-        /**
-         * Send any actions stored to given Universe instance.
-         * @param uni Pointer to the Universe instance.
-         */
-        virtual void sendActions(UniverseT *uni) = 0;
+        /// Cleanup.
+        virtual ~ComponentActions();
 
         /**
          * Remove Component from given Entity.
@@ -83,16 +84,44 @@ namespace ent
         inline void remove(EntityId id);
 
         /**
-         * Add a new temporary Component to given Entity and
-         * return a pointer to it.
-         * Each new add invalidates previous pointers
-         * returned by this method.
-         * @tparam ComponentT
-         * @param id
-         * @return Returns ptr to the new temporary Component
+         * Get already added temporary Component.
+         * @tparam ComponentT Type of the Component.
+         * @param id ID of the Entity.
+         * @return Returns ptr to the Component data, or
+         *   nullptr, if such Component does not exist.
+         */
+        template <typename ComponentT>
+        inline ComponentT *get(EntityId id);
+
+        /**
+         * Add a temporary Component to given Entity.
+         * If such Component already exists, return ptr
+         * to it and leave it in current state.
+         * @tparam ComponentT Type of the Component.
+         * @param id ID of the Entity.
+         * @return Returns ptr to the new, or old, Component data.
+         * @remarks Each call may invalidate pointers to
+         *   previously returned Component pointers.
          */
         template <typename ComponentT>
         inline ComponentT *add(EntityId id);
+
+        /**
+         * Add a new temporary Component to given Entity.
+         * If such Component already exists, it will be
+         * overwritten with inplace constructed Component
+         * with given constructor parameters.
+         * @tparam ComponentT Type of the Component.
+         * @tparam CArgTs Constructor argument types.
+         * @param id ID of the Entity.
+         * @return Returns ptr to the new temporary Component,
+         *   constructed with given constructor parameters.
+         * @remarks Each call may invalidate pointers to
+         *   previously returned Component pointers.
+         */
+        template <typename ComponentT,
+                  typename... CArgTs>
+        inline ComponentT *add(EntityId id, CArgTs... cArgs);
 
         /**
          * Used for static dispatch of actions to
@@ -118,40 +147,61 @@ namespace ent
     class ComponentActionsSpec : public ComponentActions<UniverseT>
     {
     public:
-        /**
-         * Send any actions stored to given Universe instance.
-         * @param uni Pointer to the Universe instance.
-         */
-        virtual inline void sendActions(UniverseT *uni) override;
+        /// Cleanup.
+        virtual ~ComponentActionsSpec();
 
         /**
-         * Remove Component from given Entity.
+         * Request removal of Component from given Entity.
          * @tparam ComponentT Component type.
          * @param id ID of the Entity.
          */
         inline void remove(EntityId id);
 
         /**
-         * Add a new temporary Component to given Entity and
-         * return a pointer to it.
-         * Each new add invalidates previous pointers
-         * returned by this method.
-         * @tparam ComponentT
-         * @param id
-         * @return Returns ptr to the new temporary Component
+         * Get already added temporary Component.
+         * @param id ID of the Entity.
+         * @return Returns ptr to the Component data, or
+         *   nullptr, if such Component does not exist.
+         */
+        inline ComponentT *get(EntityId id);
+
+        /**
+         * Add a temporary Component to given Entity.
+         * If such Component already exists, return ptr
+         * to it and leave it in current state.
+         * @param id ID of the Entity.
+         * @return Returns ptr to the new, or old, Component data.
+         * @remarks Each call may invalidate pointers to
+         *   previously returned Component pointers.
          */
         inline ComponentT *add(EntityId id);
+
+        /**
+         * Add a new temporary Component to given Entity.
+         * If such Component already exists, it will be
+         * overwritten with inplace constructed Component
+         * with given constructor parameters.
+         * @tparam CArgTs Constructor argument types.
+         * @param id ID of the Entity.
+         * @return Returns ptr to the new temporary Component,
+         *   constructed with given constructor parameters.
+         * @remarks Each call may invalidate pointers to
+         *   previously returned Component pointers.
+         */
+        template <typename... CArgTs>
+        inline ComponentT *add(EntityId id, CArgTs... cArgs);
     private:
         /**
          * List of Entities which will have their Component removed.
          */
-        ent::List<EntityId> mRemoved;
+        ent::SortedList<EntityId> mRemoved;
 
         /**
          * List of Entities which will either have a new Component
          * added, or the old one changed.
          */
-        ent::List<ComponentChange<ComponentT>> mAdded;
+        ent::SortedList<ComponentChange<ComponentT>,
+            typename ComponentChange<ComponentT>::ComponentChangeCmp> mAdded;
     protected:
     }; // class ComponentActionsSpec
 
@@ -162,14 +212,6 @@ namespace ent
     class MetadataActions
     {
     public:
-        /**
-         * Send any actions stored to given Universe instance.
-         * @tparam UniverseT Type of the Universe.
-         * @param uni Pointer to the Universe instance.
-         */
-        template <typename UniverseT>
-        inline void sendActions(UniverseT *uni);
-
         /**
          * Mark given Entity for activation.
          * @param id ID of the Entity.
@@ -189,11 +231,11 @@ namespace ent
         inline void destroy(EntityId id);
     private:
         /// List of Entities which should be activated.
-        ent::List<EntityId> mActivated;
+        ent::SortedList<EntityId> mActivated;
         /// List of Entities which should be deactivated.
-        ent::List<EntityId> mDeactivated;
+        ent::SortedList<EntityId> mDeactivated;
         /// List of Entities which should be destroyed.
-        ent::List<EntityId> mDestroyed;
+        ent::SortedList<EntityId> mDestroyed;
     protected:
     }; // class MetadataActions
 
@@ -212,6 +254,18 @@ namespace ent
         inline void sendActions(UniverseT *uni);
 
         /**
+         * Get already added temporary Component.
+         * @tparam ComponentT Type of the Component.
+         * @param compId ID of the Component.
+         * @param id Entity ID.
+         * @return Returns ptr to the Component data, or
+         *   nullptr, if there is no such Component.
+         * @remarks Does NOT invalidate previously returned pointers.
+         */
+        template <typename ComponentT>
+        inline ComponentT *getComponent(u64 compId, EntityId id);
+
+        /**
          * Add temporary Component for given Entity.
          * @tparam ComponentT Type of the Component.
          * @param compId ID of the Component.
@@ -221,6 +275,21 @@ namespace ent
          */
         template <typename ComponentT>
         inline ComponentT *addComponent(u64 compId, EntityId id);
+
+        /**
+         * Add temporary Component for given Entity, and construct
+         * it with given constructor parameters.
+         * @tparam ComponentT Component type.
+         * @tparam CArgTs Constructor argument types.
+         * @param compId ID of the Component.
+         * @param id Entity ID.
+         * @param cArgs Constructor arguments.
+         * @return Returns ptr to the temporary Component.
+         * @remarks Calls invalidate previously returned pointers.
+         */
+        template <typename ComponentT,
+                  typename... CArgTs>
+        inline ComponentT *addComponent(u64 compId, EntityId id, CArgTs... cArgs);
 
         /**
          * Mark Component for removal.

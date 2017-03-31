@@ -70,9 +70,38 @@ namespace ent
         /// Insert element into the sorted list.
         inline void insert(const_reference val);
         /// Insert element into the sorted list, if the element is already present, nothing happens.
-        inline void insertUnique(const_reference val);
+        inline iterator insertUnique(const_reference val);
+        /**
+         * Insert element into the sorted list, if the element is already present, nothing happens.
+         * New element is constructed only if there are no matching.
+         * @tparam SearchT Type of the search value.
+         * @tparam CArgTs Type of the constructor arguments.
+         * @param search Searched key.
+         * @param cArgs Constructor arguments.
+         * @return Returns iterator to the element.
+         */
+        template <typename SearchT,
+                  typename... CArgTs>
+        inline iterator insertUnique(const SearchT &search, CArgTs... cArgs);
+        /**
+         * Insert element into the sorted list, if the element is already
+         * present, it will be overwritten.
+         * !Does NOT destruct the object first, if it is being overwritten!
+         * @tparam SearchT Type of the search value.
+         * @tparam CArgTs Type of the constructor arguments.
+         * @param search Searched key.
+         * @param cArgs Constructor arguments.
+         * @return Returns iterator to the element.
+         */
+        template <typename SearchT,
+                  typename... CArgTs>
+        inline iterator replaceUnique(const SearchT &search, CArgTs... cArgs);
+
         /// Find element in the list.
-        inline const_iterator find(const_reference val) const;
+        template <typename SearchT>
+        inline iterator find(const SearchT &val);
+        template <typename SearchT>
+        inline const_iterator find(const SearchT &val) const;
         /// Erase element from the list.
         inline void erase(const_reference val);
 

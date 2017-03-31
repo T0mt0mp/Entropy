@@ -84,6 +84,22 @@ struct FunTester
     }
 };
 
+struct DestructTester
+{
+    virtual ~DestructTester()
+    {
+        std::cout << "Base destruct" << std::endl;
+    }
+};
+
+struct DestructTesterSpec : public DestructTester
+{
+    virtual ~DestructTesterSpec()
+    {
+        std::cout << "Spec destruct" << std::endl;
+    }
+};
+
 TU_Begin(EntropySandbox)
 
     TU_Setup
@@ -247,6 +263,14 @@ TU_Begin(EntropySandbox)
         l(&fun, 0);
         l(&fun, 0.0f);
         l(&fun, std::string{});
+    }
+
+    TU_Case(Sandbox3, "Sandbox3")
+    {
+        DestructTester *bPtr = new DestructTester;
+        delete bPtr;
+        bPtr = new DestructTesterSpec;
+        delete bPtr;
     }
 
 TU_End(EntropySandbox)

@@ -316,7 +316,7 @@ namespace ent
 
     template <typename T,
         typename Allocator>
-    void List<T, Allocator>::insertImpl(size_type pos, const T &val)
+    auto List<T, Allocator>::insertImpl(size_type pos, const T &val) -> iterator
     {
         reserve(size() + 1);
         iterator it{begin() + pos};
@@ -326,6 +326,8 @@ namespace ent
         }
         setImpl(it, val);
         mInUse++;
+
+        return it;
     }
 
     template <typename T,
@@ -357,6 +359,23 @@ namespace ent
         }
         copyData(beg, it, static_cast<size_type>(length));
         mInUse += length;
+    }
+
+    template <typename T,
+              typename Allocator>
+    template <typename... CArgTs>
+    auto List<T, Allocator>::emplaceImpl(size_type pos, CArgTs... cArgs) -> iterator
+    {
+        reserve(size() + 1);
+        iterator it{begin() + pos};
+        if (size())
+        {
+            rCopyData(it, it + 1, end() - it);
+        }
+        constructImpl(it, std::forward<CArgTs>(cArgs)...);
+        mInUse++;
+
+        return it;
     }
 
     template <typename T,

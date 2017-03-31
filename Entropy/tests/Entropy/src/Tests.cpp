@@ -859,8 +859,12 @@ TU_Begin(EntropyEntity)
         actionsContainer.activateEntity(ent::EntityId{});
         actionsContainer.deactivateEntity(ent::EntityId{});
         actionsContainer.destroyEntity(ent::EntityId{});
-        actionsContainer.addComponent<int>(0, ent::EntityId{});
-        actionsContainer.addComponent<double>(1, ent::EntityId{});
+        TC_Require(actionsContainer.addComponent<int>(0, ent::EntityId{}));
+        TC_Require(actionsContainer.addComponent<double>(1, ent::EntityId{}));
+        TC_Require(actionsContainer.addComponent<int>(0, ent::EntityId{}, 42));
+        TC_Require(actionsContainer.addComponent<double>(1, ent::EntityId{}, 42.0f));
+        TC_RequireEqual(*actionsContainer.getComponent<int>(0, ent::EntityId{}), 42);
+        TC_RequireEqual(*actionsContainer.getComponent<double>(1, ent::EntityId{}), 42.0f);
         actionsContainer.removeComponent<int>(0, ent::EntityId{});
         actionsContainer.removeComponent<double>(1, ent::EntityId{});
         actionsContainer.sendActions(nullptr);

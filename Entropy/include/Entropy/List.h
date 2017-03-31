@@ -318,9 +318,21 @@ namespace ent
          * Insert element at given position.
          * @param pos Position.
          * @param val Element value.
+         * @return Returns iterator to the position.
          */
-        inline void insert(iterator pos, const value_type &val = {})
-        { insertImpl(pos - begin(), val); }
+        iterator insert(iterator pos, const value_type &val = {})
+        { return insertImpl(pos - begin(), val); }
+
+        /**
+         * Emplace element at given position.
+         * @tparam CArgTs Constructor parameter types.
+         * @param pos Position where to emplace.
+         * @param cArgs Constructor arguments.
+         * @return Returns iterator to the position.
+         */
+        template <typename... CArgTs>
+        iterator emplace(iterator pos, CArgTs... cArgs)
+        { return emplaceImpl(pos - begin(), std::forward<CArgTs>(cArgs)...); }
 
         /**
          * Erase the element on given position.
@@ -428,7 +440,7 @@ namespace ent
          * @param pos Position, where to insert the element.
          * @param val Value of the element.
          */
-        inline void insertImpl(size_type pos, const T &val);
+        inline iterator insertImpl(size_type pos, const T &val);
 
         /**
          * Insert elements to the List.
@@ -445,6 +457,16 @@ namespace ent
          * @param end End iterator.
          */
         inline void insertImpl(size_type pos, iterator beg, iterator end);
+
+        /**
+         * Emplace element at given position.
+         * @tparam CArgTs Constructor parameter types.
+         * @param pos Position where to emplace.
+         * @param cArgs Constructor arguments.
+         * @return Returns iterator to the position.
+         */
+        template <typename... CArgTs>
+        inline iterator emplaceImpl(size_type pos, CArgTs... cArgs);
 
         /**
          * Erase element on given position and move the List
