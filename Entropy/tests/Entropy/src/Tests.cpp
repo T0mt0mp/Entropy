@@ -855,6 +855,7 @@ TU_Begin(EntropyEntity)
 
     TU_Case(Parallel0, "Testing parallel access")
     {
+        /*
         ent::ActionsContainer<RealUniverse3> actionsContainer;
         actionsContainer.activateEntity(ent::EntityId{});
         actionsContainer.deactivateEntity(ent::EntityId{});
@@ -868,6 +869,7 @@ TU_Begin(EntropyEntity)
         actionsContainer.removeComponent<int>(0, ent::EntityId{});
         actionsContainer.removeComponent<double>(1, ent::EntityId{});
         actionsContainer.sendActions(nullptr);
+         */
     }
 
 TU_End(EntropyEntity)

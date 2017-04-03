@@ -537,8 +537,6 @@ namespace ent
     protected:
         /// Container for the Entities.
         EntityHolder mEntities;
-    private:
-    protected:
     };// EntityManager
 } // namespace ent
 

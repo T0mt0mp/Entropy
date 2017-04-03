@@ -106,6 +106,24 @@ namespace ent
 
     template <typename UT>
     template <typename ComponentT>
+    bool ComponentManager<UT>::registered() const
+    { return componentInfo<ComponentT>().constructed(); }
+
+    template <typename UT>
+    void ComponentManager<UT>::entityDestroyed(EntityId id, const ComponentBitset &components)
+    {
+        // TODO - find a better way, instead of a virtual call...
+        for (u64 index = 0; index < mRefreshHolders.size(); ++index)
+        {
+            if (components.test(index))
+            {
+                mRefreshHolders[index]->remove(id);
+            }
+        }
+    }
+
+    template <typename UT>
+    template <typename ComponentT>
     ComponentT *ComponentManager<UT>::add(EntityId id)
     {
         if (!registered<ComponentT>())

@@ -11,7 +11,7 @@
 #include "ComponentManager.h"
 #include "GroupManager.h"
 #include "SystemManager.h"
-#include "ChangeSet.h"
+#include "ActionsCache.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -203,7 +203,7 @@ namespace ent
          * immediately, including Entity metadata.
          * @tparam ComponentT Type of the Component
          * @tparam CArgTs Constructor argument types.
-         * @param id Id of the Component
+         * @param id Id of the Entity.
          * @return Returns pointer to the Component.
          * @remarks Not thread-safe! If thread-safety is required, use addComponentD.
          * @remarks Changes Entity metadata!
@@ -224,10 +224,28 @@ namespace ent
          * Deferred version, temporary Component is
          * returned, operation is finished on refresh.
          * @tparam ComponentT Type of the Component
-         * @tparam CArgTs Constructor argument types.
-         * @param id Id of the Component
+         * @param id Id of the Entity
          * @return Returns pointer to the temporary Component.
          * @remarks Is thread-safe.
+         * @remarks Each call invalidates previously returned
+         *   temporary Component pointers of the same type.
+         */
+        template <typename ComponentT,
+                  typename... CArgTs>
+        inline ComponentT *addComponentD(EntityId id);
+
+        /**
+         * Add Component to the given Entity.
+         * Deferred version, temporary Component is
+         * returned, operation is finished on refresh.
+         * @tparam ComponentT Type of the Component
+         * @tparam CArgTs Component constructor argument types.
+         * @param id Id of the Entity.
+         * @param cArgs Component constructor arguments.
+         * @return Returns pointer to the temporary Component.
+         * @remarks Is thread-safe.
+         * @remarks Each call invalidates previously returned
+         *   temporary Component pointers of the same type.
          */
         template <typename ComponentT,
             typename... CArgTs>
@@ -240,7 +258,7 @@ namespace ent
          * be called.
          * Returns Component with current state, excluding any thread-local changes.
          * @tparam ComponentT Type of the Component
-         * @param id Id of the Component
+         * @param id Id of the Entity.
          * @return Returns pointer to the Component.
          * @remarks Not thread-safe in case of write access! If thread-safety
          *   is required, use getComponentD.
@@ -257,7 +275,7 @@ namespace ent
          * Returns read-only ptr to the Component.
          * Returns Component with current state, excluding any thread-local changes.
          * @tparam ComponentT Type of the Component
-         * @param id Id of the Component
+         * @param id Id of the Entity.
          * @return Returns pointer to the Component.
          * @remarks Is thread-safe for cases, when on other thread
          *   has write access to the same Component.
@@ -273,12 +291,14 @@ namespace ent
          * Get temporary Component, which can be safely
          * used for write access. The operation will be
          * finished on refresh.
-         * Each call returns a new Component.
-         * Returned Component will be default constructed.
+         * Temporary Component has to be added first.
          * @tparam ComponentT Type of the Component
-         * @param id Id of the Component
+         * @param id Id of the Entity.
          * @return Returns pointer to the temporary Component.
          * @remarks Is thread-safe.
+         * @remarks Returned pointer is valid until a new Component
+         *   of the same type is added/removed, or the ChangeSet is
+         *   committed.
          */
         template <typename ComponentT>
         inline ComponentT *getComponentD(EntityId id);
@@ -296,11 +316,22 @@ namespace ent
         inline bool hasComponent(EntityId id) const;
 
         /**
+         * Check, if there is a temporary Component prepared.
+         * @tparam ComponentT Type of the Component
+         * @param id Id of the Entity.
+         * @return Returns true, if there is a temporary
+         *   Component of given type.
+         * @remarks Is thread-safe.
+         */
+        template <typename ComponentT>
+        inline bool hasComponentD(EntityId id) const;
+
+        /**
          * Remove Component from given Entity.
          * If there is no Component associated with the Entity, nothing happens.
          * Operation is performed immediately.
          * @tparam ComponentT Type of the Component
-         * @param id Id of the Component
+         * @param id Id of the Entity.
          * @return Returns true, if the Component has been successfully removed.
          * @remarks Not thread-safe!
          * @remarks Changes Entity metadata!
@@ -318,7 +349,7 @@ namespace ent
          * Remove Component from given Entity.
          * Operation is finished on refresh.
          * @tparam ComponentT Type of the Component
-         * @param id Id of the Component
+         * @param id Id of the Entity.
          * @remarks Is thread-safe.
          */
         template <typename ComponentT>
@@ -474,6 +505,13 @@ namespace ent
          *   entity metadata.
          */
         inline bool entityActive(EntityId id) const;
+
+        /**
+         * Commit actions stored in the ChangeSet of the
+         * current thread.
+         * @remarks Is thread-safe, using a mutex.
+         */
+        inline void commitChangeSet();
     private:
         /**
          * Reset parts of this Universe.
@@ -500,6 +538,8 @@ namespace ent
         GroupManager<UniverseT> mGM;
         /// Used for managing Systems and Groups.
         SystemManager<UniverseT> mSM;
+        /// Actions cache for storing actions to be performed at a later time.
+        ActionsCache<UniverseT> mAC;
 
         /// List of changed Entities since the last refresh.
         SortedList<EntityId> mChanged;

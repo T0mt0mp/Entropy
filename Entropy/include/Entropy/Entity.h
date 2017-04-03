@@ -71,15 +71,15 @@ namespace ent
          * @param rhs Copy this Entity.
          */
         template <typename UT>
-        void copy(const Entity<UT> &rhs);
-        void copy(const Entity &rhs);
+        inline void copy(const Entity<UT> &rhs);
+        inline void copy(const Entity &rhs);
 
         /**
          * Comparison operator, compares only ID!
          * @param rhs Second operand.
          * @return Returns true, if the IDs are the same.
          */
-        bool operator==(const Entity &rhs) const;
+        inline bool operator==(const Entity &rhs) const;
 
         /**
          * Does this Entity have Component of given type
@@ -88,8 +88,7 @@ namespace ent
          * @return Returns true, if such Component is associated.
          */
         template <typename ComponentT>
-        bool has() const
-        { return mUniverse->template hasComponent<ComponentT>(mId); }
+        inline bool has() const;
 
         /**
          * Get the Component of given type associated with
@@ -99,11 +98,9 @@ namespace ent
          *   Entity does not have such Component.
          */
         template <typename ComponentT>
-        const ComponentT *get() const
-        { return mUniverse->template getComponent<ComponentT>(mId); }
+        inline const ComponentT *get() const;
         template <typename ComponentT>
-        ComponentT *get()
-        { return mUniverse->template getComponent<ComponentT>(mId); }
+        inline ComponentT *get();
 
         /**
          * Add Component of given type to this Entity. If there already
@@ -113,11 +110,7 @@ namespace ent
          * @return Returns ptr to new Component, or already existing one.
          */
         template <typename ComponentT>
-        const ComponentT *add() const
-        { return mUniverse->template addComponent<ComponentT>(mId); }
-        template <typename ComponentT>
-        ComponentT *add()
-        { return mUniverse->template addComponent<ComponentT>(mId); }
+        inline ComponentT *add();
 
         /**
          * Remove Component of given type from this Entity.
@@ -127,72 +120,156 @@ namespace ent
          * @return Returns true, if the Component has been successfully removed.
          */
         template <typename ComponentT>
-        bool remove()
-        { return mUniverse->template removeComponent<ComponentT>(mId); }
+        inline bool remove();
 
         /**
          * Check if this Entity contains valid EntityId.
          * !!Does not check for validity withing the Universe - use valid() method for that!!
          * @return Returns true, if the EntityId has been set to valid (not null) value.
          */
-        bool created() const
-        { return mId.index() != 0 && mUniverse != nullptr; }
+        inline bool created() const;
 
         /**
          * Check if this Entity is valid within its Universe.
          * @return Returns true, if it exists within its universe.
          */
-        bool valid() const
-        { return created() && mUniverse->entityValid(mId); }
+        inline bool valid() const;
 
         /**
          * Activate this Entity, if it's already active, nothing happens.
          */
-        void activate()
-        { mUniverse->activateEntity(mId); }
+        inline void activate();
 
         /**
          * Deactivate this Entity, if it's already inactive, nothing happens.
          */
-        void deactivate()
-        { mUniverse->deactivateEntity(mId); }
+        inline void deactivate();
 
         /**
          * Is this Entity active?
          * @return Returns true, if this Entity is active.
          */
-        bool active() const
-        { return mUniverse->entityActive(mId); }
+        inline bool active() const;
 
         /**
          * Destroy this Entity. Resets ID of the Entity to 0.
          * @return Returns false, if this Entity did not exist.
          */
-        bool destroy()
-        {
-            bool result{mUniverse->destroyEntity(mId)};
-            mId = 0;
-            return result;
-        }
+        inline bool destroy();
 
         /// Universe ptr getter.
-        const UniverseT *universe() const
-        { return mUniverse; }
+        inline const UniverseT *universe() const;
 
         /// EntityId getter.
-        const EntityId &id() const
-        { return mId; }
+        inline const EntityId &id() const;
 
         /// EntityId setter.
-        void setId(EntityId id)
-        { mId = id; }
+        inline void setId(EntityId id);
     private:
         /// Universe this Entity lives in.
         UniverseT *mUniverse;
         /// ID this Entity represents.
         EntityId mId;
     protected:
-    }; // Entity
+    }; // class Entity
+
+    /**
+     * Temporary Entity handle used for performing operations
+     * on Entities which are not yet created.
+     * @tparam UniverseT Type of the Universe.
+     */
+    template <typename UniverseT>
+    class TemporaryEntity : NonCopyable
+    {
+    public:
+        /**
+         * Check, if there is a temporary Component prepared.
+         * @tparam ComponentT Type of the Component
+         * @return Returns true, if there is a temporary
+         *   Component of given type.
+         * @remarks Is thread-safe.
+         */
+        template <typename ComponentT>
+        inline bool has() const;
+
+        /**
+         * Get temporary Component, which can be safely
+         * used for write access. The operation will be
+         * finished on refresh.
+         * Temporary Component has to be added first.
+         * @tparam ComponentT Type of the Component
+         * @return Returns pointer to the temporary Component.
+         * @remarks Is thread-safe.
+         * @remarks Returned pointer is valid until a new Component
+         *   of the same type is added/removed, or the ChangeSet is
+         *   committed.
+         */
+        template <typename ComponentT>
+        inline ComponentT *get();
+
+        /**
+         * Add Component to the given Entity.
+         * Deferred version, temporary Component is
+         * returned, operation is finished on refresh.
+         * @tparam ComponentT Type of the Component
+         * @return Returns pointer to the temporary Component.
+         * @remarks Is thread-safe.
+         * @remarks Each call invalidates previously returned
+         *   temporary Component pointers of the same type.
+         */
+        template <typename ComponentT>
+        inline ComponentT *add();
+
+        /**
+         * Add Component to the given Entity.
+         * Deferred version, temporary Component is
+         * returned, operation is finished on refresh.
+         * @tparam ComponentT Type of the Component
+         * @tparam CArgTs Component constructor argument types.
+         * @param id Id of the Component
+         * @param cArgs Component constructor arguments.
+         * @return Returns pointer to the temporary Component.
+         * @remarks Is thread-safe.
+         * @remarks Each call invalidates previously returned
+         *   temporary Component pointers of the same type.
+         */
+        template <typename ComponentT,
+                  typename... CArgTs>
+        inline ComponentT *add(CArgTs... cArgs);
+
+        /**
+         * Remove Component from given Entity.
+         * Operation is finished on refresh.
+         * @tparam ComponentT Type of the Component
+         * @remarks Is thread-safe.
+         */
+        template <typename ComponentT>
+        inline void remove();
+
+        /**
+         * Activate given Entity.
+         * Action is finished on refresh.
+         * @remarks Is thread-safe
+         */
+        inline void activate();
+
+        /**
+         * Deactivate given Entity.
+         * Action is finished on refresh.
+         * @remarks Is thread-safe.
+         */
+        inline void deactivate();
+
+        /**
+         * Destroy given Entity.
+         * Action is finished on refresh.
+         * @return Returns false, if the Entity does not exist.
+         * @remarks Is thread-safe.
+         */
+        inline void destroy();
+    private:
+    protected:
+    }; // class TemporaryEntity
 } // namespace ent
 
 #include "Entity.inl"

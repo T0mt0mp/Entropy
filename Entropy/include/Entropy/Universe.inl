@@ -12,7 +12,7 @@ namespace ent
     // Universe implementation.
     template <typename T>
     Universe<T>::Universe() :
-        mEM(), mCM(), mGM(), mSM()
+        mEM(), mCM(), mGM(), mSM(), mAC()
     { }
 
     template <typename T>
@@ -29,13 +29,21 @@ namespace ent
     void Universe<T>::refresh()
     {
         /*
-         * GroupManager:
-         *  Empty added/removed lists.
-         * ActionCache:
-         *  Execute operations.
-         *  Notify Groups with changed Entity IDs.
-         * TODO - Order, refresh?
+         * 1) Refresh ActionCache:
+         *   a) Destroy E -> Create E.
+         *   b1) Remove/Add <C>.
+         *   b2) Change metadata.
+         *   b3) Add to changed list.
+         * 2) Refresh ComponentManager:
+         *   a) Refresh ComponentHolders
+         * 3) Refresh GroupManager:
+         *   a) Prepare Groups.
+         *   b) Check Groups for activity.
+         *   c) Check change Entities, add/remove
+         *     from Groups, change Entity metadata.
+         *   d) Finalize Groups.
          */
+
         mCM.refresh();
         mGM.refresh(mChanged, mEM);
     }
@@ -43,7 +51,9 @@ namespace ent
     template <typename T>
     void Universe<T>::reset()
     {
+        mAC.reset();
         mSM.reset();
+        mGM.reset();
         mEM.reset();
         mCM.reset();
         resetSelf();
@@ -319,6 +329,7 @@ namespace ent
 
         if (result)
         {
+            mCM.entityDestroyed(id, mEM.components(id));
             entityChanged(id);
         }
 
@@ -335,6 +346,12 @@ namespace ent
     bool Universe<T>::entityActive(EntityId id) const
     {
         return mEM.active(id);
+    }
+
+    template <typename T>
+    void Universe<T>::commitChangeSet()
+    {
+        mAC.commitChangeSet();
     }
 
     template <typename T>

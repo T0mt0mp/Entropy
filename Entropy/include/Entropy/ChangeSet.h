@@ -16,18 +16,6 @@
 namespace ent
 {
     /**
-     * Temporary Entity handle used for performing operations
-     * on Entities which are not yet created.
-     * @tparam UniverseT Type of the Universe.
-     */
-    class TemporaryEntity
-    {
-    public:
-    private:
-    protected:
-    }; // class TemporaryEntity
-
-    /**
      * Holds information about newly crated Component.
      * @tparam ComponentT Type of the Component
      */
@@ -60,20 +48,17 @@ namespace ent
         ComponentT comp;
     }; // class ComponentChange
 
-    template <typename UniverseT,
-              typename ComponentT>
+    template <typename ComponentT>
     class ComponentActionsSpec;
 
     /**
      * Abstract base class for storing Component actions.
-     * @tparam UniverseT Type of the Universe.
      */
-    template <typename UniverseT>
     class ComponentActions
     {
     public:
         /// Cleanup.
-        virtual ~ComponentActions();
+        virtual inline ~ComponentActions();
 
         /**
          * Remove Component from given Entity.
@@ -131,7 +116,7 @@ namespace ent
          *   requested specialization.
          */
         template <typename ComponentT>
-        inline ComponentActionsSpec<UniverseT, ComponentT> *castToSpec();
+        inline ComponentActionsSpec<ComponentT> *castToSpec();
     private:
     protected:
     }; // class ComponentActions
@@ -139,12 +124,10 @@ namespace ent
     /**
      * Class for storing Component actions, specialized
      * for one Component type.
-     * @tparam UniverseT Type of the Universe.
      * @tparam ComponentT Type of the Component.
      */
-    template <typename UniverseT,
-              typename ComponentT>
-    class ComponentActionsSpec : public ComponentActions<UniverseT>
+    template <typename ComponentT>
+    class ComponentActionsSpec : public ComponentActions
     {
     public:
         /// Cleanup.
@@ -241,17 +224,12 @@ namespace ent
 
     /**
      * Container for the changes.
-     * @tparam UniverseT Type of the Universe.
      */
-    template <typename UniverseT>
-    class ActionsContainer
+    class ChangeSet
     {
     public:
-        /**
-         * Send all actions to given Universe.
-         * @param uni Universe instance.
-         */
-        inline void sendActions(UniverseT *uni);
+        /// Clean up any used memory.
+        inline ~ChangeSet();
 
         /**
          * Get already added temporary Component.
@@ -326,28 +304,53 @@ namespace ent
          *   belongs to the Component type specified.
          */
         template <typename ComponentT>
-        inline ComponentActionsSpec<UniverseT, ComponentT> &componentActions(u64 componentId);
+        inline ComponentActionsSpec<ComponentT> &componentActions(u64 componentId);
 
         /**
          * List containing Component changes for each Component
          * type accessed by the thread.
          */
-        ent::List<ComponentActions<UniverseT>*> mComponentActions;
+        ent::List<ComponentActions*> mComponentActions;
         /// Entity metadata changes.
         MetadataActions mMetadataActions;
     protected:
-    }; // class ActionsContainer
+    }; // class ChangeSet
 
     /**
      * Used for aggregation of actions from parallel threads.
      */
-    class ChangeSet
+    class ActionsContainer
     {
     public:
+        /**
+         * Prepare ChangeSet for use.
+         */
+        inline ActionsContainer();
+
+        /**
+         * Deletes ChangeSet.
+         */
+        inline ~ActionsContainer();
+
+        /**
+         * Release ownership of the current ChangeSet
+         * and return a pointer to it.
+         * Also initializes a new ChangeSet.
+         * @return Returns ptr to the current ChangeSet.
+         */
+        inline ChangeSet *releaseChangeSet();
+
+        /**
+         * Get the ChangeSet currently in use.
+         * @return Returns reference to the ChangeSet in use.
+         */
+        inline ChangeSet &currentChangeSet();
     private:
+        /// ChangeSet currently in use.
+        std::unique_ptr<ChangeSet> mCurrectChangeSet;
     protected:
-    }; // class ChangeSet
-}
+    }; // class ActionsContainer
+} // namespace ent
 
 #include "ChangeSet.inl"
 

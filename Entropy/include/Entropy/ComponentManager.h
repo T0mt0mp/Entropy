@@ -163,8 +163,16 @@ namespace ent
          * @return Returns true, if the Component has been registered.
          */
         template <typename ComponentT>
-        bool registered() const
-        { return componentInfo<ComponentT>().constructed(); }
+        inline bool registered() const;
+
+        /**
+         * Called when Entity gets destroyed, in order to notify
+         * holders, that they should delete corresponding Component.
+         * @param id ID of the Entity.
+         * @param components Bitset representing which Components
+         *   were present for destroyed Entity.
+         */
+        inline void entityDestroyed(EntityId id, const ComponentBitset &components);
     private:
         /**
          * Information about registered Component.

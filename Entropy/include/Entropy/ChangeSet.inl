@@ -38,76 +38,65 @@ namespace ent
     // ComponentChangeCmp implementation end.
 
     // ComponentActions implementation.
-    template <typename UniverseT>
-    ComponentActions<UniverseT>::~ComponentActions()
+    ComponentActions::~ComponentActions()
     { }
 
-    template <typename UniverseT>
     template <typename ComponentT>
-    void ComponentActions<UniverseT>::remove(EntityId id)
+    void ComponentActions::remove(EntityId id)
     { castToSpec<ComponentT>()->remove(id); }
 
-    template <typename UniverseT>
     template <typename ComponentT>
-    ComponentT *ComponentActions<UniverseT>::get(EntityId id)
+    ComponentT *ComponentActions::get(EntityId id)
     { return castToSpec<ComponentT>()->get(id); }
 
-    template <typename UniverseT>
     template <typename ComponentT>
-    ComponentT *ComponentActions<UniverseT>::add(EntityId id)
+    ComponentT *ComponentActions::add(EntityId id)
     { return castToSpec<ComponentT>()->add(id); }
 
-    template <typename UniverseT>
     template <typename ComponentT,
               typename... CArgTs>
-    ComponentT *ComponentActions<UniverseT>::add(EntityId id, CArgTs... cArgs)
+    ComponentT *ComponentActions::add(EntityId id, CArgTs... cArgs)
     { return castToSpec<ComponentT>()->add(id, std::forward<CArgTs>(cArgs)...); }
 
-    template <typename UniverseT>
     template <typename ComponentT>
-    ComponentActionsSpec<UniverseT, ComponentT> *ComponentActions<UniverseT>::castToSpec()
+    ComponentActionsSpec<ComponentT> *ComponentActions::castToSpec()
     {
         return ENT_CHOOSE_DEBUG(
-            (dynamic_cast<ComponentActionsSpec<UniverseT, ComponentT>*>(this)),
-            (static_cast<ComponentActionsSpec<UniverseT, ComponentT>*>(this))
+            (dynamic_cast<ComponentActionsSpec<ComponentT>*>(this)),
+            (static_cast<ComponentActionsSpec<ComponentT>*>(this))
         );
     }
     // ComponentActions implementation end.
 
     // ComponentActionsSpec implementation.
-    template <typename UniverseT,
-              typename ComponentT>
-    ComponentActionsSpec<UniverseT, ComponentT>::~ComponentActionsSpec()
+    template <typename ComponentT>
+    ComponentActionsSpec<ComponentT>::~ComponentActionsSpec()
     { }
 
-    template <typename UniverseT,
-              typename ComponentT>
-    void ComponentActionsSpec<UniverseT, ComponentT>::remove(EntityId id)
+    template <typename ComponentT>
+    void ComponentActionsSpec<ComponentT>::remove(EntityId id)
     {
         mRemoved.insertUnique(id);
     }
 
-    template <typename UniverseT,
-              typename ComponentT>
-    ComponentT *ComponentActionsSpec<UniverseT, ComponentT>::get(EntityId id)
+    template <typename ComponentT>
+    ComponentT *ComponentActionsSpec<ComponentT>::get(EntityId id)
     {
         auto it = mAdded.find(id);
         return it ? &(it->comp) : nullptr;
     }
 
-    template <typename UniverseT,
-              typename ComponentT>
-    ComponentT *ComponentActionsSpec<UniverseT, ComponentT>::add(EntityId id)
+    template <typename ComponentT>
+    ComponentT *ComponentActionsSpec<ComponentT>::add(EntityId id)
     {
         auto it =  mAdded.insertUnique(id, id);
         return it ? &(it->comp) : nullptr;
     }
 
-    template <typename UniverseT,
-              typename ComponentT>
+    template <typename ComponentT>
     template <typename... CArgTs>
-    ComponentT *ComponentActionsSpec<UniverseT, ComponentT>::add(EntityId id,
-                                                                 CArgTs... cArgs)
+    ComponentT *ComponentActionsSpec<ComponentT>::add(EntityId id,
+                                                      CArgTs... cArgs)
     {
         auto it = mAdded.replaceUnique(id, id, std::forward<CArgTs>(cArgs)...);
         return it ? &(it->comp) : nullptr;
@@ -131,60 +120,45 @@ namespace ent
     }
     // MetadataActions implementation end.
 
-    // ActionsContainer implementation.
-    template <typename UniverseT>
-    void ActionsContainer<UniverseT>::sendActions(UniverseT *uni)
+    // ChangeSet implementation.
+    ChangeSet::~ChangeSet()
     {
-        ENT_WARNING("ActionContainer<>::sendActions is not implemented yet!");
-
-        /*
-        mMetadataActions.sendActions(uni);
-
-        for (ComponentActions<UniverseT> *actions : mComponentActions)
+        for (ComponentActions *cc : mComponentActions)
         {
-            actions->sendActions(uni);
+            delete cc;
         }
-         */
     }
 
-    template <typename UniverseT>
     template <typename ComponentT>
-    ComponentT *ActionsContainer<UniverseT>::getComponent(u64 compId, EntityId id)
+    ComponentT *ChangeSet::getComponent(u64 compId, EntityId id)
     { return componentActions<ComponentT>(compId).get(id); }
 
-    template <typename UniverseT>
     template <typename ComponentT>
-    ComponentT *ActionsContainer<UniverseT>::addComponent(u64 compId, EntityId id)
+    ComponentT *ChangeSet::addComponent(u64 compId, EntityId id)
     { return componentActions<ComponentT>(compId).add(id); }
 
-    template <typename UniverseT>
     template <typename ComponentT,
               typename... CArgTs>
-    ComponentT *ActionsContainer<UniverseT>::addComponent(u64 compId, EntityId id, CArgTs... cArgs)
+    ComponentT *ChangeSet::addComponent(u64 compId, EntityId id, CArgTs... cArgs)
     { return componentActions<ComponentT>(compId).add(id, std::forward<CArgTs>(cArgs)...); }
 
-    template <typename UniverseT>
     template <typename ComponentT>
-    void ActionsContainer<UniverseT>::removeComponent(u64 compId, EntityId id)
+    void ChangeSet::removeComponent(u64 compId, EntityId id)
     { componentActions<ComponentT>(compId).remove(id); }
 
-    template <typename UniverseT>
-    void ActionsContainer<UniverseT>::activateEntity(EntityId id)
+    void ChangeSet::activateEntity(EntityId id)
     { mMetadataActions.activate(id); }
 
-    template <typename UniverseT>
-    void ActionsContainer<UniverseT>::deactivateEntity(EntityId id)
+    void ChangeSet::deactivateEntity(EntityId id)
     { mMetadataActions.deactivate(id); }
 
-    template <typename UniverseT>
-    void ActionsContainer<UniverseT>::destroyEntity(EntityId id)
+    void ChangeSet::destroyEntity(EntityId id)
     { mMetadataActions.destroy(id); }
 
-    template <typename UniverseT>
     template <typename ComponentT>
-    ComponentActionsSpec<UniverseT, ComponentT> &ActionsContainer<UniverseT>::componentActions(u64 componentId)
+    ComponentActionsSpec<ComponentT> &ChangeSet::componentActions(u64 componentId)
     {
-        ComponentActions<UniverseT> *result{nullptr};
+        ComponentActions *result{nullptr};
 
         if (mComponentActions.size() <= componentId)
         { // Resize the list of ComponentSets.
@@ -194,11 +168,30 @@ namespace ent
         result = mComponentActions[componentId];
         if (result == nullptr)
         { // ComponentSet has not been created yet.
-            result = new ComponentActionsSpec<UniverseT, ComponentT>;
+            result = new ComponentActionsSpec< ComponentT>;
             mComponentActions[componentId] = result;
         }
 
         return *(result->template castToSpec<ComponentT>());
     }
-    // ActionsContainer implementation end.
-}
+    // ChangeSet implementation end.
+
+    // ActionsContainer implementation.
+    ActionsContainer::ActionsContainer() :
+        mCurrectChangeSet{new ChangeSet}
+    { }
+
+    ActionsContainer::~ActionsContainer()
+    { }
+
+    ChangeSet &ActionsContainer::currentChangeSet()
+    { return *mCurrectChangeSet; }
+
+    ChangeSet *ActionsContainer::releaseChangeSet()
+    {
+        ChangeSet *result{mCurrectChangeSet.release()};
+        mCurrectChangeSet.reset(new ChangeSet);
+        return result;
+    }
+    // ActionsContainer implementation.
+} // namespace ent

@@ -121,7 +121,7 @@ namespace ent
     { return validImpl(id.index(), id.generation()); }
 
     const ComponentBitset &EntityHolder::components(EntityId id) const
-    { ENT_ASSERT_SLOW(valid(id)); return mRecords[id.index()].comp(); }
+    { ENT_ASSERT_SLOW(indexValid(id.index())); return mRecords[id.index()].comp(); }
 
     const GroupBitset &EntityHolder::groups(EntityId id)
     { ENT_ASSERT_SLOW(indexValid(id.index())); return mRecords[id.index()].grp(); }

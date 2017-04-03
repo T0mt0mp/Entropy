@@ -30,6 +30,15 @@ namespace ent
          * Called during the Universe refresh.
          */
         virtual void refresh() noexcept = 0;
+
+        /**
+         * Remove Component for given Entity. If the Entity does not have
+         * Component associated with it, nothing happens.
+         * @param id Id of the Entity.
+         * @return Returns true, if there are no more Components of this type
+         *   for given Entity.
+         */
+        virtual bool remove(EntityId id) noexcept = 0;
     private:
     protected:
     }; // class BaseComponentHolderBase
@@ -68,15 +77,6 @@ namespace ent
          * @return Returns pointer to the Component, or nullptr, if it does not exist.
          */
         virtual const ComponentT *get(EntityId id) const noexcept = 0;
-
-        /**
-         * Remove Component for given Entity. If the Entity does not have
-         * Component associated with it, nothing happens.
-         * @param id Id of the Entity.
-         * @return Returns true, if there are no more Components of this type
-         *   for given Entity.
-         */
-        virtual bool remove(EntityId id) noexcept = 0;
     private:
     protected:
     }; // class BaseComponentHolder

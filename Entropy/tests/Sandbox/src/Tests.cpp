@@ -9,6 +9,7 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <functional>
 
 struct ThreadTester
 {
@@ -97,6 +98,24 @@ struct DestructTesterSpec : public DestructTester
     virtual ~DestructTesterSpec()
     {
         std::cout << "Spec destruct" << std::endl;
+    }
+};
+
+struct TestBase
+{
+    virtual ~TestBase()
+    { }
+    virtual u64 fun(u64 add) = 0;
+};
+
+template <typename T>
+struct TestSpec : public TestBase
+{
+    virtual ~TestSpec() override final
+    { }
+    virtual u64 fun(u64 add) override final
+    {
+        return sizeof(T) + add;
     }
 };
 
@@ -273,6 +292,34 @@ TU_Begin(EntropySandbox)
         delete bPtr;
     }
 
+    TU_Case(Sandbox4, "Sandbox4")
+    {
+        static constexpr u64 ATTEMPTS{100};
+        TestBase *t = new TestSpec<u64>;
+        auto f = std::bind(&TestSpec<u64>::fun, static_cast<TestSpec<u64>*>(t), std::placeholders::_1);
+
+        {
+            PROF_SCOPE("Virtual");
+            u64 sum{0};
+
+            for (u64 iii = 0; iii < ATTEMPTS; ++iii)
+            {
+                sum += t->fun(iii);
+            }
+        }
+
+        {
+            PROF_SCOPE("Bind");
+            u64 sum{0};
+
+            for (u64 iii = 0; iii < ATTEMPTS; ++iii)
+            {
+                sum += f(iii);
+            }
+        }
+
+        delete t;
+    }
 TU_End(EntropySandbox)
 
 int main(int argc, char* argv[])

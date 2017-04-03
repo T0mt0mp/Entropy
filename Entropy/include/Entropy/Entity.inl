@@ -62,5 +62,69 @@ namespace ent
     {
         return mId == rhs.mId && mId.generation() == rhs.mId.generation();
     }
+
+    template <typename UniverseT>
+    template <typename ComponentT>
+    bool Entity<UniverseT>::has() const
+    { return mUniverse->template hasComponent<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    template <typename ComponentT>
+    const ComponentT *Entity<UniverseT>::get() const
+    { return mUniverse->template getComponent<ComponentT>(mId); }
+    template <typename UniverseT>
+    template <typename ComponentT>
+    ComponentT *Entity<UniverseT>::get()
+    { return mUniverse->template getComponent<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    template <typename ComponentT>
+    ComponentT *Entity<UniverseT>::add()
+    { return mUniverse->template addComponent<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    template <typename ComponentT>
+    bool Entity<UniverseT>::remove()
+    { return mUniverse->template removeComponent<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    bool Entity<UniverseT>::created() const
+    { return mId.index() != 0 && mUniverse != nullptr; }
+
+    template <typename UniverseT>
+    bool Entity<UniverseT>::valid() const
+    { return created() && mUniverse->entityValid(mId); }
+
+    template <typename UniverseT>
+    void Entity<UniverseT>::activate()
+    { mUniverse->activateEntity(mId); }
+
+    template <typename UniverseT>
+    void Entity<UniverseT>::deactivate()
+    { mUniverse->deactivateEntity(mId); }
+
+    template <typename UniverseT>
+    bool Entity<UniverseT>::active() const
+    { return mUniverse->entityActive(mId); }
+
+    template <typename UniverseT>
+    bool Entity<UniverseT>::destroy()
+    {
+        bool result{mUniverse->destroyEntity(mId)};
+        mId = 0;
+        return result;
+    }
+
+    template <typename UniverseT>
+    const UniverseT *Entity<UniverseT>::universe() const
+    { return mUniverse; }
+
+    template <typename UniverseT>
+    const EntityId &Entity<UniverseT>::id() const
+    { return mId; }
+
+    template <typename UniverseT>
+    void Entity<UniverseT>::setId(EntityId id)
+    { mId = id; }
     // Entity implementation end.
 } // namespace ent

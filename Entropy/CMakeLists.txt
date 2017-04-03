@@ -17,8 +17,8 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 
 if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -pedantic -Wall -Werror")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g")
-    #set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
+    #set(CMAKE_CXX_FLAGS_DEBUG "-g")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 	set(THREAD_LIB pthread)
 endif()
@@ -55,6 +55,8 @@ set(ENTROPY_HEADERS
         ${ENTROPY_INCLUDE_DIR}/Entropy/ComponentManager.inl
         ${ENTROPY_INCLUDE_DIR}/Entropy/ChangeSet.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/ChangeSet.inl
+        ${ENTROPY_INCLUDE_DIR}/Entropy/ActionsCache.h
+        ${ENTROPY_INCLUDE_DIR}/Entropy/ActionsCache.inl
         ${ENTROPY_INCLUDE_DIR}/Entropy/Entity.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/Entity.inl
         ${ENTROPY_INCLUDE_DIR}/Entropy/EntityId.h
