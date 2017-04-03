@@ -13,7 +13,7 @@ namespace ent
     template <typename UniverseT>
     Entity<UniverseT>::Entity(UniverseT *uni, EntityId id) :
         mUniverse{uni}, mId{id}
-    { }
+    { ENT_ASSERT_SLOW(mId.generation() != EntityId::TEMP_ENTITY_GEN); }
 
     template <typename UniverseT>
     Entity<UniverseT>::Entity(const Entity &rhs)
@@ -70,8 +70,14 @@ namespace ent
 
     template <typename UniverseT>
     template <typename ComponentT>
+    bool Entity<UniverseT>::hasD() const
+    { return mUniverse->template hasComponentD<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    template <typename ComponentT>
     const ComponentT *Entity<UniverseT>::get() const
     { return mUniverse->template getComponent<ComponentT>(mId); }
+
     template <typename UniverseT>
     template <typename ComponentT>
     ComponentT *Entity<UniverseT>::get()
@@ -79,8 +85,30 @@ namespace ent
 
     template <typename UniverseT>
     template <typename ComponentT>
+    ComponentT *Entity<UniverseT>::getD()
+    { return mUniverse->template getComponentD<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    template <typename ComponentT>
     ComponentT *Entity<UniverseT>::add()
     { return mUniverse->template addComponent<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    template <typename ComponentT,
+              typename... CArgTs>
+    ComponentT *Entity<UniverseT>::add(CArgTs... cArgs)
+    { return mUniverse->template addComponent<ComponentT>(mId, std::forward<CArgTs>(cArgs)...); }
+
+    template <typename UniverseT>
+    template <typename ComponentT>
+    ComponentT *Entity<UniverseT>::addD()
+    { return mUniverse->template addComponentD<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    template <typename ComponentT,
+              typename... CArgTs>
+    ComponentT *Entity<UniverseT>::addD(CArgTs... cArgs)
+    { return mUniverse->template addComponentD<ComponentT>(mId, std::forward<CArgTs>(cArgs)...); }
 
     template <typename UniverseT>
     template <typename ComponentT>
@@ -88,20 +116,33 @@ namespace ent
     { return mUniverse->template removeComponent<ComponentT>(mId); }
 
     template <typename UniverseT>
-    bool Entity<UniverseT>::created() const
+    template <typename ComponentT>
+    void Entity<UniverseT>::removeD()
+    { return mUniverse->template removeComponentD<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    bool Entity<UniverseT>::validId() const
     { return mId.index() != 0 && mUniverse != nullptr; }
 
     template <typename UniverseT>
     bool Entity<UniverseT>::valid() const
-    { return created() && mUniverse->entityValid(mId); }
+    { return validId() && mUniverse->entityValid(mId); }
 
     template <typename UniverseT>
     void Entity<UniverseT>::activate()
     { mUniverse->activateEntity(mId); }
 
     template <typename UniverseT>
+    void Entity<UniverseT>::activateD()
+    { mUniverse->activateEntityD(mId); }
+
+    template <typename UniverseT>
     void Entity<UniverseT>::deactivate()
     { mUniverse->deactivateEntity(mId); }
+
+    template <typename UniverseT>
+    void Entity<UniverseT>::deactivateD()
+    { mUniverse->deactivateEntityD(mId); }
 
     template <typename UniverseT>
     bool Entity<UniverseT>::active() const
@@ -116,6 +157,10 @@ namespace ent
     }
 
     template <typename UniverseT>
+    inline bool Entity<UniverseT>::destroyD()
+    { return mUniverse->destroyEntityD(mId); }
+
+    template <typename UniverseT>
     const UniverseT *Entity<UniverseT>::universe() const
     { return mUniverse; }
 
@@ -127,4 +172,49 @@ namespace ent
     void Entity<UniverseT>::setId(EntityId id)
     { mId = id; }
     // Entity implementation end.
+
+    // TemporaryEntity implementation.
+    template <typename UniverseT>
+    TemporaryEntity<UniverseT>::TemporaryEntity(UniverseT *uni, EntityId id) :
+        mUniverse{uni}, mId{id}
+    { ENT_ASSERT_SLOW(mId.generation() == EntityId::TEMP_ENTITY_GEN); }
+
+    template <typename UniverseT>
+    template <typename ComponentT>
+    bool TemporaryEntity<UniverseT>::has() const
+    { return mUniverse->template hasComponentD<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    template<typename ComponentT>
+    ComponentT *TemporaryEntity<UniverseT>::get()
+    { return mUniverse->template getComponentD<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    template<typename ComponentT>
+    ComponentT *TemporaryEntity<UniverseT>::add()
+    { return mUniverse->template addComponentD<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    template<typename ComponentT,
+             typename... CArgTs>
+    ComponentT *TemporaryEntity<UniverseT>::add(CArgTs... cArgs)
+    { return mUniverse->template addComponentD<ComponentT>(mId, std::forward<CArgTs>(cArgs)...); }
+
+    template <typename UniverseT>
+    template<typename ComponentT>
+    void TemporaryEntity<UniverseT>::remove()
+    { return mUniverse->template removeComponentD<ComponentT>(mId); }
+
+    template <typename UniverseT>
+    void TemporaryEntity<UniverseT>::activate()
+    { mUniverse->activateEntityD(mId); }
+
+    template <typename UniverseT>
+    void TemporaryEntity<UniverseT>::deactivate()
+    { mUniverse->deactivateEntityD(mId); }
+
+    template <typename UniverseT>
+    bool TemporaryEntity<UniverseT>::destroy()
+    { return mUniverse->destroyEntityD(mId); }
+    // TemporaryEntity implementation end.
 } // namespace ent

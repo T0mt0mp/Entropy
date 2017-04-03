@@ -39,5 +39,37 @@ namespace ent
         std::lock_guard<std::mutex> lg(mCommitMutex);
         mCommittedChanges.clear();
     }
+
+    template <typename UniverseT>
+    void ActionsCache<UniverseT>::applyChangeSets(UniverseT *uni)
+    {
+        // TODO - optimize, parallelize.
+
+        // Destroy Entities.
+        for (auto cs : mCommittedChanges)
+        {
+            for (EntityId id : cs->metadataChanges().destroyed())
+            {
+                uni->destroyEntity(id);
+            }
+        }
+
+        // Create Entities.
+        for (auto cs : mCommittedChanges)
+        {
+            for (EntityId &id : cs->temporaryEntityMapper())
+            {
+                id = uni->createEntityId();
+            }
+        }
+
+        // Remove / add Components.
+        for (auto cs : mCommittedChanges)
+        {
+            for (ComponentChange &cc : cs->)
+        }
+
+        // Change metadata.
+    }
     // ActionsCache implementation end.
 } // namespace ent

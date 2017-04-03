@@ -63,6 +63,16 @@ namespace ent
         virtual ComponentT *add(EntityId id) noexcept = 0;
 
         /**
+         * Replace Component of given Entity with provided Component.
+         * If given Entity has no Component of given type, insert the new
+         * Component.
+         * @param id ID of the Entity.
+         * @param comp Component data.
+         * @return Returns pointer to the Component.
+         */
+        virtual ComponentT *replace(EntityId id, const ComponentT &comp) noexcept = 0;
+
+        /**
          * Get Component belonging to given EntityId.
          * Returns a pointer o read-write Component.
          * @param id Id of the Entity.
@@ -105,6 +115,19 @@ namespace ent
          * @return Returns pointer to the Component.
          */
         virtual inline ComponentT *add(EntityId id) noexcept override;
+
+        /**
+         * Add Component for given EntityId, if the Component
+         * already exists, nothing happens.
+         * Pass constructor parameters to the Component on
+         * construction.
+         * @tparam CArgTs Component constructor argument types.
+         * @param id ID of the Entity.
+         * @param cArgs Component constructor arguments.
+         * @return Returns pointer to the Component.
+         */
+        template <typename... CArgTs>
+        inline ComponentT *add(EntityId id, CArgTs... cArgs) noexcept;
 
         /**
          * Get Component belonging to given EntityId.

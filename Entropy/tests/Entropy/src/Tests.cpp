@@ -149,6 +149,11 @@ public:
 
 struct Velocity
 {
+    Velocity() = default;
+    Velocity(float a, float b) :
+        x{a}, y{b}
+    { }
+
     float x;
     float y;
 
@@ -505,7 +510,7 @@ TU_Begin(EntropyEntity)
         for (u64 iii = 1u; iii <= ent::ENT_MIN_FREE + 1; ++iii)
         {
             Entity ent = u.createEntity();
-            TC_Require(ent.created());
+            TC_Require(ent.validId());
             TC_Require(ent.active());
             TC_Require(ent.valid());
             if (iii == ent::ENT_MIN_FREE + 1)
@@ -523,7 +528,7 @@ TU_Begin(EntropyEntity)
 
             TC_Require(ent.destroy());
             TC_Require(!ent.valid());
-            TC_Require(!ent.created());
+            TC_Require(!ent.validId());
         }
     }
 
@@ -851,6 +856,48 @@ TU_Begin(EntropyEntity)
             TC_RequireEqual(u.registerComponent<DestructionC>(), 0u);
             TC_RequireEqual(u.addSystem<DestructionSystem>(), sys1);
         }
+    }
+
+    TU_Case(Entity1, "Testing the Entity and TemporaryEntity")
+    {
+        using Universe = RealUniverse2::UniverseT;
+        using Entity = RealUniverse2::EntityT;
+        using TempEntity = RealUniverse2::TempEntityT;
+
+        Universe &u{RealUniverse2::instance()};
+
+        TC_RequireEqual(u.registerComponent<Position>(), 0u);
+        TC_RequireEqual(u.registerComponent<Velocity>(), 1u);
+
+        Entity e = u.createEntity();
+        e.active();
+        e.activate();
+        e.activateD();
+        e.add<Position>();
+        e.add<Velocity>(1.0, 2.0);
+        e.addD<Position>();
+        e.addD<Velocity>(1.0, 2.0);
+        e.deactivate();
+        e.deactivateD();
+        e.get<Position>();
+        static_cast<const Entity>(e).get<Velocity>();
+        e.getD<Position>();
+        e.has<Position>();
+        e.hasD<Velocity>();
+        e.remove<Position>();
+        e.removeD<Velocity>();
+        e.destroyD();
+        e.destroy();
+
+        TempEntity te = u.createEntityD();
+        te.activate();
+        te.add<Position>();
+        te.add<Velocity>(1.0, 2.0);
+        te.deactivate();
+        te.get<Position>();
+        te.has<Velocity>();
+        te.remove<Position>();
+        te.destroy();
     }
 
     TU_Case(Parallel0, "Testing parallel access")

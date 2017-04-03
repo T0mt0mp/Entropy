@@ -126,6 +126,7 @@ namespace ent
     template <typename ComponentT>
     ComponentT *ComponentManager<UT>::add(EntityId id)
     {
+        // TODO - find a better place for the testing.
         if (!registered<ComponentT>())
         {
             ENT_WARNING("Unknown Component type!");
@@ -136,9 +137,25 @@ namespace ent
     }
 
     template <typename UT>
+    template <typename ComponentT,
+              typename... CArgTs>
+    ComponentT *ComponentManager<UT>::add(EntityId id, CArgTs... cArgs)
+    {
+        // TODO - find a better place for the testing.
+        if (!registered<ComponentT>())
+        {
+            ENT_WARNING("Unknown Component type!");
+            return nullptr;
+        }
+
+        return getHolder<ComponentT>().add(id, std::forward<CArgTs>(cArgs)...);
+    }
+
+    template <typename UT>
     template <typename ComponentT>
     ComponentT *ComponentManager<UT>::get(EntityId id)
     {
+        // TODO - find a better place for the testing.
         if (!registered<ComponentT>())
         {
             ENT_WARNING("Unknown Component type!");
@@ -152,6 +169,7 @@ namespace ent
     template <typename ComponentT>
     const ComponentT *ComponentManager<UT>::get(EntityId id) const
     {
+        // TODO - find a better place for the testing.
         if (!registered<ComponentT>())
         {
             ENT_WARNING("Unknown Component type!");
@@ -165,6 +183,7 @@ namespace ent
     template <typename ComponentT>
     bool ComponentManager<UT>::remove(EntityId id)
     {
+        // TODO - find a better place for the testing.
         if (!registered<ComponentT>())
         {
             ENT_WARNING("Unknown Component type!");

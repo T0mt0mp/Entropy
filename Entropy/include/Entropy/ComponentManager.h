@@ -110,6 +110,19 @@ namespace ent
         inline ComponentT *add(EntityId id);
 
         /**
+         * Add Component for given Entity.
+         * Pass constructor parameters to the holder.
+         * @tparam ComponentT Type of the Component.
+         * @tparam CArgTs Component constructor argument types.
+         * @param id ID of the Entity.
+         * @param cArgs Component constructor arguments.
+         * @return Returns pointer to the added Component.
+         */
+        template <typename ComponentT,
+                  typename... CArgTs>
+        inline ComponentT *add(EntityId id, CArgTs... cArgs);
+
+        /**
          * Get Component of given Entity.
          * Returns pointer to read-write Component.
          * @tparam ComponentT Component type.

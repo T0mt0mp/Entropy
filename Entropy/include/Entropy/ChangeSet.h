@@ -212,9 +212,19 @@ namespace ent
          * @param id ID of the Entity.
          */
         inline void destroy(EntityId id);
+
+        /// List of activated Entities.
+        inline const ent::SortedList<EntityId> &activated() const;
+
+        /// List of deactivated Entities.
+        inline const ent::SortedList<EntityId> &deactivated() const;
+
+        /// List of destroyed Entities.
+        inline const ent::SortedList<EntityId> &destroyed() const;
     private:
         /// List of Entities which should be activated.
         ent::SortedList<EntityId> mActivated;
+        // TODO - Merge activated and deactivated lists?
         /// List of Entities which should be deactivated.
         ent::SortedList<EntityId> mDeactivated;
         /// List of Entities which should be destroyed.
@@ -230,6 +240,17 @@ namespace ent
     public:
         /// Clean up any used memory.
         inline ~ChangeSet();
+
+        /**
+         * Does given Entity have a temporary Component of
+         * specified type?
+         * @param compId ID of the Component.
+         * @param id Entity ID.
+         * @return Returns true, if there is such temporary
+         *   Component.
+         */
+        template <typename ComponentT>
+        inline bool hasComponent(u64 compId, EntityId id);
 
         /**
          * Get already added temporary Component.
@@ -295,6 +316,19 @@ namespace ent
          * @param id ID of the Entity.
          */
         inline void destroyEntity(EntityId id);
+
+        /**
+         * Create new temporary Entity.
+         * @return Returns ID of the temporary Entity. Generation
+         *   is always EntityId::TEMP_ENTITY_GEN.
+         */
+        inline EntityId createEntity();
+
+        /// Metadata changes getter.
+        inline const MetadataActions &metadataChanges() const;
+
+        /// Temporary Entity mapping list getter.
+        inline ent::List<EntityId> &temporaryEntityMapper();
     private:
         /**
          * Get Component actions holder for hiven Component type.
@@ -311,8 +345,15 @@ namespace ent
          * type accessed by the thread.
          */
         ent::List<ComponentActions*> mComponentActions;
+
         /// Entity metadata changes.
         MetadataActions mMetadataActions;
+
+        /**
+         * List mapping temporary EntityId (index) to
+         * EntityId of the created Entity.
+         */
+        ent::List<EntityId> mTempEntities;
     protected:
     }; // class ChangeSet
 

@@ -44,6 +44,8 @@ namespace ent
          *   d) Finalize Groups.
          */
 
+        mAC.applyChangeSets(this);
+
         mCM.refresh();
         mGM.refresh(mChanged, mEM);
     }
@@ -176,9 +178,8 @@ namespace ent
     { return mCM.template registered<ComponentT>(); }
 
     template <typename T>
-    template <typename ComponentT,
-        typename... CArgTs>
-    ComponentT *Universe<T>::addComponent(EntityId id, CArgTs... cargs)
+    template <typename ComponentT>
+    ComponentT *Universe<T>::addComponent(EntityId id)
     {
 #ifdef ENT_ENTITY_VALID
         if (!mEM.valid(id))
@@ -187,7 +188,34 @@ namespace ent
         }
 #endif
 
-        ComponentT *result{mCM.template add<ComponentT>(id, std::forward(cargs)...)};
+        ComponentT *result{mCM.template add<ComponentT>(id)};
+
+        if (result)
+        { // Check, if the add operation returned success.
+            bool alreadyPresent{mEM.hasComponent(id, mCM.template id<ComponentT>())};
+            if (!alreadyPresent)
+            { // Check, if the Component has been added previously.
+                entityChanged(id);
+                mEM.addComponent(id, mCM.template id<ComponentT>());
+            }
+        }
+
+        return result;
+    }
+
+    template <typename T>
+    template <typename ComponentT,
+        typename... CArgTs>
+    ComponentT *Universe<T>::addComponent(EntityId id, CArgTs... cArgs)
+    {
+#ifdef ENT_ENTITY_VALID
+        if (!mEM.valid(id))
+        {
+            throw std::runtime_exception("Unable to add Component to invalid Entity!");
+        }
+#endif
+
+        ComponentT *result{mCM.template add<ComponentT>(id, std::forward<CArgTs>(cArgs)...)};
 
         if (result)
         { // Check, if the add operation returned success.
@@ -263,6 +291,12 @@ namespace ent
     template <typename T>
     auto Universe<T>::createEntity() -> EntityT
     {
+        return EntityT(this, createEntityId());
+    }
+
+    template <typename T>
+    EntityId Universe<T>::createEntityId()
+    {
         EntityId newId{mEM.create()};
 
 #ifdef ENT_ENTITY_EXCEPT
@@ -285,7 +319,13 @@ namespace ent
             }
         }
 
-        return EntityT(this, newId);
+        return newId;
+    }
+
+    template <typename T>
+    auto Universe<T>::createEntityD() -> TempEntityT
+    {
+        return mAC.changeSet().createEntity();
     }
 
     template <typename T>
@@ -363,6 +403,7 @@ namespace ent
     template <typename T>
     void Universe<T>::entityChanged(EntityId id)
     {
+        // TODO - Performance, sorted insert without moving immediately?
         mChanged.insertUnique(id);
     }
     // Universe implementation end.

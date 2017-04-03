@@ -25,7 +25,18 @@ namespace ent
         try {
             result = &mMap[id];
         } catch(...) {
-            //ENT_WARNING("Get has thrown an exception!");
+        }
+        return result;
+    }
+
+    template <typename ComponentT>
+    template <typename... CArgTs>
+    ComponentT *ComponentHolder<ComponentT>::add(EntityId id, CArgTs... cArgs) noexcept
+    {
+        ComponentT* result{nullptr};
+        try {
+            result = &(mMap.try_emplace(id, std::forward<CArgTs>(cArgs)...).first->second);
+        } catch(...) {
         }
         return result;
     }

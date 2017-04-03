@@ -29,7 +29,7 @@ namespace ent
     public:
         using UniverseT = Universe<T>;
         using EntityT = Entity<UniverseT>;
-        using TempEntityT = void; // TODO - TemporaryEntity
+        using TempEntityT = TemporaryEntity<UniverseT>;
         using SystemT = System<UniverseT>;
 
         friend class Entity<UniverseT>;
@@ -200,10 +200,31 @@ namespace ent
         /**
          * Add Component to the given Entity.
          * Immediate version, all actions are performed
-         * immediately, including Entity metadata.
+         * immediately, including editing Entity metadata.
          * @tparam ComponentT Type of the Component
-         * @tparam CArgTs Constructor argument types.
          * @param id Id of the Entity.
+         * @return Returns pointer to the Component.
+         * @remarks Not thread-safe! If thread-safety is required, use addComponentD.
+         * @remarks Changes Entity metadata!
+         * @remarks All pointers to Components of the same type may be invalidated!
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
+         */
+        template <typename ComponentT>
+        inline ComponentT *addComponent(EntityId id);
+
+        /**
+         * Add Component to the given Entity.
+         * Immediate version, all actions are performed
+         * immediately, including editing Entity metadata.
+         * @tparam ComponentT Type of the Component
+         * @tparam CArgTs Component constructor argument types.
+         * @param id Id of the Entity.
+         * @param cArgs Component constructor arguments.
          * @return Returns pointer to the Component.
          * @remarks Not thread-safe! If thread-safety is required, use addComponentD.
          * @remarks Changes Entity metadata!
@@ -217,7 +238,7 @@ namespace ent
          */
         template <typename ComponentT,
                   typename... CArgTs>
-        inline ComponentT *addComponent(EntityId id, CArgTs... cargs);
+        inline ComponentT *addComponent(EntityId id, CArgTs... cArgs);
 
         /**
          * Add Component to the given Entity.
@@ -249,7 +270,7 @@ namespace ent
          */
         template <typename ComponentT,
             typename... CArgTs>
-        inline ComponentT *addComponentD(EntityId id, CArgTs... cargs);
+        inline ComponentT *addComponentD(EntityId id, CArgTs... cArgs);
 
         /**
          * Get Component associated with the given Entity.
@@ -299,6 +320,10 @@ namespace ent
          * @remarks Returned pointer is valid until a new Component
          *   of the same type is added/removed, or the ChangeSet is
          *   committed.
+         * @remarks Default behavior, if Component doesn't exist, is returning
+         *   nullptr. Method can throw exception instead, if ENT_COMP_EXCEPT
+         *   macro is defined. Exception of type std::runtime_error is thrown in
+         *   that case.
          */
         template <typename ComponentT>
         inline ComponentT *getComponentD(EntityId id);
@@ -310,7 +335,7 @@ namespace ent
          * @param id Id of the Component
          * @return Returns true, if there is such Component.
          * @remarks Is thread-safe, if no other thread is
-         *   directly accessing entity metadata.
+         *   directly writing to entity metadata.
          */
         template <typename ComponentT>
         inline bool hasComponent(EntityId id) const;
@@ -356,6 +381,19 @@ namespace ent
         inline void removeComponentD(EntityId id);
 
         /**
+         * Create a new Entity and return its ID.
+         * Operation is performed immediately.
+         * @return ID of the newly created Entity.
+         * @remarks Not thread-safe!
+         * @remarks Changes Entity metadata.
+         * @remarks Default behavior, if Entity could not be created, is
+         *   returning invalid Entity (Entity.valid() == false). Method can
+         *   also throw exception of type std::runtime_error, if such
+         *   result is require, macro ENT_ENTITY_EXCEPT should be defined.
+         */
+        inline EntityId createEntityId();
+
+        /**
          * Create a new Entity and return a handle to it.
          * Operation is performed immediately.
          * @return Handle to newly created Entity.
@@ -379,7 +417,7 @@ namespace ent
          */
         inline TempEntityT createEntityD();
 
-#ifdef ENT_NOT_USED
+#ifdef ENT_NOT_IMPLEMENTED
 
         /**
          * Try to create Entity with given ID (without generation), if
@@ -439,6 +477,12 @@ namespace ent
          * Action is finished on refresh.
          * @param id ID of the Entity.
          * @remarks Is thread-safe
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
          */
         inline void activateEntityD(EntityId id);
 
@@ -462,6 +506,12 @@ namespace ent
          * Action is finished on refresh.
          * @param id ID of the Entity.
          * @remarks Is thread-safe.
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
          */
         inline void deactivateEntityD(EntityId id);
 

@@ -45,7 +45,33 @@ namespace ent
          * Reset the ActionsCache.
          */
         void reset();
+
+        /**
+         * Apply committed ChangeSets from ActionsCache.
+         * @param uni Universe instance.
+         */
+        void applyChangeSets(UniverseT *uni);
     private:
+        class ComponentWorkerBase
+        {
+        public:
+            virtual void work(UniverseT *uni, ChangeSet *cs) = 0;
+        private:
+        protected:
+        };
+
+        template <typename ComponentT>
+        class ComponentWorker : public ComponentWorkerBase
+        {
+        public:
+            ComponentWorker(u64 compId);
+
+            virtual void work(UniverseT *uni, ChangeSet *cs) override final;
+        private:
+            u64 mCompId;
+        protected:
+        };
+
         /**
          * Actions storage specific to each thread
          * and Universe type.

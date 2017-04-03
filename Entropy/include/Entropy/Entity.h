@@ -32,19 +32,19 @@ namespace ent
          * @param uni Universe pointer.
          * @param id ID of the Entity.
          */
-        Entity(UniverseT *uni, EntityId id = {});
+        inline Entity(UniverseT *uni, EntityId id = {});
 
         /**
          * Copy constructor.
          * @param rhs Entity to copy.
          */
-        Entity(const Entity &rhs);
+        inline Entity(const Entity &rhs);
 
         /**
          * Move constructor.
          * @param rhs Entity to move.
          */
-        Entity(Entity &&rhs);
+        inline Entity(Entity &&rhs);
 
         /**
          * Copy-assignment operator.
@@ -53,7 +53,7 @@ namespace ent
          * @param rhs Entity to copy.
          */
         template <typename UT>
-        Entity &operator=(const Entity<UT> &rhs);
+        inline Entity &operator=(const Entity<UT> &rhs);
 
         /**
          * Move-assignment operator.
@@ -62,7 +62,7 @@ namespace ent
          * @param rhs Entity to move.
          */
         template <typename UT>
-        Entity &operator=(Entity<UT> &&rhs);
+        inline Entity &operator=(Entity<UT> &&rhs);
 
         /**
          * Copy helper method. Copy Given Entity ID, if the
@@ -82,80 +82,273 @@ namespace ent
         inline bool operator==(const Entity &rhs) const;
 
         /**
-         * Does this Entity have Component of given type
-         * associated with it?
-         * @tparam ComponentT Type of Component.
-         * @return Returns true, if such Component is associated.
+         * Does this Entity have Component associated with it?
+         * Checks the current state, excluding any thread-local changes.
+         * @tparam ComponentT Type of the Component
+         * @return Returns true, if there is such a Component.
+         * @remarks Is thread-safe, if no other thread is
+         *   directly writing to entity metadata.
          */
         template <typename ComponentT>
         inline bool has() const;
 
         /**
-         * Get the Component of given type associated with
-         * this Entity.
-         * @tparam ComponentT Type of the Component.
-         * @return Returns ptr to the Component, or nullptr if this
-         *   Entity does not have such Component.
+         * Check, if there is a temporary Component prepared.
+         * @tparam ComponentT Type of the Component
+         * @return Returns true, if there is a temporary
+         *   Component of given type.
+         * @remarks Is thread-safe.
+         */
+        template <typename ComponentT>
+        inline bool hasD() const;
+
+        /**
+         * Get Component associated with this Entity.
+         * Returns read-only ptr to the Component.
+         * Returns Component with current state, excluding any thread-local changes.
+         * @tparam ComponentT Type of the Component
+         * @return Returns pointer to the Component.
+         * @remarks Is thread-safe for cases, when on other thread
+         *   has write access to the same Component.
+         * @remarks Default behavior, if Component doesn't exist, is returning
+         *   nullptr. Method can throw exception instead, if ENT_COMP_EXCEPT
+         *   macro is defined. Exception of type std::runtime_error is thrown in
+         *   that case.
          */
         template <typename ComponentT>
         inline const ComponentT *get() const;
+
+        /**
+         * Get Component associated with this Entity.
+         * Returns read-write ptr to the Component.
+         * For read-only access, const version should
+         * be called.
+         * Returns Component with current state, excluding any thread-local changes.
+         * @tparam ComponentT Type of the Component
+         * @return Returns pointer to the Component.
+         * @remarks Not thread-safe in case of write access! If thread-safety
+         *   is required, use add/getComponentD.
+         * @remarks Default behavior, if Component doesn't exist, is returning
+         *   nullptr. Method can throw exception instead, if ENT_COMP_EXCEPT
+         *   macro is defined. Exception of type std::runtime_error is thrown in
+         *   that case.
+         */
         template <typename ComponentT>
         inline ComponentT *get();
 
         /**
-         * Add Component of given type to this Entity. If there already
-         * is Component of this type associated with this Entity, nothing
-         * happens.
-         * @tparam ComponentT Type of the Component.
-         * @return Returns ptr to new Component, or already existing one.
+         * Get temporary Component, which can be safely
+         * used for write access. The operation will be
+         * finished on refresh.
+         * Temporary Component has to be added first.
+         * @tparam ComponentT Type of the Component
+         * @return Returns pointer to the temporary Component.
+         * @remarks Is thread-safe.
+         * @remarks Returned pointer is valid until a new Component
+         *   of the same type is added/removed, or the ChangeSet is
+         *   committed.
+         * @remarks Default behavior, if Component doesn't exist, is returning
+         *   nullptr. Method can throw exception instead, if ENT_COMP_EXCEPT
+         *   macro is defined. Exception of type std::runtime_error is thrown in
+         *   that case.
+         */
+        template <typename ComponentT>
+        inline ComponentT *getD();
+
+        /**
+         * Add Component to this Entity.
+         * Immediate version, all actions are performed
+         * immediately, including editing Entity metadata.
+         * @tparam ComponentT Type of the Component
+         * @param id Id of the Entity.
+         * @return Returns pointer to the Component.
+         * @remarks Not thread-safe! If thread-safety is required, use addComponentD.
+         * @remarks Changes Entity metadata!
+         * @remarks All pointers to Components of the same type may be invalidated!
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
          */
         template <typename ComponentT>
         inline ComponentT *add();
 
         /**
-         * Remove Component of given type from this Entity.
-         * If there is no Component of this type associated with
-         * the Entity, nothing happens.
-         * @tparam ComponentT Type of the Component.
+         * Add Component to this Entity.
+         * Immediate version, all actions are performed
+         * immediately, including editing Entity metadata.
+         * @tparam ComponentT Type of the Component
+         * @tparam CArgTs Component constructor argument types.
+         * @param cArgs Component constructor arguments.
+         * @return Returns pointer to the Component.
+         * @remarks Not thread-safe! If thread-safety is required, use addComponentD.
+         * @remarks Changes Entity metadata!
+         * @remarks All pointers to Components of the same type may be invalidated!
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
+         */
+        template <typename ComponentT,
+                  typename... CArgTs>
+        inline ComponentT *add(CArgTs... cArgs);
+
+        /**
+         * Add Component to this Entity.
+         * Deferred version, temporary Component is
+         * returned, operation is finished on refresh.
+         * @tparam ComponentT Type of the Component
+         * @return Returns pointer to the temporary Component.
+         * @remarks Is thread-safe.
+         * @remarks Each call invalidates previously returned
+         *   temporary Component pointers of the same type.
+         */
+        template <typename ComponentT>
+        inline ComponentT *addD();
+
+        /**
+         * Add Component to this Entity.
+         * Deferred version, temporary Component is
+         * returned, operation is finished on refresh.
+         * @tparam ComponentT Type of the Component
+         * @tparam CArgTs Component constructor argument types.
+         * @param cArgs Component constructor arguments.
+         * @return Returns pointer to the temporary Component.
+         * @remarks Is thread-safe.
+         * @remarks Each call invalidates previously returned
+         *   temporary Component pointers of the same type.
+         */
+        template <typename ComponentT,
+                  typename... CArgTs>
+        inline ComponentT *addD(CArgTs... cArgs);
+
+        /**
+         * Remove Component from this Entity.
+         * If there is no Component associated with the Entity, nothing happens.
+         * Operation is performed immediately.
+         * @tparam ComponentT Type of the Component
          * @return Returns true, if the Component has been successfully removed.
+         * @remarks Not thread-safe!
+         * @remarks Changes Entity metadata!
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
          */
         template <typename ComponentT>
         inline bool remove();
 
         /**
-         * Check if this Entity contains valid EntityId.
-         * !!Does not check for validity withing the Universe - use valid() method for that!!
-         * @return Returns true, if the EntityId has been set to valid (not null) value.
+         * Remove Component from this Entity.
+         * Operation is finished on refresh.
+         * @tparam ComponentT Type of the Component
+         * @remarks Is thread-safe.
          */
-        inline bool created() const;
+        template <typename ComponentT>
+        inline void removeD();
 
         /**
-         * Check if this Entity is valid within its Universe.
-         * @return Returns true, if it exists within its universe.
+         * Check if this Entity contains valid EntityId.
+         * @return Returns true, if the EntityId has been set to valid (not null) value.
+         */
+        inline bool validId() const;
+
+        /**
+         * Checks validity of this Entity.
+         * Checks the current state, excluding any thread-local changes.
+         * @return Returns true, if the Entity exists.
+         * @remarks Is thread-safe, if no other thread is modifying
+         *   entity metadata.
          */
         inline bool valid() const;
 
         /**
-         * Activate this Entity, if it's already active, nothing happens.
+         * Activate this Entity.
+         * Action is performed immediately.
+         * @remarks Not thread-safe!
+         * @remarks Changes Entity metadata.
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
          */
         inline void activate();
 
         /**
-         * Deactivate this Entity, if it's already inactive, nothing happens.
+         * Activate this Entity.
+         * Action is finished on refresh.
+         * @remarks Is thread-safe
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
+         */
+        inline void activateD();
+
+        /**
+         * Deactivate this Entity.
+         * Action is performed immediately.
+         * @remarks Not thread-safe!
+         * @remarks Changes Entity metadata.
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
          */
         inline void deactivate();
 
         /**
-         * Is this Entity active?
-         * @return Returns true, if this Entity is active.
+         * Deactivate this Entity.
+         * Action is finished on refresh.
+         * @remarks Is thread-safe.
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
+         */
+        inline void deactivateD();
+
+        /**
+         * Checks if this Entity is active.
+         * Checks the current state, excluding any thread-local changes.
+         * @return Returns true, if the Entity is active.
+         * @remarks Does NOT check index bounds!
+         * @remarks Is thread-safe, if no other thread is modifying
+         *   entity metadata.
          */
         inline bool active() const;
 
         /**
-         * Destroy this Entity. Resets ID of the Entity to 0.
-         * @return Returns false, if this Entity did not exist.
+         * Destroy this Entity.
+         * Action is performed immediately.
+         * @return Returns false, if the Entity could not
+         *   be destroyed.
+         * @remarks Not thread-safe!
+         * @remarks Changes Entity metadata.
          */
         inline bool destroy();
+
+        /**
+         * Destroy this Entity.
+         * Action is finished on refresh.
+         * @return Returns false, if the Entity does not exist.
+         * @remarks Is thread-safe.
+         */
+        inline bool destroyD();
 
         /// Universe ptr getter.
         inline const UniverseT *universe() const;
@@ -179,9 +372,16 @@ namespace ent
      * @tparam UniverseT Type of the Universe.
      */
     template <typename UniverseT>
-    class TemporaryEntity : NonCopyable
+    class TemporaryEntity
     {
     public:
+        /**
+         * Create Temporary Entity.
+         * @param uni Universe instance.
+         * @param id ID of the temporary Entity.
+         */
+        TemporaryEntity(UniverseT *uni, EntityId id);
+
         /**
          * Check, if there is a temporary Component prepared.
          * @tparam ComponentT Type of the Component
@@ -203,12 +403,16 @@ namespace ent
          * @remarks Returned pointer is valid until a new Component
          *   of the same type is added/removed, or the ChangeSet is
          *   committed.
+         * @remarks Default behavior, if Component doesn't exist, is returning
+         *   nullptr. Method can throw exception instead, if ENT_COMP_EXCEPT
+         *   macro is defined. Exception of type std::runtime_error is thrown in
+         *   that case.
          */
         template <typename ComponentT>
         inline ComponentT *get();
 
         /**
-         * Add Component to the given Entity.
+         * Add Component to the this Entity.
          * Deferred version, temporary Component is
          * returned, operation is finished on refresh.
          * @tparam ComponentT Type of the Component
@@ -221,7 +425,7 @@ namespace ent
         inline ComponentT *add();
 
         /**
-         * Add Component to the given Entity.
+         * Add Component to this Entity.
          * Deferred version, temporary Component is
          * returned, operation is finished on refresh.
          * @tparam ComponentT Type of the Component
@@ -238,7 +442,7 @@ namespace ent
         inline ComponentT *add(CArgTs... cArgs);
 
         /**
-         * Remove Component from given Entity.
+         * Remove Component from this Entity.
          * Operation is finished on refresh.
          * @tparam ComponentT Type of the Component
          * @remarks Is thread-safe.
@@ -247,27 +451,31 @@ namespace ent
         inline void remove();
 
         /**
-         * Activate given Entity.
+         * Activate this Entity.
          * Action is finished on refresh.
          * @remarks Is thread-safe
          */
         inline void activate();
 
         /**
-         * Deactivate given Entity.
+         * Deactivate this Entity.
          * Action is finished on refresh.
          * @remarks Is thread-safe.
          */
         inline void deactivate();
 
         /**
-         * Destroy given Entity.
+         * Destroy this Entity.
          * Action is finished on refresh.
          * @return Returns false, if the Entity does not exist.
          * @remarks Is thread-safe.
          */
-        inline void destroy();
+        inline bool destroy();
     private:
+        /// Universe this Entity lives in.
+        UniverseT *mUniverse;
+        /// ID this Entity represents.
+        EntityId mId;
     protected:
     }; // class TemporaryEntity
 } // namespace ent

@@ -118,6 +118,15 @@ namespace ent
     {
         mDestroyed.insertUnique(id);
     }
+
+    const ent::SortedList<EntityId> &MetadataActions::activated() const
+    { return mActivated; }
+
+    const ent::SortedList<EntityId> &MetadataActions::deactivated() const
+    { return mDeactivated; }
+
+    const ent::SortedList<EntityId> &MetadataActions::destroyed() const
+    { return mDestroyed; }
     // MetadataActions implementation end.
 
     // ChangeSet implementation.
@@ -128,6 +137,10 @@ namespace ent
             delete cc;
         }
     }
+
+    template <typename ComponentT>
+    bool ChangeSet::hasComponent(u64 compId, EntityId id)
+    { return componentActions<ComponentT>(compId).get(id) != nullptr; }
 
     template <typename ComponentT>
     ComponentT *ChangeSet::getComponent(u64 compId, EntityId id)
@@ -154,6 +167,18 @@ namespace ent
 
     void ChangeSet::destroyEntity(EntityId id)
     { mMetadataActions.destroy(id); }
+
+    EntityId ChangeSet::createEntity()
+    {
+        mTempEntities.pushBack(EntityId(0u, 0u));
+        return EntityId(static_cast<EIdType>(mTempEntities.size()) - 1u, EntityId::TEMP_ENTITY_GEN);
+    }
+
+    const MetadataActions &ChangeSet::metadataChanges() const
+    { return mMetadataActions; }
+
+    ent::List<EntityId> &ChangeSet::temporaryEntityMapper()
+    { return mTempEntities; }
 
     template <typename ComponentT>
     ComponentActionsSpec<ComponentT> &ChangeSet::componentActions(u64 componentId)
