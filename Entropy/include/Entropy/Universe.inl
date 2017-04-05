@@ -164,6 +164,8 @@ namespace ent
             CHECK_STATS(mStats);
         }
 
+        mAC.registerComponent<ComponentT>(cId);
+
         return cId;
     }
 
@@ -232,6 +234,49 @@ namespace ent
 
     template <typename T>
     template <typename ComponentT>
+    ComponentT *Universe<T>::replaceComponent(EntityId id, const ComponentT &comp)
+    {
+#ifdef ENT_ENTITY_VALID
+        if (!mEM.valid(id))
+        {
+            throw std::runtime_exception("Unable to add/replace Component to invalid Entity!");
+        }
+#endif
+
+        ComponentT *result{mCM.template replace<ComponentT>(id, comp)};
+
+        if (result)
+        { // Check, if the add operation returned success.
+            bool alreadyPresent{mEM.hasComponent(id, mCM.template id<ComponentT>())};
+            if (!alreadyPresent)
+            { // Check, if the Component has been added previously.
+                entityChanged(id);
+                mEM.addComponent(id, mCM.template id<ComponentT>());
+            }
+        }
+
+        return result;
+    }
+
+    template <typename T>
+    template <typename ComponentT>
+    ComponentT *Universe<T>::addComponentD(EntityId id)
+    {
+        // TODO - check existence of the Entity?
+        return mAC.changeSet().addComponent<ComponentT>(mCM.template id<ComponentT>(), id);
+    }
+
+    template <typename T>
+    template <typename ComponentT,
+              typename... CArgTs>
+    ComponentT *Universe<T>::addComponentD(EntityId id, CArgTs... cArgs)
+    {
+        // TODO - check existence of the Entity?
+        return mAC.changeSet().addComponent<ComponentT>(mCM.template id<ComponentT>(), id, std::forward<CArgTs>(cArgs)...);
+    }
+
+    template <typename T>
+    template <typename ComponentT>
     ComponentT *Universe<T>::getComponent(EntityId id)
     {
 #ifdef ENT_COMP_EXCEPT
@@ -264,8 +309,29 @@ namespace ent
 
     template <typename T>
     template <typename ComponentT>
+    ComponentT *Universe<T>::getComponentD(EntityId id)
+    {
+#ifdef ENT_COMP_EXCEPT
+        ComponentT *result{mAC.changeSet().getComponent(mCM.template id<ComponentT>(), id)};
+        if (result == nullptr)
+        {
+            throw std::runtime_exception("Component for given Entity does not exist!");
+        }
+        return result;
+#else
+        return mAC.changeSet().getComponent<ComponentT>(mCM.template id<ComponentT>(), id);
+#endif
+    }
+
+    template <typename T>
+    template <typename ComponentT>
     bool Universe<T>::hasComponent(EntityId id) const
     { return mCM.template registered<ComponentT>() && mEM.hasComponent(id, mCM.template id<ComponentT>()); }
+
+    template <typename T>
+    template <typename ComponentT>
+    bool Universe<T>::hasComponentD(EntityId id)
+    { return mAC.changeSet().hasComponent<ComponentT>(mCM.template id<ComponentT>(), id); }
 
     template <typename T>
     template <typename ComponentT>
@@ -286,6 +352,13 @@ namespace ent
         }
 
         return result;
+    }
+
+    template <typename T>
+    template <typename ComponentT>
+    void Universe<T>::removeComponentD(EntityId id)
+    {
+        return mAC.changeSet().removeComponent<ComponentT>(mCM.template id<ComponentT>(), id);
     }
 
     template <typename T>
@@ -325,7 +398,7 @@ namespace ent
     template <typename T>
     auto Universe<T>::createEntityD() -> TempEntityT
     {
-        return mAC.changeSet().createEntity();
+        return TempEntityT(this, mAC.changeSet().createEntity());
     }
 
     template <typename T>
@@ -346,6 +419,10 @@ namespace ent
     }
 
     template <typename T>
+    void Universe<T>::activateEntityD(EntityId id)
+    { mAC.changeSet().activateEntity(id); }
+
+    template <typename T>
     void Universe<T>::deactivateEntity(EntityId id)
     {
 #ifdef ENT_ENTITY_VALID
@@ -363,6 +440,10 @@ namespace ent
     }
 
     template <typename T>
+    void Universe<T>::deactivateEntityD(EntityId id)
+    { mAC.changeSet().deactivateEntity(id); }
+
+    template <typename T>
     bool Universe<T>::destroyEntity(EntityId id)
     {
         bool result{mEM.destroy(id)};
@@ -375,6 +456,10 @@ namespace ent
 
         return result;
     }
+
+    template <typename T>
+    void Universe<T>::destroyEntityD(EntityId id)
+    { return mAC.changeSet().destroyEntity(id); }
 
     template <typename T>
     bool Universe<T>::entityValid(EntityId id) const

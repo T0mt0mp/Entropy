@@ -11,7 +11,7 @@ template <typename ComponentT,
 class TestComponentHolder : public ent::BaseComponentHolder<ComponentT>
 {
 public:
-    TestComponentHolder(u32 num) :
+    explicit TestComponentHolder(u32 num) :
         mNum{num}
     {
         mInstantiated++;
@@ -21,6 +21,8 @@ public:
     static u64 mInstantiated;
 
     ComponentT* add(ent::EntityId id) noexcept override
+    { return nullptr; }
+    ComponentT* replace(ent::EntityId id, const ComponentT &comp) noexcept override
     { return nullptr; }
     ComponentT* get(ent::EntityId id) noexcept override
     { return nullptr; }
@@ -54,7 +56,7 @@ struct TestComponent3
 
 struct TestComponent4
 {
-    using HolderT = TestComponentHolder<TestComponent4, int>;
+    using HolderT = TestComponentHolder<TestComponent4, double>;
 
     TestComponent4()
     {
@@ -89,7 +91,7 @@ TU_Begin(EntropyEntityModule)
         TC_RequireEqual(id1, 0u);
         TC_RequireEqual(id2, 1u);
 
-        TC_RequireEqual((TestComponentHolder<TestComponent4, int>::mInstantiated), 1u);
+        TC_RequireEqual((TestComponentHolder<TestComponent4, double>::mInstantiated), 1u);
     }
 TU_End(EntropyEntityModule)
 

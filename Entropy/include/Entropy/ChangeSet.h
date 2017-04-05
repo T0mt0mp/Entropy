@@ -11,6 +11,7 @@
 #include "Util.h"
 #include "SortedList.h"
 #include "EntityId.h"
+#include "ComponentManager.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -130,6 +131,10 @@ namespace ent
     class ComponentActionsSpec : public ComponentActions
     {
     public:
+        /// Holder type for contained Component
+        using HolderT = typename HolderExtractor<ComponentT>::type;
+        // TODO - Use Holder for temporary Component storage?
+
         /// Cleanup.
         virtual ~ComponentActionsSpec();
 
@@ -173,6 +178,14 @@ namespace ent
          */
         template <typename... CArgTs>
         inline ComponentT *add(EntityId id, CArgTs... cArgs);
+
+        /// Get List of removed Components.
+        const auto &removed() const
+        { return mRemoved; }
+
+        /// Get List of added Components.
+        const auto &added() const
+        { return mAdded; };
     private:
         /**
          * List of Entities which will have their Component removed.
@@ -329,6 +342,9 @@ namespace ent
 
         /// Temporary Entity mapping list getter.
         inline ent::List<EntityId> &temporaryEntityMapper();
+
+        /// ComponentsActions list getter.
+        inline ent::List<ComponentActions*> &components();
     private:
         /**
          * Get Component actions holder for hiven Component type.

@@ -241,6 +241,27 @@ namespace ent
         inline ComponentT *addComponent(EntityId id, CArgTs... cArgs);
 
         /**
+         * Add or replace a Component for given Entity.
+         * Immediate version, all actions are performed
+         * immediately, including editing Entity metadata.
+         * @tparam ComponentT Type of the Component
+         * @param id Id of the Entity.
+         * @param comp Component data.
+         * @return Returns pointer to the Component.
+         * @remarks Not thread-safe! If thread-safety is required, use addComponentD.
+         * @remarks Changes Entity metadata!
+         * @remarks All pointers to Components of the same type may be invalidated!
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
+         */
+        template <typename ComponentT>
+        inline ComponentT *replaceComponent(EntityId id, const ComponentT &comp);
+
+        /**
          * Add Component to the given Entity.
          * Deferred version, temporary Component is
          * returned, operation is finished on refresh.
@@ -251,8 +272,7 @@ namespace ent
          * @remarks Each call invalidates previously returned
          *   temporary Component pointers of the same type.
          */
-        template <typename ComponentT,
-                  typename... CArgTs>
+        template <typename ComponentT>
         inline ComponentT *addComponentD(EntityId id);
 
         /**
@@ -349,7 +369,7 @@ namespace ent
          * @remarks Is thread-safe.
          */
         template <typename ComponentT>
-        inline bool hasComponentD(EntityId id) const;
+        inline bool hasComponentD(EntityId id);
 
         /**
          * Remove Component from given Entity.
@@ -477,12 +497,6 @@ namespace ent
          * Action is finished on refresh.
          * @param id ID of the Entity.
          * @remarks Is thread-safe
-         * @remarks Method does NOT check, if the
-         *   Entity is valid. If such behavior is
-         *   required, ENT_ENTITY_VALID should be
-         *   defined. If the macro is defined and
-         *   Entity is not valid, exception of type
-         *   std::runtime_exception will be thrown.
          */
         inline void activateEntityD(EntityId id);
 
@@ -506,12 +520,6 @@ namespace ent
          * Action is finished on refresh.
          * @param id ID of the Entity.
          * @remarks Is thread-safe.
-         * @remarks Method does NOT check, if the
-         *   Entity is valid. If such behavior is
-         *   required, ENT_ENTITY_VALID should be
-         *   defined. If the macro is defined and
-         *   Entity is not valid, exception of type
-         *   std::runtime_exception will be thrown.
          */
         inline void deactivateEntityD(EntityId id);
 
@@ -530,10 +538,9 @@ namespace ent
          * Destroy given Entity.
          * Action is finished on refresh.
          * @param id ID of the Entity.
-         * @return Returns false, if the Entity does not exist.
          * @remarks Is thread-safe.
          */
-        inline bool destroyEntityD(EntityId id);
+        inline void destroyEntityD(EntityId id);
 
         /**
          * Checks validity of given Entity.

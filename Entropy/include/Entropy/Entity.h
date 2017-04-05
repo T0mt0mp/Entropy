@@ -345,10 +345,9 @@ namespace ent
         /**
          * Destroy this Entity.
          * Action is finished on refresh.
-         * @return Returns false, if the Entity does not exist.
          * @remarks Is thread-safe.
          */
-        inline bool destroyD();
+        inline void destroyD();
 
         /// Universe ptr getter.
         inline const UniverseT *universe() const;
@@ -467,10 +466,9 @@ namespace ent
         /**
          * Destroy this Entity.
          * Action is finished on refresh.
-         * @return Returns false, if the Entity does not exist.
          * @remarks Is thread-safe.
          */
-        inline bool destroy();
+        inline void destroy();
     private:
         /// Universe this Entity lives in.
         UniverseT *mUniverse;

@@ -18,14 +18,34 @@
 namespace ent
 {
     /**
-     * ComponentManager base class containing code which does not need to be templated.
+     * Extract Component holder type from given Component.
+     * Default value is ent::ComponentHolder.
+     * This is the base case, where Component has no specified Holder type.
+     * @tparam ComponentT Type of the Component.
+     * @tparam Check SFINAE check.
      */
-    class ComponentManagerBase : NonCopyable
+    template <typename ComponentT,
+              typename = void>
+    struct HolderExtractor
     {
-    public:
-    private:
-    protected:
-    }; // ComponentManagerBase
+        using type = ent::ComponentHolder<ComponentT>;
+    };
+
+    /**
+     * Extract Component holder type from given Component.
+     * Default value is ent::ComponentHolder.
+     * This is the case, when Component does have a Holder type specified.
+     * @tparam ComponentT Type of the Component.
+     * @tparam Check SFINAE check.
+     */
+    template <typename ComponentT>
+    struct HolderExtractor<ComponentT,
+        typename std::enable_if<
+            std::is_base_of<ent::BaseComponentHolder<ComponentT>, typename ComponentT::HolderT>::value
+        >::type>
+    {
+        using type = typename ComponentT::HolderT;
+    };
 
     /**
      * ComponentManager is a part of Entropy ECS Universe.
@@ -35,38 +55,8 @@ namespace ent
      * @tparam UniverseT Type of the Universe, where this class is being used.
      */
     template <typename UniverseT>
-    class ComponentManager final : public ComponentManagerBase
+    class ComponentManager final : NonCopyable
     {
-    private:
-        /**
-         * Extract Component holder type from given Component.
-         * Default value is ent::ComponentHolder.
-         * This is the base case, where Component has no specified Holder type.
-         * @tparam ComponentT Type of the Component.
-         * @tparam Check SFINAE check.
-         */
-        template <typename ComponentT,
-                  typename = void>
-        struct HolderExtractor
-        {
-            using type = ent::ComponentHolder<ComponentT>;
-        };
-
-        /**
-         * Extract Component holder type from given Component.
-         * Default value is ent::ComponentHolder.
-         * This is the case, when Component does have a Holder type specified.
-         * @tparam ComponentT Type of the Component.
-         * @tparam Check SFINAE check.
-         */
-        template <typename ComponentT>
-        struct HolderExtractor<ComponentT,
-            typename std::enable_if<
-                std::is_base_of<ent::BaseComponentHolder<ComponentT>, typename ComponentT::HolderT>::value
-            >::type>
-        {
-            using type = typename ComponentT::HolderT;
-        };
     public:
         /**
          * Default constructor.
@@ -92,12 +82,12 @@ namespace ent
          * @tparam ComponentT Type of the Component.
          * @tparam HolderT Type of the Holder, deduced from Component type.
          * @tparam CArgTs Constructor argument types.
-         * @param args Constructor arguments passed to the Holder constructor.
+         * @param cArgs Constructor arguments passed to the Holder constructor.
          */
         template <typename ComponentT,
                   typename HolderT = typename HolderExtractor<ComponentT>::type,
                   typename... CArgTs>
-        inline u64 registerComponent(CArgTs... args);
+        inline u64 registerComponent(CArgTs... cArgs);
 
         /**
          * Add Component for given Entity.
@@ -121,6 +111,17 @@ namespace ent
         template <typename ComponentT,
                   typename... CArgTs>
         inline ComponentT *add(EntityId id, CArgTs... cArgs);
+
+        /**
+         * Add or replace a Component for given Entity.
+         * Pass constructor parameters to the holder.
+         * @tparam ComponentT Type of the Component.
+         * @param id ID of the Entity.
+         * @param comp Component data.
+         * @return Returns pointer to the changed Component.
+         */
+        template <typename ComponentT>
+        inline ComponentT *replace(EntityId id, const ComponentT &comp);
 
         /**
          * Get Component of given Entity.

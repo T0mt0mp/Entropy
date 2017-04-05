@@ -38,6 +38,14 @@ namespace ent
     {
         std::lock_guard<std::mutex> lg(mCommitMutex);
         mCommittedChanges.clear();
+        mRegisteredExtractors.clear();
+    }
+
+    template <typename UniverseT>
+    template <typename ComponentT>
+    void ActionsCache<UniverseT>::registerComponent(u64 cId)
+    {
+        mRegisteredExtractors.push_back(&extractorGetter<ComponentT>());
     }
 
     template <typename UniverseT>
@@ -46,7 +54,7 @@ namespace ent
         // TODO - optimize, parallelize.
 
         // Destroy Entities.
-        for (auto cs : mCommittedChanges)
+        for (std::unique_ptr<ChangeSet> &cs : mCommittedChanges)
         {
             for (EntityId id : cs->metadataChanges().destroyed())
             {
@@ -55,7 +63,7 @@ namespace ent
         }
 
         // Create Entities.
-        for (auto cs : mCommittedChanges)
+        for (std::unique_ptr<ChangeSet> &cs : mCommittedChanges)
         {
             for (EntityId &id : cs->temporaryEntityMapper())
             {
@@ -64,12 +72,41 @@ namespace ent
         }
 
         // Remove / add Components.
-        for (auto cs : mCommittedChanges)
+        for (std::unique_ptr<ChangeSet> &cs : mCommittedChanges)
         {
-            for (ComponentChange &cc : cs->)
+            for (u64 index = 0;
+                 index < cs->components().size() && index < mRegisteredExtractors.size();
+                 ++index)
+            {
+                if (cs->components()[index])
+                {
+                    mRegisteredExtractors[index]->addRemoveComponents(cs->components()[index], uni);
+                }
+            }
         }
 
         // Change metadata.
+    }
+    template <typename UniverseT>
+    template <typename ComponentT>
+    void ActionsCache<UniverseT>::ComponentExtractorSpec<ComponentT>::
+        addRemoveComponents(ComponentActions *ca, UniverseT *uni)
+    {
+        ComponentActionsSpec<ComponentT> *actions{
+            ENT_CHOOSE_DEBUG(
+                dynamic_cast<ComponentActionsSpec<ComponentT>*>(ca),
+                static_cast<ComponentActionsSpec<ComponentT>*>(ca)
+        )};
+
+        for (EntityId id : actions->removed())
+        {
+            uni->template removeComponent<ComponentT>(id);
+        }
+
+        for (const ComponentChange<ComponentT> &cc : actions->added())
+        {
+            uni->template replaceComponent<ComponentT>(cc.id, cc.comp);
+        }
     }
     // ActionsCache implementation end.
 } // namespace ent

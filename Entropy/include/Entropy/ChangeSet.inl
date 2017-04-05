@@ -180,6 +180,9 @@ namespace ent
     ent::List<EntityId> &ChangeSet::temporaryEntityMapper()
     { return mTempEntities; }
 
+    ent::List<ComponentActions*> &ChangeSet::components()
+    { return mComponentActions; }
+
     template <typename ComponentT>
     ComponentActionsSpec<ComponentT> &ChangeSet::componentActions(u64 componentId)
     {

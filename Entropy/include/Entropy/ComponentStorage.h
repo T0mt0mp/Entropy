@@ -63,14 +63,28 @@ namespace ent
         virtual ComponentT *add(EntityId id) noexcept = 0;
 
         /**
-         * Replace Component of given Entity with provided Component.
-         * If given Entity has no Component of given type, insert the new
-         * Component.
+         * Add/replace Component of given Entity with a copy of given Component.
          * @param id ID of the Entity.
-         * @param comp Component data.
-         * @return Returns pointer to the Component.
+         * @param comp Component to copy.
+         * @return Return ptr to the Component.
          */
         virtual ComponentT *replace(EntityId id, const ComponentT &comp) noexcept = 0;
+
+        /**
+         * Optional operation for holders.
+         *
+         * Add Component for given EntityId, if the Component
+         * already exists, It will be overwritten with element
+         * constructed with given constructor parameters..
+         * Pass constructor parameters to the Component on
+         * construction.
+         * @tparam CArgTs Component constructor argument types.
+         * @param id ID of the Entity.
+         * @param cArgs Component constructor arguments.
+         * @return Returns pointer to the Component.
+         */
+        //template <typename... CArgTs>
+        //inline ComponentT *add(EntityId id, CArgTs... cArgs) noexcept;
 
         /**
          * Get Component belonging to given EntityId.
@@ -117,8 +131,17 @@ namespace ent
         virtual inline ComponentT *add(EntityId id) noexcept override;
 
         /**
+         * Add/replace Component of given Entity with a copy of given Component.
+         * @param id ID of the Entity.
+         * @param comp Component to copy.
+         * @return Return ptr to the Component.
+         */
+        virtual inline ComponentT *replace(EntityId id, const ComponentT &comp) noexcept override;
+
+        /**
          * Add Component for given EntityId, if the Component
-         * already exists, nothing happens.
+         * already exists, It will be overwritten with element
+         * constructed with given constructor parameters.
          * Pass constructor parameters to the Component on
          * construction.
          * @tparam CArgTs Component constructor argument types.
@@ -182,6 +205,28 @@ namespace ent
         virtual inline ComponentT *add(EntityId id) noexcept override;
 
         /**
+         * Add/replace Component of given Entity with a copy of given Component.
+         * @param id ID of the Entity.
+         * @param comp Component to copy.
+         * @return Return ptr to the Component.
+         */
+        virtual inline ComponentT *replace(EntityId id, const ComponentT &comp) noexcept override;
+
+        /**
+         * Add Component for given EntityId, if the Component
+         * already exists, It will be overwritten with element
+         * constructed with given constructor parameters.
+         * Pass constructor parameters to the Component on
+         * construction.
+         * @tparam CArgTs Component constructor argument types.
+         * @param id ID of the Entity.
+         * @param cArgs Component constructor arguments.
+         * @return Returns pointer to the Component.
+         */
+        template <typename... CArgTs>
+        inline ComponentT *add(EntityId id, CArgTs... cArgs) noexcept;
+
+        /**
          * Get Component belonging to given EntityId.
          * @param id Id of the Entity.
          * @return Returns pointer to the Component, or nullptr, if it does not exist.
@@ -204,6 +249,14 @@ namespace ent
          */
         virtual inline void refresh() noexcept override;
     private:
+        /**
+         * Get already existing index, or create a new element.
+         * @param id ID of the Entity.
+         * @return Returns index of the element in
+         *   mList for given Entity.
+         */
+        u64 getCreateIndex(EntityId id);
+
         /// Mapping from EntityId to index in the List.
         std::map<EntityId, u64> mMapping;
         /// List of free IDs.
@@ -236,6 +289,28 @@ namespace ent
          * @return Returns pointer to the Component.
          */
         virtual inline ComponentT *add(EntityId id) noexcept;
+
+        /**
+         * Add/replace Component of given Entity with a copy of given Component.
+         * @param id ID of the Entity.
+         * @param comp Component to copy.
+         * @return Return ptr to the Component.
+         */
+        virtual inline ComponentT *replace(EntityId id, const ComponentT &comp) noexcept override;
+
+        /**
+         * Add Component for given EntityId, if the Component
+         * already exists, It will be overwritten with element
+         * constructed with given constructor parameters.
+         * Pass constructor parameters to the Component on
+         * construction.
+         * @tparam CArgTs Component constructor argument types.
+         * @param id ID of the Entity.
+         * @param cArgs Component constructor arguments.
+         * @return Returns pointer to the Component.
+         */
+        template <typename... CArgTs>
+        inline ComponentT *add(EntityId id, CArgTs... cArgs) noexcept;
 
         /**
          * Get Component belonging to given EntityId.

@@ -103,20 +103,19 @@ struct DestructTesterSpec : public DestructTester
 
 struct TestBase
 {
-    virtual ~TestBase()
-    { }
-    virtual u64 fun(u64 add) = 0;
+    void say()
+    { std::cout << "Hello from TestBase" << std::endl; }
+    virtual TestBase *give()
+    { return this;}
 };
 
 template <typename T>
 struct TestSpec : public TestBase
 {
-    virtual ~TestSpec() override final
-    { }
-    virtual u64 fun(u64 add) override final
-    {
-        return sizeof(T) + add;
-    }
+    void say()
+    { std::cout << "Hello from Spec" << std::endl; }
+    virtual TestSpec *give()
+    { return this; }
 };
 
 TU_Begin(EntropySandbox)
@@ -294,31 +293,16 @@ TU_Begin(EntropySandbox)
 
     TU_Case(Sandbox4, "Sandbox4")
     {
-        static constexpr u64 ATTEMPTS{100};
-        TestBase *t = new TestSpec<u64>;
-        auto f = std::bind(&TestSpec<u64>::fun, static_cast<TestSpec<u64>*>(t), std::placeholders::_1);
-
-        {
-            PROF_SCOPE("Virtual");
-            u64 sum{0};
-
-            for (u64 iii = 0; iii < ATTEMPTS; ++iii)
-            {
-                sum += t->fun(iii);
-            }
-        }
-
-        {
-            PROF_SCOPE("Bind");
-            u64 sum{0};
-
-            for (u64 iii = 0; iii < ATTEMPTS; ++iii)
-            {
-                sum += f(iii);
-            }
-        }
-
-        delete t;
+        TestBase b;
+        TestSpec<u64> s;
+        TestBase *bPtr{&b};
+        TestSpec<u64> *sPtr{&s};
+        TestBase *bsPtr{&s};
+        b.say();
+        s.say();
+        bPtr->give()->say();
+        sPtr->give()->say();
+        bsPtr->give()->say();
     }
 TU_End(EntropySandbox)
 

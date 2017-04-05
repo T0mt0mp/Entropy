@@ -49,11 +49,34 @@ namespace ent
     template <typename ComponentT,
         typename HolderT,
         typename... CArgTs>
-    u64 ComponentManager<UT>::registerComponent(CArgTs... args)
+    u64 ComponentManager<UT>::registerComponent(CArgTs... cArgs)
     {
         static_assert(std::is_base_of<ent::BaseComponentHolder<ComponentT>, HolderT>::value,
                       "Component holder has to inherit from ent::BaseComponentHolder!");
-        static_assert(sizeof(HolderT(std::declval<CArgTs>()...)), "Component holder has to be constructible!");
+
+        // Check that all required Holder operations are present.
+        /*
+        static_assert(std::is_same<decltype(std::declval<HolderT>().
+                refresh()), void>::value,
+            "Component holder has to have refresh method!");
+        static_assert(std::is_same<decltype(std::declval<HolderT>().
+                remove(std::declval<EntityId>())), bool>::value,
+            "Component holder has to have remove method!");
+        static_assert(std::is_same<decltype(std::declval<HolderT>().
+                add(std::declval<EntityId>())), ComponentT*>::value,
+            "Component holder has to have add method!");
+        static_assert(std::is_same<decltype(std::declval<HolderT>().
+                replace(std::declval<EntityId>(), std::declval<const ComponentT&>())), ComponentT*>::value,
+            "Component holder has to have add/replace method method!");
+        static_assert(std::is_same<decltype(std::declval<HolderT>().
+                get(std::declval<EntityId>())), ComponentT*>::value,
+            "Component holder has to have r/w get method method!");
+        static_assert(std::is_same<decltype(std::declval<const HolderT>().
+                get(std::declval<EntityId>())), const ComponentT*>::value,
+            "Component holder has to have read only get method method!");
+            */
+        static_assert(sizeof(HolderT(std::declval<CArgTs>()...)),
+            "Component holder has to be constructible!");
 
         if (registered<ComponentT>())
         { // Prevent double register.
@@ -73,7 +96,7 @@ namespace ent
         ENT_ASSERT_FAST(regInfo.id == cId);
 
         // Initialize the Component storage.
-        regInfo.holder.construct(std::forward<CArgTs>(args)...);
+        regInfo.holder.construct(std::forward<CArgTs>(cArgs)...);
 
         // Initialize Component mask.
         ENT_ASSERT_FAST(regInfo.mask.none());
@@ -94,6 +117,12 @@ namespace ent
     template <typename ComponentT>
     u64 ComponentManager<UT>::id() const
     {
+        // TODO - find a better way, instead of a virtual call...
+        if (!registered<ComponentT>())
+        {
+            ENT_WARNING("Unknown Component type!");
+        }
+
         return componentInfo<ComponentT>()().id;
     }
 
@@ -149,6 +178,20 @@ namespace ent
         }
 
         return getHolder<ComponentT>().add(id, std::forward<CArgTs>(cArgs)...);
+    }
+
+    template <typename UT>
+    template <typename ComponentT>
+    ComponentT *ComponentManager<UT>::replace(EntityId id, const ComponentT &comp)
+    {
+        // TODO - find a better place for the testing.
+        if (!registered<ComponentT>())
+        {
+            ENT_WARNING("Unknown Component type!");
+            return nullptr;
+        }
+
+        return getHolder<ComponentT>().replace(id, std::forward<const ComponentT&>(comp));
     }
 
     template <typename UT>

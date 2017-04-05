@@ -157,8 +157,8 @@ namespace ent
     }
 
     template <typename UniverseT>
-    inline bool Entity<UniverseT>::destroyD()
-    { return mUniverse->destroyEntityD(mId); }
+    inline void Entity<UniverseT>::destroyD()
+    { mUniverse->destroyEntityD(mId); }
 
     template <typename UniverseT>
     const UniverseT *Entity<UniverseT>::universe() const
@@ -214,7 +214,7 @@ namespace ent
     { mUniverse->deactivateEntityD(mId); }
 
     template <typename UniverseT>
-    bool TemporaryEntity<UniverseT>::destroy()
-    { return mUniverse->destroyEntityD(mId); }
+    void TemporaryEntity<UniverseT>::destroy()
+    { mUniverse->destroyEntityD(mId); }
     // TemporaryEntity implementation end.
 } // namespace ent

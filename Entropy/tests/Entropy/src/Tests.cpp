@@ -25,6 +25,8 @@ public:
     { return nullptr; }
     const ComponentT* get(ent::EntityId id) const noexcept override
     { return nullptr; }
+    ComponentT* replace(ent::EntityId id, const ComponentT &comp) noexcept override
+    { return nullptr; }
     bool remove(ent::EntityId id) noexcept override
     { return true; }
     void refresh() noexcept override
@@ -229,6 +231,12 @@ struct DestructionHolder : public ent::BaseComponentHolder<T>
 
     virtual T* add(ent::EntityId id) noexcept override
     {
+        return &mInst;
+    }
+
+    virtual T* replace(ent::EntityId id, const T &comp) noexcept override
+    {
+        mInst = comp;
         return &mInst;
     }
 
@@ -865,9 +873,6 @@ TU_Begin(EntropyEntity)
         using TempEntity = RealUniverse2::TempEntityT;
 
         Universe &u{RealUniverse2::instance()};
-
-        TC_RequireEqual(u.registerComponent<Position>(), 0u);
-        TC_RequireEqual(u.registerComponent<Velocity>(), 1u);
 
         Entity e = u.createEntity();
         e.active();

@@ -47,30 +47,42 @@ namespace ent
         void reset();
 
         /**
+         * Called when new Component is registered.
+         * @tparam ComponentT Type of the Component.
+         * @param cId Component ID.
+         */
+        template <typename ComponentT>
+        void registerComponent(u64 cId);
+
+        /**
          * Apply committed ChangeSets from ActionsCache.
          * @param uni Universe instance.
          */
         void applyChangeSets(UniverseT *uni);
     private:
-        class ComponentWorkerBase
+        class ComponentExtractor
         {
         public:
-            virtual void work(UniverseT *uni, ChangeSet *cs) = 0;
+            virtual void addRemoveComponents(ComponentActions *ca, UniverseT *uni) = 0;
         private:
         protected:
-        };
+        }; // class ComponentExtractor
 
         template <typename ComponentT>
-        class ComponentWorker : public ComponentWorkerBase
+        class ComponentExtractorSpec : public ComponentExtractor
         {
         public:
-            ComponentWorker(u64 compId);
-
-            virtual void work(UniverseT *uni, ChangeSet *cs) override final;
+            virtual void addRemoveComponents(ComponentActions *ca, UniverseT *uni) override final;
         private:
-            u64 mCompId;
         protected:
-        };
+        }; // class ComponentExtractorSpec
+
+        template <typename ComponentT>
+        ComponentExtractorSpec<ComponentT> &extractorGetter()
+        {
+            static ComponentExtractorSpec<ComponentT> extr;
+            return extr;
+        }
 
         /**
          * Actions storage specific to each thread
@@ -82,6 +94,8 @@ namespace ent
         std::mutex mCommitMutex;
         /// List of ChangeSets which were committed for the next refresh.
         std::vector<std::unique_ptr<ChangeSet>> mCommittedChanges;
+        /// List of registered Component extractors.
+        std::vector<ComponentExtractor*> mRegisteredExtractors;
     protected:
     }; // class ActionsCache
 } // namespace ent
