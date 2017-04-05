@@ -61,6 +61,8 @@ set(ENTROPY_HEADERS
         ${ENTROPY_INCLUDE_DIR}/Entropy/Entity.inl
         ${ENTROPY_INCLUDE_DIR}/Entropy/EntityId.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/EntityId.inl
+        ${ENTROPY_INCLUDE_DIR}/Entropy/EntityMetadata.h
+        ${ENTROPY_INCLUDE_DIR}/Entropy/EntityMetadata.inl
         ${ENTROPY_INCLUDE_DIR}/Entropy/EntityManager.h
         ${ENTROPY_INCLUDE_DIR}/Entropy/EntityManager.inl
         ${ENTROPY_INCLUDE_DIR}/Entropy/SystemManager.h

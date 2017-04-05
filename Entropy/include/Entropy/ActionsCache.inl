@@ -87,6 +87,7 @@ namespace ent
 
         // Change metadata.
     }
+
     template <typename UniverseT>
     template <typename ComponentT>
     void ActionsCache<UniverseT>::ComponentExtractorSpec<ComponentT>::

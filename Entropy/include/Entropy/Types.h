@@ -80,6 +80,8 @@ namespace ent
     static constexpr std::size_t ENT_MAX_COMPONENTS{64};
     /// Maximum number of EntityGroups per Universe. +1 will be added for Entity flags.
     static constexpr std::size_t ENT_MAX_GROUPS{63};
+    /// How many Entities share a single bitset, changes granularity of inner parallelism.
+    static constexpr std::size_t ENT_BITSET_GROUP_SIZE{64u};
 } // namespace ent
 
 #endif //ECS_FIT_TYPES_H
