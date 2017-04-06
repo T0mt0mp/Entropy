@@ -97,13 +97,34 @@ namespace ent
                   typename... CArgTs>
         inline iterator replaceUnique(const SearchT &search, CArgTs... cArgs);
 
-        /// Find element in the list.
+        /**
+         * Find element in the List.
+         * @tparam SearchT Type of the search key.
+         * @param val Value of the search key.
+         * @return Returns iterator to the element, or
+         *   end(), if the element has not been found.
+         */
         template <typename SearchT>
         inline iterator find(const SearchT &val);
+
+        /**
+         * Find element in the List.
+         * @tparam SearchT Type of the search key.
+         * @param val Value of the search key.
+         * @return Returns iterator to the element, or
+         *   end(), if the element has not been found.
+         */
         template <typename SearchT>
         inline const_iterator find(const SearchT &val) const;
-        /// Erase element from the list.
-        inline void erase(const_reference val);
+
+        /**
+         * Erase element from the List.
+         * If the element is not found, nothing happens.
+         * @tparam SearchT Type of the search key.
+         * @param val Value of the search key.
+         */
+        template <typename SearchT>
+        inline void erase(const SearchT &val);
 
         inline void swap(SortedList &&other);
 

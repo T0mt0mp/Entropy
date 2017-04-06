@@ -11,7 +11,6 @@ namespace ent
 {
     // EntityId implementation.
     ENT_CONSTEXPR_FUN EntityId::EntityId(EIdType index, EIdType generation) :
-    //mId{combineGenIndex(rGenToLGen(generation), index)}
         mId{generation << EID_INDEX_BITS | index}
     { }
 
@@ -19,12 +18,13 @@ namespace ent
     { return mId; }
 
     ENT_CONSTEXPR_FUN EIdType EntityId::index() const
-    //{ return indexPart(mId); }
     { return mId & INDEX_MASK; }
 
     ENT_CONSTEXPR_FUN EIdType EntityId::generation() const
-    //{ return genPart(mId); }
     { return (mId & GEN_MASK) >> EID_INDEX_BITS; }
+
+    ENT_CONSTEXPR_FUN bool EntityId::isTemp() const
+    { return generation() == TEMP_ENTITY_GEN; }
 
     ENT_CONSTEXPR_FUN EIdType EntityId::rGenToLGen(EIdType rGen)
     { return rGen << EID_INDEX_BITS; }

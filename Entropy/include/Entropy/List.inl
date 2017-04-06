@@ -496,7 +496,7 @@ namespace ent
         typename Allocator>
     void List<T, Allocator>::eraseImpl(iterator pos)
     {
-        copyData(pos + 1, pos, useEndPtr() - pos);
+        copyData(pos + 1, pos, useEndPtr() - pos - 1u);
         mInUse--;
     }
 
@@ -504,7 +504,7 @@ namespace ent
         typename Allocator>
     void List<T, Allocator>::eraseImpl(iterator beg, iterator end)
     {
-        copyData(end, beg, useEndPtr() - end);
+        copyData(end, beg, useEndPtr() - end - 1u);
         mInUse -= end - beg;
     }
     // List implementation end.

@@ -28,6 +28,8 @@ namespace ent
         inline void activate();
         /// Deactivate this Entity.
         inline void deactivate();
+        /// Set activity to provided value.
+        inline bool setActivity(bool activity);
 
         /// Set metadata for given Component.
         inline void setComp(u64 index);
@@ -220,6 +222,16 @@ namespace ent
          * @return Returns true, if the Component is present.
          */
         inline bool hasComponent(EntityId id, u64 index) const;
+
+        /**
+         * Set activity of given Entity to
+         * desired value.
+         * @param id ID of the Entity.
+         * @param activity Value of activity.
+         * @return Returns true, if the activity
+         *   has changed - has not stayed the same.
+         */
+        inline bool setActivity(EntityId id, bool activity);
 
         /**
          * Activate given Entity.
@@ -445,6 +457,17 @@ namespace ent
          */
         bool hasComponent(EntityId id, u64 index) const
         { return mEntities.hasComponent(id, index); }
+
+        /**
+         * Set activity of given Entity to
+         * desired value.
+         * @param id ID of the Entity.
+         * @param activity Value of activity.
+         * @return Returns true, if the activity
+         *   has changed - has not stayed the same.
+         */
+        bool setActivity(EntityId id, bool activity)
+        { return mEntities.setActivity(id, activity); }
 
         /**
          * Activate given Entity.

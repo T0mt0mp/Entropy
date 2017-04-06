@@ -60,10 +60,13 @@ namespace ent
      * Number of bits in EID used for entity index.
      * Default value : 24 => ~16M entities
      */
-    static constexpr u64 EID_INDEX_BITS{24};
+    static constexpr u64 EID_INDEX_BITS{24u};
 
     /// Minimal number of free Entity indices, before new are created.
-    static constexpr u64 ENT_MIN_FREE{8};
+    static constexpr u64 ENT_MIN_FREE{8u};
+
+    /// Limit for haw many elements will get printed in printStats.
+    static constexpr u64 ENT_PRINT_LIMIT{30u};
 
     /**
      * Number of bits in EID used for entity generation.

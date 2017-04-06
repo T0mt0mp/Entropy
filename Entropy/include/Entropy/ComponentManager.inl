@@ -117,12 +117,7 @@ namespace ent
     template <typename ComponentT>
     u64 ComponentManager<UT>::id() const
     {
-        // TODO - find a better way, instead of a virtual call...
-        if (!registered<ComponentT>())
-        {
-            ENT_WARNING("Unknown Component type!");
-        }
-
+        ENT_ASSERT_SLOW(registered<ComponentT>());
         return componentInfo<ComponentT>()().id;
     }
 
@@ -155,13 +150,6 @@ namespace ent
     template <typename ComponentT>
     ComponentT *ComponentManager<UT>::add(EntityId id)
     {
-        // TODO - find a better place for the testing.
-        if (!registered<ComponentT>())
-        {
-            ENT_WARNING("Unknown Component type!");
-            return nullptr;
-        }
-
         return getHolder<ComponentT>().add(id);
     }
 
@@ -170,13 +158,6 @@ namespace ent
               typename... CArgTs>
     ComponentT *ComponentManager<UT>::add(EntityId id, CArgTs... cArgs)
     {
-        // TODO - find a better place for the testing.
-        if (!registered<ComponentT>())
-        {
-            ENT_WARNING("Unknown Component type!");
-            return nullptr;
-        }
-
         return getHolder<ComponentT>().add(id, std::forward<CArgTs>(cArgs)...);
     }
 
@@ -184,13 +165,6 @@ namespace ent
     template <typename ComponentT>
     ComponentT *ComponentManager<UT>::replace(EntityId id, const ComponentT &comp)
     {
-        // TODO - find a better place for the testing.
-        if (!registered<ComponentT>())
-        {
-            ENT_WARNING("Unknown Component type!");
-            return nullptr;
-        }
-
         return getHolder<ComponentT>().replace(id, std::forward<const ComponentT&>(comp));
     }
 
@@ -198,13 +172,6 @@ namespace ent
     template <typename ComponentT>
     ComponentT *ComponentManager<UT>::get(EntityId id)
     {
-        // TODO - find a better place for the testing.
-        if (!registered<ComponentT>())
-        {
-            ENT_WARNING("Unknown Component type!");
-            return nullptr;
-        }
-
         return getHolder<ComponentT>().get(id);
     }
 
@@ -212,13 +179,6 @@ namespace ent
     template <typename ComponentT>
     const ComponentT *ComponentManager<UT>::get(EntityId id) const
     {
-        // TODO - find a better place for the testing.
-        if (!registered<ComponentT>())
-        {
-            ENT_WARNING("Unknown Component type!");
-            return nullptr;
-        }
-
         return getHolder<ComponentT>().get(id);
     }
 
@@ -226,13 +186,6 @@ namespace ent
     template <typename ComponentT>
     bool ComponentManager<UT>::remove(EntityId id)
     {
-        // TODO - find a better place for the testing.
-        if (!registered<ComponentT>())
-        {
-            ENT_WARNING("Unknown Component type!");
-            return false;
-        }
-
         return getHolder<ComponentT>().remove(id);
     }
 
@@ -241,6 +194,7 @@ namespace ent
         typename HolderT>
     HolderT &ComponentManager<UT>::getHolder()
     {
+        ENT_ASSERT_SLOW(registered<ComponentT>());
         return componentInfo<ComponentT>()().holder();
     }
 

@@ -22,6 +22,12 @@ namespace ent
     template <typename T>
     void Universe<T>::init()
     {
+        if (LOG_STATS)
+        {
+            mStats.univInits++;
+            ENT_CHECK_STATS(mStats);
+        }
+
         refresh();
     }
 
@@ -62,6 +68,33 @@ namespace ent
     }
 
     template <typename T>
+    void Universe<T>::printStatus(std::ostream &out)
+    {
+        out << "Information about Universe: \n";
+
+        mStats.print(out);
+        /*
+         * TODO - finish print methods.
+        mEM.printStatus(out);
+        mCM.printStatus(out);
+        mGM.printStatus(out);
+        mSM.printStatus(out);
+        mAC.printStatus(out);
+         */
+
+        out << "Changed list contains " << mChanged.size() << " Entities.\n";
+        if (mChanged.size() <= ENT_PRINT_LIMIT)
+        {
+            out << "\tContents: \n";
+            for (EntityId id : mChanged)
+            {
+                out << "\t\t" << id << "\n";
+            }
+        }
+        out << std::endl;
+    }
+
+    template <typename T>
     template <typename ASystemT,
         typename... CArgTs>
     ASystemT *Universe<T>::addSystem(CArgTs... args)
@@ -77,7 +110,7 @@ namespace ent
         {
             mStats.sysActive++;
             mStats.sysAdded++;
-            CHECK_STATS(mStats);
+            ENT_CHECK_STATS(mStats);
         }
 
         return system;
@@ -102,7 +135,7 @@ namespace ent
         {
             mStats.sysActive--;
             mStats.sysRemoved++;
-            CHECK_STATS(mStats);
+            ENT_CHECK_STATS(mStats);
         }
 
         return removed;
@@ -120,7 +153,7 @@ namespace ent
             {
                 mStats.grpActive++;
                 mStats.grpAdded++;
-                CHECK_STATS(mStats);
+                ENT_CHECK_STATS(mStats);
             }
         }
 
@@ -138,7 +171,7 @@ namespace ent
         {
             mStats.grpActive--;
             mStats.grpRemoved++;
-            CHECK_STATS(mStats);
+            ENT_CHECK_STATS(mStats);
         }
 
         return result;
@@ -161,7 +194,6 @@ namespace ent
         if (LOG_STATS)
         {
             mStats.compRegistered++;
-            CHECK_STATS(mStats);
         }
 
         mAC.registerComponent<ComponentT>(cId);
@@ -186,7 +218,7 @@ namespace ent
 #ifdef ENT_ENTITY_VALID
         if (!mEM.valid(id))
         {
-            throw std::runtime_exception("Unable to add Component to invalid Entity!");
+            throw std::runtime_error("Unable to add Component to invalid Entity!");
         }
 #endif
 
@@ -213,7 +245,7 @@ namespace ent
 #ifdef ENT_ENTITY_VALID
         if (!mEM.valid(id))
         {
-            throw std::runtime_exception("Unable to add Component to invalid Entity!");
+            throw std::runtime_error("Unable to add Component to invalid Entity!");
         }
 #endif
 
@@ -239,7 +271,7 @@ namespace ent
 #ifdef ENT_ENTITY_VALID
         if (!mEM.valid(id))
         {
-            throw std::runtime_exception("Unable to add/replace Component to invalid Entity!");
+            throw std::runtime_error("Unable to add/replace Component to invalid Entity!");
         }
 #endif
 
@@ -267,12 +299,29 @@ namespace ent
     }
 
     template <typename T>
+    template <typename ComponentT>
+    ComponentT *Universe<T>::addComponentT(EntityId id)
+    {
+        // TODO - check existence of the Entity?
+        return mAC.changeSet().addComponentT<ComponentT>(mCM.template id<ComponentT>(), id);
+    }
+
+    template <typename T>
     template <typename ComponentT,
               typename... CArgTs>
     ComponentT *Universe<T>::addComponentD(EntityId id, CArgTs... cArgs)
     {
         // TODO - check existence of the Entity?
         return mAC.changeSet().addComponent<ComponentT>(mCM.template id<ComponentT>(), id, std::forward<CArgTs>(cArgs)...);
+    }
+
+    template <typename T>
+    template <typename ComponentT,
+              typename... CArgTs>
+    ComponentT *Universe<T>::addComponentT(EntityId id, CArgTs... cArgs)
+    {
+        // TODO - check existence of the Entity?
+        return mAC.changeSet().addComponentT<ComponentT>(mCM.template id<ComponentT>(), id, std::forward<CArgTs>(cArgs)...);
     }
 
     template <typename T>
@@ -283,7 +332,7 @@ namespace ent
         ComponentT *result{mCM.template get<ComponentT>(id)};
         if (result == nullptr)
         {
-            throw std::runtime_exception("Component for given Entity does not exist!");
+            throw std::runtime_error("Component for given Entity does not exist!");
         }
         return result;
 #else
@@ -299,7 +348,7 @@ namespace ent
         ComponentT *result{mCM.template get<ComponentT>(id)};
         if (result == nullptr)
         {
-            throw std::runtime_exception("Component for given Entity does not exist!");
+            throw std::runtime_error("Component for given Entity does not exist!");
         }
         return result;
 #else
@@ -312,14 +361,30 @@ namespace ent
     ComponentT *Universe<T>::getComponentD(EntityId id)
     {
 #ifdef ENT_COMP_EXCEPT
-        ComponentT *result{mAC.changeSet().getComponent(mCM.template id<ComponentT>(), id)};
+        ComponentT *result{mAC.changeSet().getComponent<ComponentT>(mCM.template id<ComponentT>(), id)};
         if (result == nullptr)
         {
-            throw std::runtime_exception("Component for given Entity does not exist!");
+            throw std::runtime_error("Component for given Entity does not exist!");
         }
         return result;
 #else
         return mAC.changeSet().getComponent<ComponentT>(mCM.template id<ComponentT>(), id);
+#endif
+    }
+
+    template <typename T>
+    template <typename ComponentT>
+    ComponentT *Universe<T>::getComponentT(EntityId id)
+    {
+#ifdef ENT_COMP_EXCEPT
+        ComponentT *result{mAC.changeSet().getComponentT<ComponentT>(mCM.template id<ComponentT>(), id)};
+        if (result == nullptr)
+        {
+            throw std::runtime_error("Component for given Entity does not exist!");
+        }
+        return result;
+#else
+        return mAC.changeSet().getComponentT<ComponentT>(mCM.template id<ComponentT>(), id);
 #endif
     }
 
@@ -335,12 +400,17 @@ namespace ent
 
     template <typename T>
     template <typename ComponentT>
+    bool Universe<T>::hasComponentT(EntityId id)
+    { return mAC.changeSet().hasComponentT<ComponentT>(mCM.template id<ComponentT>(), id); }
+
+    template <typename T>
+    template <typename ComponentT>
     bool Universe<T>::removeComponent(EntityId id)
     {
 #ifdef ENT_ENTITY_VALID
         if (!mEM.valid(id))
         {
-            throw std::runtime_exception("Unable to add Component to invalid Entity!");
+            throw std::runtime_error("Unable to add Component to invalid Entity!");
         }
 #endif
         bool result{mCM.template remove<ComponentT>(id)};
@@ -358,7 +428,21 @@ namespace ent
     template <typename ComponentT>
     void Universe<T>::removeComponentD(EntityId id)
     {
-        return mAC.changeSet().removeComponent<ComponentT>(mCM.template id<ComponentT>(), id);
+        mAC.changeSet().removeComponent<ComponentT>(mCM.template id<ComponentT>(), id);
+    }
+
+    template <typename T>
+    template <typename ComponentT>
+    void Universe<T>::removeTempComponent(EntityId id)
+    {
+        mAC.changeSet().removeTempComponent<ComponentT>(mCM.template id<ComponentT>(), id);
+    }
+
+    template <typename T>
+    template <typename ComponentT>
+    void Universe<T>::removeTempComponentT(EntityId id)
+    {
+        mAC.changeSet().removeTempComponentT<ComponentT>(mCM.template id<ComponentT>(), id);
     }
 
     template <typename T>
@@ -375,7 +459,7 @@ namespace ent
 #ifdef ENT_ENTITY_EXCEPT
         if (newId.index() == 0)
         { // Unable to create the Entity.
-            throw std::runtime_exception("Unable to create Entity!");
+            throw std::runtime_error("Unable to create Entity!");
         }
 #endif
 
@@ -402,12 +486,28 @@ namespace ent
     }
 
     template <typename T>
+    void Universe<T>::setActivityEntity(EntityId id, bool activity)
+    {
+#ifdef ENT_ENTITY_VALID
+        if (!mEM.valid(id))
+        {
+            throw std::runtime_error("Cannot activate invalid Entity!");
+        }
+#endif
+
+        if (mEM.setActivity(id, activity))
+        {
+            entityChanged(id);
+        }
+    }
+
+    template <typename T>
     void Universe<T>::activateEntity(EntityId id)
     {
 #ifdef ENT_ENTITY_VALID
         if (!mEM.valid(id))
         {
-            throw std::runtime_exception("Cannot activate invalid Entity!");
+            throw std::runtime_error("Cannot activate invalid Entity!");
         }
 #endif
 
@@ -423,12 +523,16 @@ namespace ent
     { mAC.changeSet().activateEntity(id); }
 
     template <typename T>
+    void Universe<T>::activateEntityT(EntityId id)
+    { mAC.changeSet().activateTempEntity(id); }
+
+    template <typename T>
     void Universe<T>::deactivateEntity(EntityId id)
     {
 #ifdef ENT_ENTITY_VALID
         if (!mEM.valid(id))
         {
-            throw std::runtime_exception("Cannot deactivate invalid Entity!");
+            throw std::runtime_error("Cannot deactivate invalid Entity!");
         }
 #endif
 
@@ -442,6 +546,10 @@ namespace ent
     template <typename T>
     void Universe<T>::deactivateEntityD(EntityId id)
     { mAC.changeSet().deactivateEntity(id); }
+
+    template <typename T>
+    void Universe<T>::deactivateEntityT(EntityId id)
+    { mAC.changeSet().deactivateTempEntity(id); }
 
     template <typename T>
     bool Universe<T>::destroyEntity(EntityId id)
@@ -460,6 +568,10 @@ namespace ent
     template <typename T>
     void Universe<T>::destroyEntityD(EntityId id)
     { return mAC.changeSet().destroyEntity(id); }
+
+    template <typename T>
+    void Universe<T>::destroyEntityT(EntityId id)
+    { return mAC.changeSet().destroyTempEntity(id); }
 
     template <typename T>
     bool Universe<T>::entityValid(EntityId id) const
@@ -483,6 +595,9 @@ namespace ent
     void Universe<T>::resetSelf()
     {
         mChanged.reclaim();
+#ifdef ENT_STATS_ENABLED
+        mStats.reset();
+#endif
     }
 
     template <typename T>

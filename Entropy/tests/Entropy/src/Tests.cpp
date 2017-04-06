@@ -865,65 +865,6 @@ TU_Begin(EntropyEntity)
             TC_RequireEqual(u.addSystem<DestructionSystem>(), sys1);
         }
     }
-
-    TU_Case(Entity1, "Testing the Entity and TemporaryEntity")
-    {
-        using Universe = RealUniverse2::UniverseT;
-        using Entity = RealUniverse2::EntityT;
-        using TempEntity = RealUniverse2::TempEntityT;
-
-        Universe &u{RealUniverse2::instance()};
-
-        Entity e = u.createEntity();
-        e.active();
-        e.activate();
-        e.activateD();
-        e.add<Position>();
-        e.add<Velocity>(1.0, 2.0);
-        e.addD<Position>();
-        e.addD<Velocity>(1.0, 2.0);
-        e.deactivate();
-        e.deactivateD();
-        e.get<Position>();
-        static_cast<const Entity>(e).get<Velocity>();
-        e.getD<Position>();
-        e.has<Position>();
-        e.hasD<Velocity>();
-        e.remove<Position>();
-        e.removeD<Velocity>();
-        e.destroyD();
-        e.destroy();
-
-        TempEntity te = u.createEntityD();
-        te.activate();
-        te.add<Position>();
-        te.add<Velocity>(1.0, 2.0);
-        te.deactivate();
-        te.get<Position>();
-        te.has<Velocity>();
-        te.remove<Position>();
-        te.destroy();
-    }
-
-    TU_Case(Parallel0, "Testing parallel access")
-    {
-        /*
-        ent::ActionsContainer<RealUniverse3> actionsContainer;
-        actionsContainer.activateEntity(ent::EntityId{});
-        actionsContainer.deactivateEntity(ent::EntityId{});
-        actionsContainer.destroyEntity(ent::EntityId{});
-        TC_Require(actionsContainer.addComponent<int>(0, ent::EntityId{}));
-        TC_Require(actionsContainer.addComponent<double>(1, ent::EntityId{}));
-        TC_Require(actionsContainer.addComponent<int>(0, ent::EntityId{}, 42));
-        TC_Require(actionsContainer.addComponent<double>(1, ent::EntityId{}, 42.0f));
-        TC_RequireEqual(*actionsContainer.getComponent<int>(0, ent::EntityId{}), 42);
-        TC_RequireEqual(*actionsContainer.getComponent<double>(1, ent::EntityId{}), 42.0f);
-        actionsContainer.removeComponent<int>(0, ent::EntityId{});
-        actionsContainer.removeComponent<double>(1, ent::EntityId{});
-        actionsContainer.sendActions(nullptr);
-         */
-    }
-
 TU_End(EntropyEntity)
 
 int main(int argc, char* argv[])

@@ -415,9 +415,9 @@ namespace ent
 #endif
 
 #if defined(ENT_STATS_ENABLED) && defined(ENT_STATS_ASSERT)
-#   define CHECK_STATS(stats) (stats.testValid())
+#   define ENT_CHECK_STATS(stats) (stats.testValid())
 #else
-#   define CHECK_STATS(_)
+#   define ENT_CHECK_STATS(_)
 #endif
 
     /**
@@ -446,6 +446,7 @@ namespace ent
         /// Test if all the data are valid.
         void testValid() const
         {
+            ENT_ASSERT_SLOW(univInits == univResets + 1u);
             ENT_ASSERT_SLOW(entActive <= entTotal);
             ENT_ASSERT_SLOW(entCreated >= entDestroyed);
             ENT_ASSERT_SLOW((entCreated - entDestroyed) == entTotal);
@@ -453,6 +454,27 @@ namespace ent
             ENT_ASSERT_SLOW((sysAdded - sysRemoved) == sysActive);
             ENT_ASSERT_SLOW(grpAdded >= grpRemoved);
             ENT_ASSERT_SLOW((grpAdded - grpRemoved) == grpActive);
+        }
+
+        /// Reset counters which should be resetted on Universe reset.
+        void reset()
+        {
+            univResets++;
+
+            entActive = 0;
+            entTotal = 0;
+            entCreated = 0;
+            entDestroyed = 0;
+
+            compRegistered = 0;
+
+            sysActive = 0;
+            sysAdded = 0;
+            sysRemoved = 0;
+
+            grpActive = 0;
+            grpAdded = 0;
+            grpRemoved = 0;
         }
 
         /// How many times has the Universe been initialized.
@@ -658,6 +680,15 @@ namespace ent
         { return testImpl(pos); }
 
         /**
+         * Get the old value and set it to the new one.
+         * @param pos Position of the bit.
+         * @param val The new value.
+         * @return The old value.
+         */
+        bool testAndSet(std::size_t pos, bool val)
+        { return testAndSetImpl(pos, val); }
+
+        /**
          * Copy bits from other bitset.
          * @param other The other bitset.
          */
@@ -757,6 +788,14 @@ namespace ent
          * @return Returns the value of given bit.
          */
         ENT_CONSTEXPR_FUN bool testImpl(u64 pos) const;
+
+        /**
+         * Get the old value and set it to the new one.
+         * @param pos Position of the bit.
+         * @param val The new value.
+         * @return The old value.
+         */
+        bool testAndSetImpl(std::size_t pos, bool val);
     protected:
         /// Memory blocks containing the bits.
         BMBType mMemory[NUM_BLOCKS];

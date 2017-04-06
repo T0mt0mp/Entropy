@@ -51,6 +51,13 @@ namespace ent
          */
         inline ENT_CONSTEXPR_FUN EIdType generation() const;
 
+        /**
+         * Does this ID represent temporary Entity?
+         * @return Returns true, if the generation is equal
+         *   to the generation of temporary Entity.
+         */
+        inline ENT_CONSTEXPR_FUN bool isTemp() const;
+
         /// Equal operator.
         ENT_CONSTEXPR_FUN bool operator==(const EntityId &rhs) const
         { return index() == rhs.index(); }

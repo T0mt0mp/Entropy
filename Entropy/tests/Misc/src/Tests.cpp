@@ -793,15 +793,15 @@ TU_Begin(EntropyMisc)
 
         for (u64 iii = NUM_ELEMENTS; iii > 0; --iii)
         {
-            list.insert(iii);
+            list.insertUnique(iii);
         }
         for (u64 iii = NUM_ELEMENTS; iii > 0; --iii)
         {
-            list.insert(iii);
+            list.insertUnique(iii);
         }
         for (u64 iii = 1; iii <= NUM_ELEMENTS; ++iii)
         {
-            list.insert(iii);
+            list.insertUnique(iii);
         }
 
         TC_RequireEqual(list.size(), NUM_ELEMENTS);

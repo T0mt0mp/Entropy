@@ -229,5 +229,16 @@ namespace ent
     {
         return getBlock(memBlock(pos)) & bitMask(pos);
     }
+
+    template <u64 N>
+    bool InfoBitset<N>::testAndSetImpl(std::size_t pos, bool val)
+    {
+        BMBType &block(getBlock(memBlock(pos)));
+        bool old{static_cast<bool>(block & bitMask(pos))};
+        //     | reset the tested bit | -> | set the requested value |
+        block = (block & (~bitMask(pos))) | (static_cast<BMBType>(val) << pos);
+
+        return old;
+    }
     // InfoBitset implementation end.
 } // namespace ent

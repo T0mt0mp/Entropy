@@ -118,6 +118,153 @@ struct TestSpec : public TestBase
     { return this; }
 };
 
+struct OpStruct1
+{
+    struct OpStructCmp
+    {
+        bool operator()(const u64 &val, const OpStruct1 &rhs)
+        { return val < rhs.val; }
+        bool operator()(const OpStruct1 &rhs, const u64 &val)
+        { return rhs.val < val; }
+        bool operator()(const OpStruct1 &lhs, const OpStruct1 &rhs)
+        { return lhs.val < rhs.val; }
+    };
+
+    OpStruct1(u64 value) :
+        val{value}
+    { }
+
+    u64 val;
+    u64 data[10];
+};
+
+struct OpStruct2
+{
+    struct OpStructCmp
+    {
+        bool operator()(const u64 &val, const OpStruct2 &rhs)
+        { return val < rhs.val; }
+        bool operator()(const OpStruct2 &rhs, const u64 &val)
+        { return rhs.val < val; }
+        bool operator()(const OpStruct2 &lhs, const OpStruct2 &rhs)
+        { return lhs.val < rhs.val; }
+    };
+
+    OpStruct2(u64 value, bool operation) :
+        val{value}, op{operation}
+    { }
+
+    u64 val;
+    u64 data[10];
+    bool op;
+};
+
+void codeBloat1(i64 &result, i64 val)
+{
+    static f64 workArray[50];
+    f64 thing{0.0f};
+    thing = sin(val);
+    thing += cos(val);
+    for (u64 index = 0; index < std::size(workArray); ++index)
+    {
+        u64 swVal{(index + val) % 10};
+        switch (swVal)
+        {
+            case 0:
+            {
+                thing += swVal * 12.0f;
+                break;
+            }
+
+            case 1:
+            {
+                thing = val * thing + swVal;
+                break;
+            }
+
+            case 2:
+            {
+                thing = sin(thing);
+                break;
+            }
+
+            case 3:
+            {
+                thing = cos(thing);
+                break;
+            }
+
+            case 6:
+            {
+                thing = cos(thing) * sin(thing);
+                break;
+            }
+
+            default:
+            {
+                thing *= swVal / 10.0f;
+                break;
+            }
+        }
+        workArray[index] = thing;
+    }
+
+    result += val + thing * 0.0f;
+}
+
+void codeBloat2(i64 &result, i64 val)
+{
+    static f64 workArray[20];
+    f64 thing{0.0f};
+    thing = sin(val);
+    thing += cos(val);
+    for (u64 index = 0; index < std::size(workArray); ++index)
+    {
+        u64 swVal{(index + val) % 10};
+        switch (swVal)
+        {
+            case 0:
+            {
+                thing += swVal * 16.0f;
+                break;
+            }
+
+            case 1:
+            {
+                thing = val * thing + swVal;
+                break;
+            }
+
+            case 2:
+            {
+                thing = cos(thing);
+                break;
+            }
+
+            case 3:
+            {
+                thing = sin(thing);
+                break;
+            }
+
+            case 6:
+            {
+                thing = cos(thing) * sin(thing);
+                break;
+            }
+
+            default:
+            {
+                thing *= swVal / 20.0f;
+                break;
+            }
+        }
+        workArray[index] = thing;
+    }
+
+    result += val + thing * 0.0f;
+}
+
 TU_Begin(EntropySandbox)
 
     TU_Setup
@@ -303,6 +450,118 @@ TU_Begin(EntropySandbox)
         bPtr->give()->say();
         sPtr->give()->say();
         bsPtr->give()->say();
+    }
+
+    TU_Case(Sandbox5, "Sandbox5")
+    {
+        static constexpr u64 ELEMENTS{1000000};
+        static constexpr u64 NUM_ATTEMPTS{10};
+        static constexpr f64 THRESHOLD{0.1};
+        static constexpr f64 REPEAT_THRESHOLD{0.005};
+
+        std::random_device rd;
+
+        std::mt19937_64 rng;
+        std::uniform_real_distribution<f64> uniform(0.0f, 1.0f);
+
+        for (u64 attempt = 0; attempt < NUM_ATTEMPTS; ++attempt)
+        {
+            u64 randomSeed{rd()};
+
+            {
+                rng.seed(randomSeed);
+                PROF_SCOPE("2 lists");
+
+                ent::SortedList<OpStruct1, OpStruct1::OpStructCmp> op1;
+                ent::SortedList<u64> op2;
+
+                PROF_BLOCK("Fill");
+                for (u64 iii = 0; iii < ELEMENTS;)
+                {
+                    if (uniform(rng) > THRESHOLD)
+                    { // OP1
+                        op2.erase(iii);
+                        op1.insertUnique(iii, iii);
+                    }
+                    else
+                    { // OP2
+                        op1.erase(iii);
+                        op2.insertUnique(iii);
+                    }
+
+                    if (uniform(rng) > REPEAT_THRESHOLD)
+                    {
+                        ++iii;
+                    }
+                }
+                PROF_BLOCK_END();
+
+                i64 result{0u};
+
+                PROF_BLOCK("Do Op");
+                for (OpStruct1 &val : op1)
+                {
+                    //result += val;
+                    codeBloat1(result, val.val);
+                }
+
+                for (u64 val : op2)
+                {
+                    //result -= val;
+                    codeBloat2(result, -val);
+                }
+                PROF_BLOCK_END();
+
+                std::cout << op1.size() << " " << op2.size() << std::endl;
+                std::cout << op1.size() + op2.size() << std::endl;
+                std::cout << "Result 2 lists: " << result << std::endl;
+            }
+
+            {
+                rng.seed(randomSeed);
+                PROF_SCOPE("1 list");
+
+                ent::SortedList<OpStruct2, OpStruct2::OpStructCmp> op;
+
+                PROF_BLOCK("Fill");
+                for (u64 iii = 0; iii < ELEMENTS;)
+                {
+                    if (uniform(rng) > THRESHOLD)
+                    { // OP1
+                        op.replaceUnique(iii, OpStruct2{iii, true});
+                    }
+                    else
+                    { // OP2
+                        op.replaceUnique(iii, OpStruct2{iii, false});
+                    }
+
+                    if (uniform(rng) > REPEAT_THRESHOLD)
+                    {
+                        ++iii;
+                    }
+                }
+                PROF_BLOCK_END();
+
+                i64 result{0u};
+
+                PROF_BLOCK("Do Op");
+                for (OpStruct2 &opStruct : op)
+                {
+                    if (opStruct.op)
+                    {
+                        codeBloat1(result, opStruct.val);
+                    }
+                    else
+                    {
+                        codeBloat2(result, -opStruct.val);
+                    }
+                }
+                PROF_BLOCK_END();
+
+                std::cout << op.size() << std::endl;
+                std::cout << "Result 1 list: " << result << std::endl;
+            }
+        }
     }
 TU_End(EntropySandbox)
 

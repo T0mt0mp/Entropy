@@ -70,8 +70,12 @@ namespace ent
     void SortedList<T, C, A>::insert(const_reference val)
     {
         iterator findIt{std::lower_bound(begin(), end(), val, mCmp)};
-        if (findIt == end() || mCmp(val, *findIt))
+        if (findIt == end())
         { // Not found.
+            mList.pushBack(val);
+        }
+        else // TODO - <- Is this really worth it?
+        {
             mList.insert(findIt, val);
         }
     }
@@ -80,8 +84,12 @@ namespace ent
     auto SortedList<T, C, A>::insertUnique(const_reference val) -> iterator
     {
         iterator findIt{std::lower_bound(begin(), end(), val, mCmp)};
-        if (findIt == end() || mCmp(val, *findIt))
+        if (findIt == end())
         { // Not found.
+            mList.pushBack(val);
+        }
+        else if (mCmp(val, *findIt)) // TODO - <- Is this really worth it?
+        {
             findIt = mList.insert(findIt, val);
         }
 
@@ -94,8 +102,12 @@ namespace ent
     auto SortedList<T, C, A>::insertUnique(const SearchT &search, CArgTs... cArgs) -> iterator
     {
         iterator findIt{std::lower_bound(begin(), end(), search, mCmp)};
-        if (findIt == end() || mCmp(search, *findIt))
+        if (findIt == end())
         { // Not found.
+            mList.emplaceBack(std::forward<CArgTs>(cArgs)...);
+        }
+        else if (mCmp(search, *findIt)) // TODO - <- Is this really worth it?
+        {
             findIt = mList.emplace(findIt, std::forward<CArgTs>(cArgs)...);
         }
 
@@ -108,8 +120,12 @@ namespace ent
     auto SortedList<T, C, A>::replaceUnique(const SearchT &search, CArgTs... cArgs) -> iterator
     {
         iterator findIt{std::lower_bound(begin(), end(), search, mCmp)};
-        if (findIt == end() || mCmp(search, *findIt))
+        if (findIt == end())
         { // Not found.
+            mList.emplaceBack(std::forward<CArgTs>(cArgs)...);
+        }
+        else if (mCmp(search, *findIt)) // TODO - <- Is this really worth it?
+        {
             findIt = mList.emplace(findIt, std::forward<CArgTs>(cArgs)...);
         }
         else
@@ -137,7 +153,8 @@ namespace ent
     }
 
     template <typename T, typename C, typename A>
-    void SortedList<T, C, A>::erase(const_reference val)
+    template <typename SearchT>
+    void SortedList<T, C, A>::erase(const SearchT &val)
     {
         iterator findIt{std::lower_bound(begin(), end(), val, mCmp)};
         if (findIt != end() && !mCmp(val, *findIt))

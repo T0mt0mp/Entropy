@@ -162,7 +162,7 @@ namespace ent
          * @tparam ComponentT Type of the Component
          * @param id Id of the Entity.
          * @return Returns pointer to the Component.
-         * @remarks Not thread-safe! If thread-safety is required, use addComponentD.
+         * @remarks Not thread-safe! If thread-safety is required, use addD.
          * @remarks Changes Entity metadata!
          * @remarks All pointers to Components of the same type may be invalidated!
          * @remarks Method does NOT check, if the
@@ -183,7 +183,7 @@ namespace ent
          * @tparam CArgTs Component constructor argument types.
          * @param cArgs Component constructor arguments.
          * @return Returns pointer to the Component.
-         * @remarks Not thread-safe! If thread-safety is required, use addComponentD.
+         * @remarks Not thread-safe! If thread-safety is required, use addD.
          * @remarks Changes Entity metadata!
          * @remarks All pointers to Components of the same type may be invalidated!
          * @remarks Method does NOT check, if the
@@ -247,11 +247,21 @@ namespace ent
         /**
          * Remove Component from this Entity.
          * Operation is finished on refresh.
-         * @tparam ComponentT Type of the Component
+         * @tparam ComponentT Type of the Component.
          * @remarks Is thread-safe.
          */
         template <typename ComponentT>
         inline void removeD();
+
+        /**
+         * Remove temporary Component from this Entity.
+         * Operation is performed immediately, on the
+         * current ChangeSet.
+         * @tparam ComponentT Type of the Component.
+         * @remarks Is thread-safe.
+         */
+        template <typename ComponentT>
+        inline void removeDC();
 
         /**
          * Check if this Entity contains valid EntityId.
@@ -441,9 +451,10 @@ namespace ent
         inline ComponentT *add(CArgTs... cArgs);
 
         /**
-         * Remove Component from this Entity.
-         * Operation is finished on refresh.
-         * @tparam ComponentT Type of the Component
+         * Remove temporary Component from this Entity.
+         * Operation is performed immediately, on the
+         * current ChangeSet.
+         * @tparam ComponentT Type of the Component.
          * @remarks Is thread-safe.
          */
         template <typename ComponentT>

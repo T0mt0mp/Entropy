@@ -52,6 +52,7 @@ namespace ent
     void ActionsCache<UniverseT>::applyChangeSets(UniverseT *uni)
     {
         // TODO - optimize, parallelize.
+        std::lock_guard<std::mutex> lg(mCommitMutex);
 
         // Destroy Entities.
         for (std::unique_ptr<ChangeSet> &cs : mCommittedChanges)
@@ -67,7 +68,10 @@ namespace ent
         {
             for (EntityId &id : cs->temporaryEntityMapper())
             {
-                id = uni->createEntityId();
+                if (!id.id())
+                { // Only create new Entity if the ID is unset.
+                    id = uni->createEntityId();
+                }
             }
         }
 
@@ -80,18 +84,37 @@ namespace ent
             {
                 if (cs->components()[index])
                 {
-                    mRegisteredExtractors[index]->addRemoveComponents(cs->components()[index], uni);
+                    mRegisteredExtractors[index]->addRemoveComponents(cs->components()[index],
+                                                                      cs->temporaryEntityMapper(), uni);
                 }
             }
         }
 
         // Change metadata.
+        for (std::unique_ptr<ChangeSet> &cs : mCommittedChanges)
+        {
+            for (const ActivityChange &ac : cs->metadataChanges().changes())
+            {
+                uni->setActivityEntity(ac.id, ac.activity);
+            }
+
+            for (const ActivityChange &ac : cs->metadataChanges().tempChanges())
+            {
+                EntityId realId{cs->temporaryEntityMapper()[ac.id.index()]};
+                if (!realId.isTemp())
+                {
+                    uni->setActivityEntity(realId, ac.activity);
+                }
+            }
+        }
+
+        mCommittedChanges.clear();
     }
 
     template <typename UniverseT>
     template <typename ComponentT>
     void ActionsCache<UniverseT>::ComponentExtractorSpec<ComponentT>::
-        addRemoveComponents(ComponentActions *ca, UniverseT *uni)
+        addRemoveComponents(ComponentActions *ca, const ent::List<EntityId> &tempMapping, UniverseT *uni)
     {
         ComponentActionsSpec<ComponentT> *actions{
             ENT_CHOOSE_DEBUG(
@@ -99,14 +122,38 @@ namespace ent
                 static_cast<ComponentActionsSpec<ComponentT>*>(ca)
         )};
 
-        for (EntityId id : actions->removed())
-        {
-            uni->template removeComponent<ComponentT>(id);
-        }
-
         for (const ComponentChange<ComponentT> &cc : actions->added())
         {
-            uni->template replaceComponent<ComponentT>(cc.id, cc.comp);
+            ENT_ASSERT_SLOW(!cc.id.isTemp());
+            // TODO - Find a way to assure that only valid Entities get here.
+            if (uni->entityValid(cc.id))
+            { // If the Entity still exists.
+                if (cc.remove)
+                {
+                    uni->template removeComponent<ComponentT>(cc.id);
+                }
+                else
+                {
+                    uni->template replaceComponent<ComponentT>(cc.id, cc.comp);
+                }
+            }
+        }
+
+        for (const ComponentChange<ComponentT> &cc : actions->tempAdded())
+        {
+            ENT_ASSERT_SLOW(cc.id.isTemp());
+            EntityId realId{tempMapping[cc.id.index()]};
+            if (!realId.isTemp())
+            {
+                if (cc.remove)
+                {
+                    uni->template removeComponent<ComponentT>(realId);
+                }
+                else
+                {
+                    uni->template replaceComponent<ComponentT>(realId, cc.comp);
+                }
+            }
         }
     }
     // ActionsCache implementation end.

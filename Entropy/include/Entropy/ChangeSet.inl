@@ -12,8 +12,8 @@ namespace ent
     // ComponentChange implementation.
     template <typename ComponentT>
     template <typename... CArgTs>
-    ComponentChange<ComponentT>::ComponentChange(EntityId id, CArgTs... cArgs) :
-        id{id}, comp(std::forward<CArgTs>(cArgs)...)
+    ComponentChange<ComponentT>::ComponentChange(EntityId id, bool removeAct, CArgTs... cArgs) :
+        id{id}, remove{removeAct}, comp(std::forward<CArgTs>(cArgs)...)
     { }
     // ComponentChange implementation end.
 
@@ -42,23 +42,6 @@ namespace ent
     { }
 
     template <typename ComponentT>
-    void ComponentActions::remove(EntityId id)
-    { castToSpec<ComponentT>()->remove(id); }
-
-    template <typename ComponentT>
-    ComponentT *ComponentActions::get(EntityId id)
-    { return castToSpec<ComponentT>()->get(id); }
-
-    template <typename ComponentT>
-    ComponentT *ComponentActions::add(EntityId id)
-    { return castToSpec<ComponentT>()->add(id); }
-
-    template <typename ComponentT,
-              typename... CArgTs>
-    ComponentT *ComponentActions::add(EntityId id, CArgTs... cArgs)
-    { return castToSpec<ComponentT>()->add(id, std::forward<CArgTs>(cArgs)...); }
-
-    template <typename ComponentT>
     ComponentActionsSpec<ComponentT> *ComponentActions::castToSpec()
     {
         return ENT_CHOOSE_DEBUG(
@@ -76,21 +59,47 @@ namespace ent
     template <typename ComponentT>
     void ComponentActionsSpec<ComponentT>::remove(EntityId id)
     {
-        mRemoved.insertUnique(id);
+        mAdded.replaceUnique(id, id, true);
+    }
+
+    template <typename ComponentT>
+    void ComponentActionsSpec<ComponentT>::removeTemp(EntityId id)
+    {
+        mAdded.erase(id);
+    }
+
+    template <typename ComponentT>
+    void ComponentActionsSpec<ComponentT>::removeTempT(EntityId id)
+    {
+        mTempAdded.erase(id);
     }
 
     template <typename ComponentT>
     ComponentT *ComponentActionsSpec<ComponentT>::get(EntityId id)
     {
         auto it = mAdded.find(id);
-        return it ? &(it->comp) : nullptr;
+        return ptrFromIt(it, mAdded);
+    }
+
+    template <typename ComponentT>
+    ComponentT *ComponentActionsSpec<ComponentT>::getT(EntityId id)
+    {
+        auto it = mTempAdded.find(id);
+        return ptrFromIt(it, mTempAdded);
     }
 
     template <typename ComponentT>
     ComponentT *ComponentActionsSpec<ComponentT>::add(EntityId id)
     {
-        auto it =  mAdded.insertUnique(id, id);
-        return it ? &(it->comp) : nullptr;
+        auto it =  mAdded.replaceUnique(id, id, false);
+        return ptrFromIt(it, mAdded);
+    }
+
+    template <typename ComponentT>
+    ComponentT *ComponentActionsSpec<ComponentT>::addT(EntityId id)
+    {
+        auto it =  mTempAdded.replaceUnique(id, id, false);
+        return ptrFromIt(it, mTempAdded);
     }
 
     template <typename ComponentT>
@@ -98,20 +107,42 @@ namespace ent
     ComponentT *ComponentActionsSpec<ComponentT>::add(EntityId id,
                                                       CArgTs... cArgs)
     {
-        auto it = mAdded.replaceUnique(id, id, std::forward<CArgTs>(cArgs)...);
-        return it ? &(it->comp) : nullptr;
+        auto it = mAdded.replaceUnique(id, id, false, std::forward<CArgTs>(cArgs)...);
+        return ptrFromIt(it, mAdded);
     }
+
+    template <typename ComponentT>
+    template <typename... CArgTs>
+    ComponentT *ComponentActionsSpec<ComponentT>::addT(EntityId id,
+                                                      CArgTs... cArgs)
+    {
+        auto it = mTempAdded.replaceUnique(id, id, false, std::forward<CArgTs>(cArgs)...);
+        return ptrFromIt(it, mTempAdded);
+    }
+
+    template <typename ComponentT>
+    ComponentT *ComponentActionsSpec<ComponentT>::ptrFromIt(typename AddedListT::iterator it, const AddedListT &list)
+    { return it != list.end() ? &(it->comp) : nullptr; }
     // ComponentActionsSpec implementation end.
+
+    // ActivityChangeCmp implementation.
+    bool ActivityChange::ActivityChangeCmp::operator()(const EntityId &id, const ActivityChange &ac)
+    { return id < ac.id; }
+    bool ActivityChange::ActivityChangeCmp::operator()(const ActivityChange &ac, const EntityId &id)
+    { return ac.id < id; }
+    bool ActivityChange::ActivityChangeCmp::operator()(const ActivityChange &ac1, const ActivityChange &ac2)
+    { return ac1.id < ac2.id; }
+    // ActivityChangeCmp implementation end.
 
     // MetadataActions implementation.
     void MetadataActions::activate(EntityId id)
     {
-        mActivated.insertUnique(id);
+        mChanges.replaceUnique(id, ActivityChange{id, true});
     }
 
     void MetadataActions::deactivate(EntityId id)
     {
-        mDeactivated.insertUnique(id);
+        mChanges.replaceUnique(id, ActivityChange{id, false});
     }
 
     void MetadataActions::destroy(EntityId id)
@@ -119,14 +150,15 @@ namespace ent
         mDestroyed.insertUnique(id);
     }
 
-    const ent::SortedList<EntityId> &MetadataActions::activated() const
-    { return mActivated; }
+    void MetadataActions::activateT(EntityId id)
+    {
+        mTempChanges.replaceUnique(id, ActivityChange{id, true});
+    }
 
-    const ent::SortedList<EntityId> &MetadataActions::deactivated() const
-    { return mDeactivated; }
-
-    const ent::SortedList<EntityId> &MetadataActions::destroyed() const
-    { return mDestroyed; }
+    void MetadataActions::deactivateT(EntityId id)
+    {
+        mTempChanges.replaceUnique(id, ActivityChange{id, false});
+    }
     // MetadataActions implementation end.
 
     // ChangeSet implementation.
@@ -140,33 +172,69 @@ namespace ent
 
     template <typename ComponentT>
     bool ChangeSet::hasComponent(u64 compId, EntityId id)
-    { return componentActions<ComponentT>(compId).get(id) != nullptr; }
+    { ENT_ASSERT_SLOW(!id.isTemp()); return componentActions<ComponentT>(compId).get(id) != nullptr; }
+    template <typename ComponentT>
+    bool ChangeSet::hasComponentT(u64 compId, EntityId id)
+    { ENT_ASSERT_SLOW(id.isTemp()); return componentActions<ComponentT>(compId).getT(id) != nullptr; }
 
     template <typename ComponentT>
     ComponentT *ChangeSet::getComponent(u64 compId, EntityId id)
-    { return componentActions<ComponentT>(compId).get(id); }
+    { ENT_ASSERT_SLOW(!id.isTemp()); return componentActions<ComponentT>(compId).get(id); }
+    template <typename ComponentT>
+    ComponentT *ChangeSet::getComponentT(u64 compId, EntityId id)
+    { ENT_ASSERT_SLOW(id.isTemp()); return componentActions<ComponentT>(compId).getT(id); }
 
     template <typename ComponentT>
     ComponentT *ChangeSet::addComponent(u64 compId, EntityId id)
-    { return componentActions<ComponentT>(compId).add(id); }
+    { ENT_ASSERT_SLOW(!id.isTemp()); return componentActions<ComponentT>(compId).add(id); }
+    template <typename ComponentT>
+    ComponentT *ChangeSet::addComponentT(u64 compId, EntityId id)
+    { ENT_ASSERT_SLOW(id.isTemp()); return componentActions<ComponentT>(compId).addT(id); }
 
     template <typename ComponentT,
               typename... CArgTs>
     ComponentT *ChangeSet::addComponent(u64 compId, EntityId id, CArgTs... cArgs)
-    { return componentActions<ComponentT>(compId).add(id, std::forward<CArgTs>(cArgs)...); }
+    { ENT_ASSERT_SLOW(!id.isTemp()); return componentActions<ComponentT>(compId).add(id, std::forward<CArgTs>(cArgs)...); }
+    template <typename ComponentT,
+              typename... CArgTs>
+    ComponentT *ChangeSet::addComponentT(u64 compId, EntityId id, CArgTs... cArgs)
+    { ENT_ASSERT_SLOW(id.isTemp()); return componentActions<ComponentT>(compId).addT(id, std::forward<CArgTs>(cArgs)...); }
 
     template <typename ComponentT>
     void ChangeSet::removeComponent(u64 compId, EntityId id)
-    { componentActions<ComponentT>(compId).remove(id); }
+    { ENT_ASSERT_SLOW(!id.isTemp()); componentActions<ComponentT>(compId).remove(id); }
+
+    template <typename ComponentT>
+    void ChangeSet::removeTempComponent(u64 compId, EntityId id)
+    { ENT_ASSERT_SLOW(!id.isTemp()); componentActions<ComponentT>(compId).removeTemp(id); }
+    template <typename ComponentT>
+    void ChangeSet::removeTempComponentT(u64 compId, EntityId id)
+    { ENT_ASSERT_SLOW(id.isTemp()); componentActions<ComponentT>(compId).removeTempT(id); }
 
     void ChangeSet::activateEntity(EntityId id)
-    { mMetadataActions.activate(id); }
+    { ENT_ASSERT_SLOW(!id.isTemp()); mMetadataActions.activate(id); }
 
     void ChangeSet::deactivateEntity(EntityId id)
-    { mMetadataActions.deactivate(id); }
+    { ENT_ASSERT_SLOW(!id.isTemp()); mMetadataActions.deactivate(id); }
 
     void ChangeSet::destroyEntity(EntityId id)
-    { mMetadataActions.destroy(id); }
+    { ENT_ASSERT_SLOW(!id.isTemp()); mMetadataActions.destroy(id); }
+
+    void ChangeSet::activateTempEntity(EntityId id)
+    { ENT_ASSERT_SLOW(id.isTemp()); mMetadataActions.activateT(id); }
+
+    void ChangeSet::deactivateTempEntity(EntityId id)
+    { ENT_ASSERT_SLOW(id.isTemp()); mMetadataActions.deactivateT(id); }
+
+    void ChangeSet::destroyTempEntity(EntityId id)
+    {
+        ENT_ASSERT_SLOW(id.isTemp());
+        if (id.index() < mTempEntities.size())
+        { // If the temporary Entity actually exists.
+            // Mark the temporary Entity as not in use.
+            mTempEntities[id.index()] = EntityId(0u, EntityId::TEMP_ENTITY_GEN);
+        }
+    }
 
     EntityId ChangeSet::createEntity()
     {

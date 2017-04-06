@@ -14,5 +14,6 @@ include_directories(${ENGINE_INCLUDE_DIR})
 
 add_subdirectory(Misc)
 add_subdirectory(Entropy)
+add_subdirectory(Parallel)
 add_subdirectory(Performance)
 add_subdirectory(Sandbox)

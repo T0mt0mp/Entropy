@@ -18,13 +18,14 @@ namespace ent
 {
     /**
      * Holds information about newly crated Component.
+     * Alternatively can hold Component removal action.
      * @tparam ComponentT Type of the Component
      */
     template <typename ComponentT>
     struct ComponentChange
     {
         /**
-         * Used as comparation functor.
+         * Used as compare functor.
          */
         struct ComponentChangeCmp
         {
@@ -41,10 +42,12 @@ namespace ent
          * @param cArgs Component constructor arguments.
          */
         template <typename... CArgTs>
-        ComponentChange(EntityId id, CArgTs... cArgs);
+        ComponentChange(EntityId id, bool remove, CArgTs... cArgs);
 
-        /// ID of the Entity, to which will own this Component.
+        /// ID of the owner.
         EntityId id;
+        /// Type of action.
+        bool remove;
         /// Component instance.
         ComponentT comp;
     }; // class ComponentChange
@@ -60,54 +63,6 @@ namespace ent
     public:
         /// Cleanup.
         virtual inline ~ComponentActions();
-
-        /**
-         * Remove Component from given Entity.
-         * @tparam ComponentT Component type.
-         * @param id ID of the Entity.
-         */
-        template <typename ComponentT>
-        inline void remove(EntityId id);
-
-        /**
-         * Get already added temporary Component.
-         * @tparam ComponentT Type of the Component.
-         * @param id ID of the Entity.
-         * @return Returns ptr to the Component data, or
-         *   nullptr, if such Component does not exist.
-         */
-        template <typename ComponentT>
-        inline ComponentT *get(EntityId id);
-
-        /**
-         * Add a temporary Component to given Entity.
-         * If such Component already exists, return ptr
-         * to it and leave it in current state.
-         * @tparam ComponentT Type of the Component.
-         * @param id ID of the Entity.
-         * @return Returns ptr to the new, or old, Component data.
-         * @remarks Each call may invalidate pointers to
-         *   previously returned Component pointers.
-         */
-        template <typename ComponentT>
-        inline ComponentT *add(EntityId id);
-
-        /**
-         * Add a new temporary Component to given Entity.
-         * If such Component already exists, it will be
-         * overwritten with inplace constructed Component
-         * with given constructor parameters.
-         * @tparam ComponentT Type of the Component.
-         * @tparam CArgTs Constructor argument types.
-         * @param id ID of the Entity.
-         * @return Returns ptr to the new temporary Component,
-         *   constructed with given constructor parameters.
-         * @remarks Each call may invalidate pointers to
-         *   previously returned Component pointers.
-         */
-        template <typename ComponentT,
-                  typename... CArgTs>
-        inline ComponentT *add(EntityId id, CArgTs... cArgs);
 
         /**
          * Used for static dispatch of actions to
@@ -135,6 +90,9 @@ namespace ent
         using HolderT = typename HolderExtractor<ComponentT>::type;
         // TODO - Use Holder for temporary Component storage?
 
+        using AddedListT = ent::SortedList<ComponentChange<ComponentT>,
+            typename ComponentChange<ComponentT>::ComponentChangeCmp>;
+
         /// Cleanup.
         virtual ~ComponentActionsSpec();
 
@@ -146,12 +104,21 @@ namespace ent
         inline void remove(EntityId id);
 
         /**
+         * Remove temporary Component from given Entity.
+         * @tparam ComponentT Component type.
+         * @param id ID of the Entity.
+         */
+        inline void removeTemp(EntityId id);
+        inline void removeTempT(EntityId id);
+
+        /**
          * Get already added temporary Component.
          * @param id ID of the Entity.
          * @return Returns ptr to the Component data, or
          *   nullptr, if such Component does not exist.
          */
         inline ComponentT *get(EntityId id);
+        inline ComponentT *getT(EntityId id);
 
         /**
          * Add a temporary Component to given Entity.
@@ -163,6 +130,7 @@ namespace ent
          *   previously returned Component pointers.
          */
         inline ComponentT *add(EntityId id);
+        inline ComponentT *addT(EntityId id);
 
         /**
          * Add a new temporary Component to given Entity.
@@ -178,28 +146,47 @@ namespace ent
          */
         template <typename... CArgTs>
         inline ComponentT *add(EntityId id, CArgTs... cArgs);
-
-        /// Get List of removed Components.
-        const auto &removed() const
-        { return mRemoved; }
+        template <typename... CArgTs>
+        inline ComponentT *addT(EntityId id, CArgTs... cArgs);
 
         /// Get List of added Components.
-        const auto &added() const
+        const AddedListT &added() const
         { return mAdded; };
+
+        /// Get List of added Components for temporary Entities.
+        const AddedListT &tempAdded() const
+        { return mTempAdded; };
     private:
-        /**
-         * List of Entities which will have their Component removed.
-         */
-        ent::SortedList<EntityId> mRemoved;
+        /// Get pointer from iterator to given list.
+        inline ComponentT *ptrFromIt(typename AddedListT::iterator it, const AddedListT &list);
 
         /**
          * List of Entities which will either have a new Component
          * added, or the old one changed.
          */
-        ent::SortedList<ComponentChange<ComponentT>,
-            typename ComponentChange<ComponentT>::ComponentChangeCmp> mAdded;
+        AddedListT mAdded;
+
+        /// List of Components for temporary Entities.
+        AddedListT mTempAdded;
     protected:
     }; // class ComponentActionsSpec
+
+    /// Represents activation/deactivation action.
+    struct ActivityChange
+    {
+        struct ActivityChangeCmp
+        {
+            /// Comparison operator.
+            inline bool operator()(const EntityId &id, const ActivityChange &ac);
+            inline bool operator()(const ActivityChange &ac, const EntityId &id);
+            inline bool operator()(const ActivityChange &ac1, const ActivityChange &ac2);
+        };
+
+        /// ID of the Entity.
+        EntityId id;
+        /// New value of the activity flag.
+        bool activity;
+    }; // struct ActivityChange.
 
     /**
      * Class for storing actions which change Entity
@@ -226,20 +213,36 @@ namespace ent
          */
         inline void destroy(EntityId id);
 
-        /// List of activated Entities.
-        inline const ent::SortedList<EntityId> &activated() const;
+        /**
+         * Set activity of given temporary Entity
+         * to active.
+         * @param id ID of the temporary Entity.
+         */
+        inline void activateT(EntityId id);
 
-        /// List of deactivated Entities.
-        inline const ent::SortedList<EntityId> &deactivated() const;
+        /**
+         * Set activity of given temporary Entity
+         * to inactive.
+         * @param id ID of the temporary Entity.
+         */
+        inline void deactivateT(EntityId id);
 
-        /// List of destroyed Entities.
-        inline const ent::SortedList<EntityId> &destroyed() const;
+        /// Get list of requested Entity activity changes.
+        const auto &changes() const
+        { return mChanges; }
+
+        /// Get list of requested tempoary Entity activity changes.
+        const auto &tempChanges() const
+        { return mTempChanges; }
+
+        /// Get list of Entities scheduled for removal.
+        const auto &destroyed() const
+        { return mDestroyed; }
     private:
-        /// List of Entities which should be activated.
-        ent::SortedList<EntityId> mActivated;
-        // TODO - Merge activated and deactivated lists?
-        /// List of Entities which should be deactivated.
-        ent::SortedList<EntityId> mDeactivated;
+        /// List of requested Entity activity changes.
+        ent::SortedList<ActivityChange, ActivityChange::ActivityChangeCmp> mChanges;
+        /// List of requested temporary Entity activity changes.
+        ent::SortedList<ActivityChange, ActivityChange::ActivityChangeCmp> mTempChanges;
         /// List of Entities which should be destroyed.
         ent::SortedList<EntityId> mDestroyed;
     protected:
@@ -264,6 +267,8 @@ namespace ent
          */
         template <typename ComponentT>
         inline bool hasComponent(u64 compId, EntityId id);
+        template <typename ComponentT>
+        inline bool hasComponentT(u64 compId, EntityId id);
 
         /**
          * Get already added temporary Component.
@@ -276,6 +281,8 @@ namespace ent
          */
         template <typename ComponentT>
         inline ComponentT *getComponent(u64 compId, EntityId id);
+        template <typename ComponentT>
+        inline ComponentT *getComponentT(u64 compId, EntityId id);
 
         /**
          * Add temporary Component for given Entity.
@@ -287,6 +294,8 @@ namespace ent
          */
         template <typename ComponentT>
         inline ComponentT *addComponent(u64 compId, EntityId id);
+        template <typename ComponentT>
+        inline ComponentT *addComponentT(u64 compId, EntityId id);
 
         /**
          * Add temporary Component for given Entity, and construct
@@ -302,6 +311,9 @@ namespace ent
         template <typename ComponentT,
                   typename... CArgTs>
         inline ComponentT *addComponent(u64 compId, EntityId id, CArgTs... cArgs);
+        template <typename ComponentT,
+                  typename... CArgTs>
+        inline ComponentT *addComponentT(u64 compId, EntityId id, CArgTs... cArgs);
 
         /**
          * Mark Component for removal.
@@ -311,6 +323,17 @@ namespace ent
          */
         template <typename ComponentT>
         inline void removeComponent(u64 compId, EntityId id);
+
+        /**
+         * Remove temporary Component.
+         * @tparam ComponentT Type of the Component.
+         * @param compId ID of the Component.
+         * @param id Entity ID.
+         */
+        template <typename ComponentT>
+        inline void removeTempComponent(u64 compId, EntityId id);
+        template <typename ComponentT>
+        inline void removeTempComponentT(u64 compId, EntityId id);
 
         /**
          * Mark Entity for activation.
@@ -329,6 +352,26 @@ namespace ent
          * @param id ID of the Entity.
          */
         inline void destroyEntity(EntityId id);
+
+        /**
+         * Set activity of given temporary Entity
+         * to active.
+         * @param id ID of the temporary Entity.
+         */
+        inline void activateTempEntity(EntityId id);
+
+        /**
+         * Set activity of given temporary Entity
+         * to inactive.
+         * @param id ID of the temporary Entity.
+         */
+        inline void deactivateTempEntity(EntityId id);
+
+        /**
+         * Destroy given temporary Entity.
+         * @param id ID of the temporary Entity.
+         */
+        inline void destroyTempEntity(EntityId id);
 
         /**
          * Create new temporary Entity.

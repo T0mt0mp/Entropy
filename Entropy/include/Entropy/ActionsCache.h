@@ -63,7 +63,9 @@ namespace ent
         class ComponentExtractor
         {
         public:
-            virtual void addRemoveComponents(ComponentActions *ca, UniverseT *uni) = 0;
+            virtual void addRemoveComponents(ComponentActions *ca,
+                                             const ent::List<EntityId> &tempMapping,
+                                             UniverseT *uni) = 0;
         private:
         protected:
         }; // class ComponentExtractor
@@ -72,7 +74,9 @@ namespace ent
         class ComponentExtractorSpec : public ComponentExtractor
         {
         public:
-            virtual void addRemoveComponents(ComponentActions *ca, UniverseT *uni) override final;
+            virtual void addRemoveComponents(ComponentActions *ca,
+                                             const ent::List<EntityId> &tempMapping,
+                                             UniverseT *uni) override final;
         private:
         protected:
         }; // class ComponentExtractorSpec

@@ -19,6 +19,11 @@ namespace ent
     { groups.set(ENT_ACTIVITY_BIT); }
     void EntityRecord::deactivate()
     { groups.reset(ENT_ACTIVITY_BIT); }
+    bool EntityRecord::setActivity(bool activity)
+    {
+        bool result{groups.testAndSet(ENT_ACTIVITY_BIT, activity)};
+        return result != activity;
+    }
 
     void EntityRecord::setComp(u64 index)
     { components.set(index); }
@@ -107,6 +112,12 @@ namespace ent
 
     bool EntityHolder::hasComponent(EntityId id, u64 index) const
     { return valid(id) && mRecords[id.index()].testComp(index); }
+
+    bool EntityHolder::setActivity(EntityId id, bool activity)
+    {
+        ENT_ASSERT_SLOW(valid(id));
+        return mRecords[id.index()].setActivity(activity);
+    }
 
     void EntityHolder::activate(EntityId id)
     { ENT_ASSERT_SLOW(valid(id)); mRecords[id.index()].activate(); }

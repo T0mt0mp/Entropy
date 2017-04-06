@@ -55,9 +55,12 @@ namespace ent
          * required Components.
          * @code
          * Universe<T> u;
-         * // Register Components
-         * // Optionally add Systems - only after Components!
+         * // Register Components.
+         * u.registerComponent<ComponentType>(...);
+         * ...
          * u.init();
+         * // Optionally add Systems - only after init!
+         * SystemType *s{u.addSystem<SystemType>(...)};
          * @endcode
          * @remarks Not thread-safe!
          */
@@ -78,6 +81,13 @@ namespace ent
          * @remarks Not thread-safe!
          */
         void reset();
+
+        /**
+         * Print status of this Universe to the given
+         * output stream.
+         * @param out Output stream.
+         */
+        void printStatus(std::ostream &out);
 
 #ifdef ENT_STATS_ENABLED
         /// Get statistics for this Universe.
@@ -274,6 +284,8 @@ namespace ent
          */
         template <typename ComponentT>
         inline ComponentT *addComponentD(EntityId id);
+        template <typename ComponentT>
+        inline ComponentT *addComponentT(EntityId id);
 
         /**
          * Add Component to the given Entity.
@@ -289,8 +301,11 @@ namespace ent
          *   temporary Component pointers of the same type.
          */
         template <typename ComponentT,
-            typename... CArgTs>
+                  typename... CArgTs>
         inline ComponentT *addComponentD(EntityId id, CArgTs... cArgs);
+        template <typename ComponentT,
+                  typename... CArgTs>
+        inline ComponentT *addComponentT(EntityId id, CArgTs... cArgs);
 
         /**
          * Get Component associated with the given Entity.
@@ -347,6 +362,8 @@ namespace ent
          */
         template <typename ComponentT>
         inline ComponentT *getComponentD(EntityId id);
+        template <typename ComponentT>
+        inline ComponentT *getComponentT(EntityId id);
 
         /**
          * Does the given Entity have Component associated with it?
@@ -370,6 +387,8 @@ namespace ent
          */
         template <typename ComponentT>
         inline bool hasComponentD(EntityId id);
+        template <typename ComponentT>
+        inline bool hasComponentT(EntityId id);
 
         /**
          * Remove Component from given Entity.
@@ -399,6 +418,18 @@ namespace ent
          */
         template <typename ComponentT>
         inline void removeComponentD(EntityId id);
+
+        /**
+         * Remove temporary Component from given Entity.
+         * Operation is performed immediately, on the
+         * current ChangeSet.
+         * @tparam ComponentT Type of the Component.
+         * @remarks Is thread-safe.
+         */
+        template <typename ComponentT>
+        inline void removeTempComponent(EntityId id);
+        template <typename ComponentT>
+        inline void removeTempComponentT(EntityId id);
 
         /**
          * Create a new Entity and return its ID.
@@ -478,6 +509,25 @@ namespace ent
 #endif
 
         /**
+         * Set activity of given Entity to the
+         * value provided.
+         * True is equal to calling activateEntity,
+         * false is equal to calling deactivateEntity.
+         * Action is performed immediately.
+         * @param id ID of the Entity.
+         * @param activity Value of desired activity.
+         * @remarks Not thread-safe!
+         * @remarks Changes Entity metadata.
+         * @remarks Method does NOT check, if the
+         *   Entity is valid. If such behavior is
+         *   required, ENT_ENTITY_VALID should be
+         *   defined. If the macro is defined and
+         *   Entity is not valid, exception of type
+         *   std::runtime_exception will be thrown.
+         */
+        inline void setActivityEntity(EntityId id, bool activity);
+
+        /**
          * Activate given Entity.
          * Action is performed immediately.
          * @param id ID of the Entity.
@@ -499,6 +549,7 @@ namespace ent
          * @remarks Is thread-safe
          */
         inline void activateEntityD(EntityId id);
+        inline void activateEntityT(EntityId id);
 
         /**
          * Deactivate given Entity.
@@ -522,6 +573,7 @@ namespace ent
          * @remarks Is thread-safe.
          */
         inline void deactivateEntityD(EntityId id);
+        inline void deactivateEntityT(EntityId id);
 
         /**
          * Destroy given Entity.
@@ -541,6 +593,7 @@ namespace ent
          * @remarks Is thread-safe.
          */
         inline void destroyEntityD(EntityId id);
+        inline void destroyEntityT(EntityId id);
 
         /**
          * Checks validity of given Entity.
