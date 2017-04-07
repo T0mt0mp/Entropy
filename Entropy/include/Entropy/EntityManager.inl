@@ -194,7 +194,7 @@ namespace ent
         mNumFree++;
     }
 
-    inline EIdType EntityHolder::popFreeId()
+    EIdType EntityHolder::popFreeId()
     {
         EIdType result{mFirstFree};
 
@@ -204,6 +204,28 @@ namespace ent
         mNumFree = result ? mNumFree - 1 : 0;
 
         return result;
+    }
+
+    u64 EntityHolder::addGroup()
+    {
+        u64 result;
+
+        if (mFreeGroupIds.size())
+        {
+            result = mFreeGroupIds.back();
+            mFreeGroupIds.popBack();
+        }
+        else
+        {
+            result = mLastGroupId++;
+        }
+
+        return result;
+    }
+
+    void EntityHolder::removeGroup(u64 groupId)
+    {
+        mFreeGroupIds.insertUnique(groupId);
     }
     // EntityHolder implementation end.
 }

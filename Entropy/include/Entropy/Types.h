@@ -85,6 +85,8 @@ namespace ent
     static constexpr std::size_t ENT_MAX_GROUPS{63};
     /// How many Entities share a single bitset, changes granularity of inner parallelism.
     static constexpr std::size_t ENT_BITSET_GROUP_SIZE{64u};
+    /// How much capacity should EntityHolder keep.
+    static constexpr std::size_t ENT_PUSH_NUM{64u};
 } // namespace ent
 
 #endif //ECS_FIT_TYPES_H

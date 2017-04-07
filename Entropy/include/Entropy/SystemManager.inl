@@ -32,6 +32,7 @@ namespace ent
     template <typename SystemT,
         typename... CArgTs>
     SystemT *SystemManager<UT>::addSystem(UT *uni, const ComponentManager<UT> &cm,
+                                          EntityManager &em,
                                           GroupManager<UT> &gm, CArgTs... cArgs)
     {
         static_assert(std::is_base_of<System<UT>, SystemT>::value,
@@ -61,7 +62,7 @@ namespace ent
             >(gm.template buildFilter<
                   typename Extract::RequireT,
                   typename Extract::RejectT
-              >(cm)
+              >(cm), em
             )
         );
 

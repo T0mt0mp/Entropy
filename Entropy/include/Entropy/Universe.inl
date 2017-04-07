@@ -35,20 +35,23 @@ namespace ent
     void Universe<T>::refresh()
     {
         /*
-         * 1) Refresh ActionCache:
+         * 1) Refresh EntityManager.
+         * 2) Refresh ActionCache:
          *   a) Destroy E -> Create E.
          *   b1) Remove/Add <C>.
          *   b2) Change metadata.
          *   b3) Add to changed list.
-         * 2) Refresh ComponentManager:
+         * 3) Refresh ComponentManager:
          *   a) Refresh ComponentHolders
-         * 3) Refresh GroupManager:
+         * 4) Refresh GroupManager:
          *   a) Prepare Groups.
          *   b) Check Groups for activity.
          *   c) Check change Entities, add/remove
          *     from Groups, change Entity metadata.
          *   d) Finalize Groups.
          */
+
+        mEM.refresh();
 
         mAC.applyChangeSets(this);
 
@@ -104,7 +107,7 @@ namespace ent
         static_assert(std::is_constructible<ASystemT, CArgTs...>::value,
                       "Unable to construct System with given constructor parameters!");
 
-        ASystemT *system{mSM.template addSystem<ASystemT>(this, mCM, mGM, std::forward<CArgTs>(args)...)};
+        ASystemT *system{mSM.template addSystem<ASystemT>(this, mCM, mEM, mGM, std::forward<CArgTs>(args)...)};
 
         if (LOG_STATS)
         {
@@ -148,7 +151,7 @@ namespace ent
     {
         if (!mGM.template hasGroup<RequireT, RejectT>())
         {
-            mGM.template addGroup<RequireT, RejectT>(mGM.template buildFilter<RequireT, RejectT>(mCM));
+            mGM.template addGroup<RequireT, RejectT>(mGM.template buildFilter<RequireT, RejectT>(mCM), mEM);
             if (LOG_STATS)
             {
                 mStats.grpActive++;

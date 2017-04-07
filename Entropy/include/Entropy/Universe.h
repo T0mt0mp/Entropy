@@ -96,6 +96,7 @@ namespace ent
 #endif
         /**
          * Register given System for this universe.
+         * Operation is finished on refresh.
          * @tparam ASystemT Type of the system, has to inherit from base ent::System.
          * @tparam CArgTs System constructor argument types.
          * @param args System constructor arguments, passed to the System on construction.
@@ -127,6 +128,7 @@ namespace ent
 
         /**
          * Add or get already created Entity group.
+         * Operation is finished on refresh.
          * The pointer is guaranteed to be valid as long as the
          * Universe is instantiated - the Group will not be
          * moved around.

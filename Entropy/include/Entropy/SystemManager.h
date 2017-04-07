@@ -9,7 +9,7 @@
 
 #include "Types.h"
 #include "Util.h"
-#include "EntityGroup.h"
+#include "GroupManager.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -51,12 +51,14 @@ namespace ent
          * @param uni Universe ptr.
          * @param cm Used for resolving Component filter.
          * @param gm Used for creating EntityGroups.
+         * @param em Used for adding metadata for EntityGroup.
          * @param cArgs Construct arguments.
          * @return Returns ptr to the constructed System.
          */
         template <typename SystemT,
                   typename... CArgTs>
         SystemT *addSystem(UniverseT *uni, const ComponentManager<UniverseT> &cm,
+                           EntityManager &em,
                            GroupManager<UniverseT> &gm, CArgTs... cArgs);
 
         /**

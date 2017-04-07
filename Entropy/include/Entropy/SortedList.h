@@ -131,6 +131,12 @@ namespace ent
         /// Explicitly sort the list.
         inline void sort();
 
+        auto back()
+        { return mList.back(); }
+
+        void popBack()
+        { mList.popBack(); }
+
         void clear()
         { return mList.clear(); }
 

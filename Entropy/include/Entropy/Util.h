@@ -637,10 +637,17 @@ namespace ent
         /**
          * Set bit on given position to given value (true by default).
          * @param pos Position of the bit.
-         * @param val Value to set.
          */
         InfoBitset &set(std::size_t pos)
         { setImpl(pos); return *this; }
+
+        /**
+         * Set bit on given position to given value (true by default).
+         * @param pos Position of the bit.
+         * @param val Value to set.
+         */
+        InfoBitset &set(std::size_t pos, bool val)
+        { setImpl(pos, val); return *this; }
 
         /// Set all bits to false.
         InfoBitset &reset()
@@ -760,6 +767,13 @@ namespace ent
         void setImpl(u64 pos);
 
         /**
+         * Set bit on given position to given value.
+         * @param pos Position of the bit.
+         * @param val The value.
+         */
+        void setImpl(u64 pos, bool val);
+
+        /**
          * Set all bits to false.
          */
         void resetImpl();
@@ -808,9 +822,13 @@ namespace ent
     using GroupBitset = InfoBitset<ENT_MAX_GROUPS + 1u>;
     static constexpr u64 ENT_ACTIVITY_BIT{ENT_MAX_GROUPS};
 
+    /// Bitset used for metadata storage.
+    using MetadataBitset = InfoBitset<ENT_BITSET_GROUP_SIZE>;
+
     /**
      * Get the next higher or equal number, which is power of two.
-     * @param value Value.
+     * Credit : user Larry Gritz on stackoverflow.com
+     * @param value Value to power2 round up.
      * @return Returns a number >= value, which is power of two.
      */
     static ENT_CONSTEXPR_FUN u64 pow2RoundUp(u64 value);

@@ -173,6 +173,15 @@ namespace ent
     }
 
     template <u64 N>
+    void InfoBitset<N>::setImpl(u64 pos, bool val)
+    {
+        BMBType &block(getBlock(memBlock(pos)));
+        //     | reset the tested bit | -> | set the requested value |
+        block = (block & (~bitMask(pos))) | (static_cast<BMBType>(val) << pos);
+    }
+
+
+    template <u64 N>
     void InfoBitset<N>::resetImpl()
     {
         std::memset(mMemory, BYTE_ZERO, NUM_USED_BYTES);

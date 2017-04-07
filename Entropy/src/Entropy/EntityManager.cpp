@@ -28,6 +28,11 @@ namespace ent
         initEntity(0u);
     }
 
+    void EntityHolder::refresh()
+    {
+
+    }
+
     EntityId EntityHolder::create()
     {
         EIdType index{0};

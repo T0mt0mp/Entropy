@@ -365,6 +365,11 @@ TU_Begin(EntropyEntity)
     }
 	*/
 
+    TU_Case(Misc0, "Miscellaneous tests")
+    {
+        TC_RequireEqual(ent::pow2RoundUp(0u), 0u);
+    }
+
     TU_Case(Universe0, "Testing the Universe class")
     {
         using Universe = FirstUniverse;

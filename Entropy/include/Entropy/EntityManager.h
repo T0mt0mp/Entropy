@@ -11,6 +11,7 @@
 #include "Types.h"
 #include "EntityId.h"
 #include "List.h"
+#include "EntityMetadata.h"
 
 /// Main Entropy namespace
 namespace ent
@@ -163,6 +164,11 @@ namespace ent
         void reset();
 
         /**
+         * Refresh the Entity metadata.
+         */
+        void refresh();
+
+        /**
          * Create a new Entity and return its ID.
          * @return Returns ID of the new Entity.
          */
@@ -313,6 +319,18 @@ namespace ent
          * @param andMask AND mask applied to the Group metadata.
          */
         inline void resetGroups(const GroupBitset &andMask);
+
+        /**
+         * Add metadata for new EntityGroup.
+         * @return Returns index of the metadata column.
+         */
+        inline u64 addGroup();
+
+        /**
+         * Remove EntityGroup metadata column.
+         * @param groupId Index of the column.
+         */
+        inline void removeGroup(u64 groupId);
     private:
         /**
          * Initialize Entity on given index to 0 values.
@@ -371,6 +389,10 @@ namespace ent
         EIdType mLastFree;
         /// Length of the free chain.
         u64 mNumFree;
+        /// Unused EntityGroup Ids.
+        ent::SortedList<u64, std::greater<u64>> mFreeGroupIds;
+        /// First Group ID not in use.
+        u64 mLastGroupId;
     protected:
     };
 
@@ -396,6 +418,12 @@ namespace ent
          */
         void reset()
         { mEntities.reset(); }
+
+        /**
+         * Refresh the Entity metadata.
+         */
+        void refresh()
+        { mEntities.refresh(); }
 
         /**
          * TODO - implement.
@@ -556,6 +584,20 @@ namespace ent
          */
         void resetGroups(const GroupBitset &andMask)
         { mEntities.resetGroups(andMask); }
+
+        /**
+         * Add metadata for new EntityGroup.
+         * @return Returns index of the metadata column.
+         */
+        u64 addGroup()
+        { return mEntities.addGroup(); }
+
+        /**
+         * Remove EntityGroup metadata column.
+         * @param groupId Index of the column.
+         */
+        void removeGroup(u64 groupId)
+        { mEntities.removeGroup(groupId); }
     private:
     protected:
         /// Container for the Entities.

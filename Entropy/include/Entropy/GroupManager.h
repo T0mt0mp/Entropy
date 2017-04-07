@@ -56,6 +56,7 @@ namespace ent
          * @tparam RequireT List of required Component types.
          * @tparam RejectT List of rejected Component types.
          * @param f Filter corresponding to the template parameters.
+         * @param em EntityManager used for adding Group metadata.
          * @return Returns ptr to the requested Entity Group. If the
          *   Group already exists, no new groups are created.
          * @remark Each time this method is called the corresponding usage
@@ -63,7 +64,7 @@ namespace ent
          */
         template<typename RequireT,
             typename RejectT>
-        inline EntityGroup *addGroup(const ComponentFilter &f);
+        inline EntityGroup *addGroup(const ComponentFilter &f, EntityManager &em);
 
         /**
          * Is there an EntityGroup with given filter?
@@ -158,10 +159,12 @@ namespace ent
          * Initialize group.
          * @tparam RequireT List of required Component types.
          * @tparam RejectT List of rejected Component types.
+         * @param f Group filter.
+         * @param em EntityManager used for adding Group metadata.
          */
         template<typename RequireT,
             typename RejectT>
-        inline void initGroup(const ComponentFilter &f);
+        inline void initGroup(const ComponentFilter &f, EntityManager &em);
 
         /**
          * Check, if there is no EntityGroup already using this
@@ -174,13 +177,6 @@ namespace ent
          *   with same filter.
          */
         inline bool checkGrpRedundancy(const ComponentFilter &f);
-
-        /**
-         * Get next available Group ID and remove it from
-         * the List of available IDs.
-         * @return Next Entity Group ID not in use.
-         */
-        inline u64 nextGroupId();
 
         /**
          * Remove inactive Groups from given list.
@@ -201,10 +197,6 @@ namespace ent
             return group;
         }
 
-        /// List of recycled EntityGroup IDs.
-        std::vector<u64> mFreeIds;
-        /// Last Entity Group ID in use.
-        u64 mLastUsedId;
         /// List of active EntityGroups, which are being refreshed.
         std::vector<EntityGroup*> mActiveGroups;
         /// List of newly created EntityGroups.

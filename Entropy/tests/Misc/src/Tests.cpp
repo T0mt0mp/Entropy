@@ -823,6 +823,168 @@ TU_Begin(EntropyMisc)
         }
     }
 
+    TU_Case(MetadataGroup0, "Testing the MetadataGroup class")
+    {
+        TC_RequireEqual(ent::pow2RoundUp(0u), 0u);
+        TC_RequireEqual(ent::pow2RoundUp(1u), 1u);
+
+        ent::MetadataGroup mg1;
+        ent::MetadataGroup mg2(1);
+        ent::MetadataGroup mg3(1, 1);
+        ent::MetadataGroup mg4(10, 10);
+        ent::MetadataGroup mg5(10, 64);
+        ent::MetadataGroup mg6(10, 65);
+
+        TC_RequireEqual(mg1.columns(), 0u);
+        TC_RequireEqual(mg1.rows(), 0u);
+        TC_RequireEqual(mg1.capacity(), 0u);
+        TC_RequireEqual(mg2.columns(), 1u);
+        TC_RequireEqual(mg2.rows(), 0u);
+        TC_RequireEqual(mg2.capacity(), 0u);
+        TC_RequireEqual(mg3.columns(), 1u);
+        TC_RequireEqual(mg3.rows(), 1u);
+        TC_RequireEqual(mg3.capacity(), ent::ENT_BITSET_GROUP_SIZE * 1u);
+        TC_RequireEqual(mg4.columns(), 10u);
+        TC_RequireEqual(mg4.rows(), 10u);
+        TC_RequireEqual(mg4.capacity(), ent::ENT_BITSET_GROUP_SIZE * 1u);
+        TC_RequireEqual(mg5.columns(), 10u);
+        TC_RequireEqual(mg5.rows(), 64u);
+        TC_RequireEqual(mg5.capacity(), ent::ENT_BITSET_GROUP_SIZE * 1u);
+        TC_RequireEqual(mg6.columns(), 10u);
+        TC_RequireEqual(mg6.rows(), 65u);
+        TC_RequireEqual(mg6.capacity(), ent::ENT_BITSET_GROUP_SIZE * 3u);
+
+        for (u64 col = 0; col < mg6.columns(); ++col)
+        {
+            for (ent::MetadataBitset *it = mg6.begin(col); it != mg6.end(col); ++it)
+            {
+                TC_Require(it->none());
+            }
+
+            u64 pos{0u};
+
+            ent::MetadataBitset &bs1(mg6.bitsetBit(pos, col, 0u));
+            TC_RequireEqual(pos, 0u);
+            TC_RequireEqual(bs1.testAndSet(pos, true), false);
+            ent::MetadataBitset &bs2(mg6.bitsetBit(pos, col, 1u));
+            TC_RequireEqual(pos, 1u);
+            TC_RequireEqual(bs2.testAndSet(pos, true), false);
+            ent::MetadataBitset &bs3(mg6.bitsetBit(pos, col, 64u));
+            TC_RequireEqual(pos, 0u);
+            TC_RequireEqual(bs3.testAndSet(pos, true), false);
+            ent::MetadataBitset &bs4(mg6.bitsetBit(pos, col, 127u));
+            TC_RequireEqual(pos, 63u);
+            TC_RequireEqual(bs4.testAndSet(pos, true), false);
+            ent::MetadataBitset &bs5(mg6.bitsetBit(pos, col, 128u));
+            TC_RequireEqual(pos, 0u);
+            TC_RequireEqual(bs5.testAndSet(pos, true), false);
+
+            TC_Require(&bs1 == &bs2);
+            TC_Require(&bs1 != &bs3);
+            TC_Require(&bs3 == &bs4);
+            TC_Require(&bs3 != &bs5);
+
+            TC_RequireEqual(bs1.count(), 2u);
+            TC_RequireEqual(bs3.count(), 2u);
+            TC_RequireEqual(bs5.count(), 1u);
+        }
+
+        mg6.pushBackRow();
+        TC_RequireEqual(mg6.columns(), 10u);
+        TC_RequireEqual(mg6.rows(), 66u);
+        TC_RequireEqual(mg6.capacity(), ent::ENT_BITSET_GROUP_SIZE * 3u);
+
+        for (u64 col = 0; col < mg6.columns(); ++col)
+        {
+            u64 pos{0u};
+
+            ent::MetadataBitset &bs1(mg6.bitsetBit(pos, col, 0u));
+            TC_RequireEqual(pos, 0u);
+            TC_RequireEqual(bs1.testAndSet(pos, true), true);
+            ent::MetadataBitset &bs2(mg6.bitsetBit(pos, col, 1u));
+            TC_RequireEqual(pos, 1u);
+            TC_RequireEqual(bs2.testAndSet(pos, false), true);
+            ent::MetadataBitset &bs3(mg6.bitsetBit(pos, col, 64u));
+            TC_RequireEqual(pos, 0u);
+            TC_RequireEqual(bs3.testAndSet(pos, true), true);
+            ent::MetadataBitset &bs4(mg6.bitsetBit(pos, col, 127u));
+            TC_RequireEqual(pos, 63u);
+            TC_RequireEqual(bs4.testAndSet(pos, false), true);
+            ent::MetadataBitset &bs5(mg6.bitsetBit(pos, col, 128u));
+            TC_RequireEqual(pos, 0u);
+            TC_RequireEqual(bs5.testAndSet(pos, true), true);
+
+            TC_Require(&bs1 == &bs2);
+            TC_Require(&bs1 != &bs3);
+            TC_Require(&bs3 == &bs4);
+            TC_Require(&bs3 != &bs5);
+
+            TC_RequireEqual(bs1.count(), 1u);
+            TC_RequireEqual(bs3.count(), 1u);
+            TC_RequireEqual(bs5.count(), 1u);
+        }
+
+        mg6.setColumns(12u);
+        TC_RequireEqual(mg6.columns(), 12u);
+        TC_RequireEqual(mg6.rows(), 66u);
+        TC_RequireEqual(mg6.capacity(), ent::ENT_BITSET_GROUP_SIZE * 2u);
+
+        for (u64 col = 0; col < mg6.columns(); ++col)
+        {
+            u64 pos{0u};
+
+            ent::MetadataBitset &bs1(mg6.bitsetBit(pos, col, 0u));
+            TC_RequireEqual(pos, 0u);
+            TC_RequireEqual(bs1.testAndSet(pos, true), col < 10);
+            ent::MetadataBitset &bs2(mg6.bitsetBit(pos, col, 1u));
+            TC_RequireEqual(pos, 1u);
+            TC_RequireEqual(bs2.testAndSet(pos, true), false);
+            ent::MetadataBitset &bs3(mg6.bitsetBit(pos, col, 64u));
+            TC_RequireEqual(pos, 0u);
+            TC_RequireEqual(bs3.testAndSet(pos, true), col < 10);
+            ent::MetadataBitset &bs4(mg6.bitsetBit(pos, col, 127u));
+            TC_RequireEqual(pos, 63u);
+            TC_RequireEqual(bs4.testAndSet(pos, true), false);
+
+            TC_Require(&bs1 == &bs2);
+            TC_Require(&bs1 != &bs3);
+            TC_Require(&bs3 == &bs4);
+
+            TC_RequireEqual(bs1.count(), 2u);
+            TC_RequireEqual(bs3.count(), 2u);
+        }
+
+        mg6.setColumns(1u);
+        TC_RequireEqual(mg6.columns(), 1u);
+        TC_RequireEqual(mg6.rows(), 66u);
+        TC_RequireEqual(mg6.capacity(), ent::ENT_BITSET_GROUP_SIZE * 2u);
+
+        for (u64 col = 0; col < mg6.columns(); ++col)
+        {
+            u64 pos{0u};
+
+            ent::MetadataBitset &bs1(mg6.bitsetBit(pos, col, 0u));
+            TC_RequireEqual(pos, 0u);
+            TC_RequireEqual(bs1.testAndSet(pos, true), true);
+            ent::MetadataBitset &bs2(mg6.bitsetBit(pos, col, 1u));
+            TC_RequireEqual(pos, 1u);
+            TC_RequireEqual(bs2.testAndSet(pos, true), true);
+            ent::MetadataBitset &bs3(mg6.bitsetBit(pos, col, 64u));
+            TC_RequireEqual(pos, 0u);
+            TC_RequireEqual(bs3.testAndSet(pos, true), true);
+            ent::MetadataBitset &bs4(mg6.bitsetBit(pos, col, 127u));
+            TC_RequireEqual(pos, 63u);
+            TC_RequireEqual(bs4.testAndSet(pos, true), true);
+
+            TC_Require(&bs1 == &bs2);
+            TC_Require(&bs1 != &bs3);
+            TC_Require(&bs3 == &bs4);
+
+            TC_RequireEqual(bs1.count(), 2u);
+            TC_RequireEqual(bs3.count(), 2u);
+        }
+    }
+
 TU_End(EntropyMisc)
 
 int main(int argc, char* argv[])

@@ -30,8 +30,6 @@ namespace ent
     void GroupManager<UT>::reset()
     {
         mActiveGroups.clear();
-        mFreeIds.clear();
-        mLastUsedId = 0u;
 
         for (auto &h : mDestructOnReset)
         {
@@ -43,11 +41,11 @@ namespace ent
     template <typename UT>
     template <typename RequireT,
         typename RejectT>
-    EntityGroup *GroupManager<UT>::addGroup(const ComponentFilter &f)
+    EntityGroup *GroupManager<UT>::addGroup(const ComponentFilter &f, EntityManager &em)
     {
         if (!hasGroup<RequireT, RejectT>())
         {
-            initGroup<RequireT, RejectT>(f);
+            initGroup<RequireT, RejectT>(f, em);
         }
 
         EntityGroup *result{getGroup<RequireT, RejectT>()};
@@ -279,7 +277,7 @@ namespace ent
     template <typename UT>
     template <typename RequireT,
         typename RejectT>
-    void GroupManager<UT>::initGroup(const ComponentFilter &f)
+    void GroupManager<UT>::initGroup(const ComponentFilter &f, EntityManager &em)
     {
         if (group<RequireT, RejectT>().constructed())
         { // Prevent double initialized Entity Groups.
@@ -294,14 +292,7 @@ namespace ent
                             "reject, but in different order)");
         }
 #endif
-        u64 grpId{nextGroupId()};
-        if (grpId >= ENT_MAX_GROUPS)
-        { // No more Groups can be created.
-            ENT_WARNING("No more Entity Groups can be created, increase the "
-                            "MAX_GROUPS number in \"Types.h\".");
-            mLastUsedId--;
-            return;
-        }
+        u64 grpId{em.addGroup()};
 
         // Create the EntityGroup.
         group<RequireT, RejectT>().construct(f, grpId);
@@ -325,24 +316,6 @@ namespace ent
         }
 
         return false;
-    }
-
-    template <typename UT>
-    u64 GroupManager<UT>::nextGroupId()
-    {
-        u64 result;
-
-        if (mFreeIds.empty())
-        {
-            result = mLastUsedId++;
-        }
-        else
-        {
-            result = mFreeIds.back();
-            mFreeIds.pop_back();
-        }
-
-        return result;
     }
 
     template <typename UT>
