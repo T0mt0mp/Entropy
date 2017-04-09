@@ -87,7 +87,7 @@ namespace ent
         template <typename ComponentT,
                   typename HolderT = typename HolderExtractor<ComponentT>::type,
                   typename... CArgTs>
-        inline u64 registerComponent(CArgTs... cArgs);
+        inline CIdType registerComponent(CArgTs... cArgs);
 
         /**
          * Add Component for given Entity.
@@ -159,17 +159,7 @@ namespace ent
          * @return ID of the Component type.
          */
         template <typename ComponentT>
-        inline u64 id() const;
-
-        /**
-         * Get bitset mask for given Component type.
-         * Mask contains at most one bit set to '1'.
-         * If there are no bits set to '1', then the Component has not been registered.
-         * @tparam ComponentT Type of the Component
-         * @return Bitset mask for given Component type.
-         */
-        template <typename ComponentT>
-        inline const ComponentBitset &mask() const;
+        inline CIdType id() const;
 
         /**
          * Check, if given Component type is registered in this manager.
@@ -178,15 +168,6 @@ namespace ent
          */
         template <typename ComponentT>
         inline bool registered() const;
-
-        /**
-         * Called when Entity gets destroyed, in order to notify
-         * holders, that they should delete corresponding Component.
-         * @param id ID of the Entity.
-         * @param components Bitset representing which Components
-         *   were present for destroyed Entity.
-         */
-        inline void entityDestroyed(EntityId id, const ComponentBitset &components);
     private:
         /**
          * Information about registered Component.
@@ -196,13 +177,11 @@ namespace ent
         struct ComponentRegister
         {
             ComponentRegister() :
-                mask{0u}, id{0u}
+                id{0u}
             { }
 
-            /// Mask of the Component.
-            ComponentBitset mask;
             /// ID of the Component.
-            u64 id;
+            CIdType id;
 
             /// Used for storing Component data.
             ConstructionHandler<HolderT> holder;
@@ -213,8 +192,11 @@ namespace ent
         { sComponentIdCounter = 0; }
 
         /// Get new unique Component ID and increment the counter.
-        static u64 compIdInc()
-        { return sComponentIdCounter++; }
+        static CIdType compIdInc()
+        {
+            ENT_ASSERT_FAST(sComponentIdCounter < ENT_MAX_COMPONENTS);
+            return sComponentIdCounter++;
+        }
 
         /**
          * Get ComponentHolder.
@@ -247,72 +229,9 @@ namespace ent
         std::vector<std::function<void()>> mDestructOnReset;
 
         /// Counter for Component IDs.
-        static u64 sComponentIdCounter;
+        static CIdType sComponentIdCounter;
     protected:
     }; // ComponentManager
-
-    /**
-     * ComponentFilter is used for filtering Entities by their present/missing Components.
-     */
-    class ComponentFilter final
-    {
-    public:
-        /**
-         * Create a filter from require and reject masks.
-         * @param require Which bits need to be true.
-         * @param reject Which bits must not be true, unless they are in the require mask.
-         */
-        ComponentFilter(const ComponentBitset &require,
-                        const ComponentBitset &reject) :
-            mRequire(require), mMask(require | reject) { }
-
-        /**
-         * Create a filter from require mask.
-         * @param require Which bits need to be true.
-         */
-        ComponentFilter(const ComponentBitset &require) :
-            mRequire(require), mMask(require) { }
-
-        /**
-         * Create a filter from require and reject masks.
-         * @param require Which bits need to be true.
-         * @param reject Which bits must not be true, unless they are in the require mask.
-         */
-        ComponentFilter(ComponentBitset&& require,
-                        ComponentBitset&& reject) :
-            mRequire(require), mMask(require | reject) { }
-
-        ComponentFilter(const ComponentFilter &rhs) :
-            mRequire{rhs.mRequire}, mMask{rhs.mMask} { }
-
-        ComponentFilter &operator=(const ComponentFilter &rhs)
-        {
-            mRequire = rhs.mRequire;
-            mMask = rhs.mMask;
-            return *this;
-        }
-
-        /**
-         * Check if the given bitset passes this filter.
-         * @param bitset Bitset to check.
-         * @return Returns true, if the bitset passes through this filter.
-         */
-        bool match(const ComponentBitset &bitset) const
-        { return (bitset & mMask) == mRequire; }
-
-        /// Comparison operator.
-        bool operator==(const ComponentFilter &rhs) const
-        { return (mRequire == rhs.mRequire) && (mMask == rhs.mMask); }
-
-        /// Print operator.
-        friend std::ostream &operator<<(std::ostream &out, const ComponentFilter &rhs);
-    private:
-        /// Bitset signifying which Component types need to be present.
-        ComponentBitset mRequire;
-        /// Bitset mask representing which bits are of interest.
-        ComponentBitset mMask;
-    protected:
-    };
 } // namespace ent
 
 #include "ComponentManager.inl"

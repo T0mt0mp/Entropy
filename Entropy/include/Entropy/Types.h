@@ -53,8 +53,12 @@ namespace ent
     using u64 = unsigned long long int;
     using i64 = signed long long int;
 
-    /// Entity ID type
+    /// Entity ID type.
     using EIdType = u32;
+
+    /// Component ID type.
+    using CIdType = u8;
+    static constexpr u64 ENT_MAX_COMPONENTS{std::numeric_limits<CIdType>::max()};
 
     /**
      * Number of bits in EID used for entity index.
@@ -79,11 +83,21 @@ namespace ent
     static_assert(EID_INDEX_BITS != 0 && EID_GEN_BITS != 0,
                   "Number of INDEX and GENERATION bits cannot be 0!");
 
-    /// Maximum number of component types per Universe.
-    static constexpr std::size_t ENT_MAX_COMPONENTS{64};
-    /// Maximum number of EntityGroups per Universe. +1 will be added for Entity flags.
-    static constexpr std::size_t ENT_MAX_GROUPS{63};
-    /// How many Entities share a single bitset, changes granularity of inner parallelism.
+    /**
+     * Number of bits in EntityGroup filters.
+     * The larger the number of bits is, the more
+     * Components can be used in filtering.
+     * Does not limit maximum number of Components.
+     * Some of the bits will be used for other
+     * filtering purposes.
+     * Should be multiple of 64.
+     */
+    static constexpr std::size_t ENT_GROUP_FILTER_BITS{64u};
+    /**
+     * How many Entities share a single bitset, changes
+     * granularity of inner parallelism.
+     * Should be multiple of 64.
+     */
     static constexpr std::size_t ENT_BITSET_GROUP_SIZE{64u};
     /// How much capacity should EntityHolder keep.
     static constexpr std::size_t ENT_PUSH_NUM{64u};

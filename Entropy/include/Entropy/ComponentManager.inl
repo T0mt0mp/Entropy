@@ -49,7 +49,7 @@ namespace ent
     template <typename ComponentT,
         typename HolderT,
         typename... CArgTs>
-    u64 ComponentManager<UT>::registerComponent(CArgTs... cArgs)
+    CIdType ComponentManager<UT>::registerComponent(CArgTs... cArgs)
     {
         static_assert(std::is_base_of<ent::BaseComponentHolder<ComponentT>, HolderT>::value,
                       "Component holder has to inherit from ent::BaseComponentHolder!");
@@ -92,16 +92,11 @@ namespace ent
         ENT_ASSERT_FAST(sComponentIdCounter < ENT_MAX_COMPONENTS);
         // Assign unique ID to the new Component.
         regInfo.id = compIdInc();
-        const u64 cId{id<ComponentT>()};
+        const CIdType cId{id<ComponentT>()};
         ENT_ASSERT_FAST(regInfo.id == cId);
 
         // Initialize the Component storage.
         regInfo.holder.construct(std::forward<CArgTs>(cArgs)...);
-
-        // Initialize Component mask.
-        ENT_ASSERT_FAST(regInfo.mask.none());
-        regInfo.mask.set(id<ComponentT>());
-        ENT_ASSERT_FAST(regInfo.mask == mask<ComponentT>());
 
         // Register the Component storage for refresh.
         mRefreshHolders.emplace_back(regInfo.holder.ptr());
@@ -115,7 +110,7 @@ namespace ent
 
     template <typename UT>
     template <typename ComponentT>
-    u64 ComponentManager<UT>::id() const
+    CIdType ComponentManager<UT>::id() const
     {
         ENT_ASSERT_SLOW(registered<ComponentT>());
         return componentInfo<ComponentT>()().id;
@@ -123,28 +118,8 @@ namespace ent
 
     template <typename UT>
     template <typename ComponentT>
-    const ComponentBitset &ComponentManager<UT>::mask() const
-    {
-        return componentInfo<ComponentT>()().mask;
-    }
-
-    template <typename UT>
-    template <typename ComponentT>
     bool ComponentManager<UT>::registered() const
     { return componentInfo<ComponentT>().constructed(); }
-
-    template <typename UT>
-    void ComponentManager<UT>::entityDestroyed(EntityId id, const ComponentBitset &components)
-    {
-        // TODO - find a better way, instead of a virtual call...
-        for (u64 index = 0; index < mRefreshHolders.size(); ++index)
-        {
-            if (components.test(index))
-            {
-                mRefreshHolders[index]->remove(id);
-            }
-        }
-    }
 
     template <typename UT>
     template <typename ComponentT>

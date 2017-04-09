@@ -192,10 +192,10 @@ namespace ent
          *   into this Group.
          * @param groupId ID of the group, starting at 0.
          */
-        inline EntityGroup(const ComponentFilter &filter, u64 groupId);
+        inline EntityGroup(const EntityFilter &filter, u64 groupId);
 
         /// Filter getter.
-        const ComponentFilter &filter() const
+        const EntityFilter &filter() const
         { return mFilter; }
 
         /// Group ID getter.

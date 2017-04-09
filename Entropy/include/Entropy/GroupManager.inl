@@ -186,46 +186,39 @@ namespace ent
     void GroupManager<UT>::checkEntities(const ent::SortedList<EntityId> &changed,
                               EntityManager &em)
     {
-        if (!mActiveGroups.empty())
-        {
-            for (const EntityId &id : changed)
-            {
-                // TODO - Rewrite, parallelize.
-                if (!em.active(id))
-                { // Destroyed Entity.
-                    const GroupBitset &groups(em.groups(id));
-                    for (EntityGroup *grp : mActiveGroups)
-                    {
-                        if (groups.test(grp->id()))
-                        { // Entity is leaving the Group.
-                            em.resetGroup(id, grp->id());
-                            grp->remove(id);
-                        }
-                    }
-                }
-                else
-                { // Entity with changed Components/activity.
-                    const ComponentBitset &components(em.components(id));
-                    const GroupBitset &groups(em.groups(id));
+        // TODO - Parallelize.
 
-                    for (EntityGroup *grp : mActiveGroups)
-                    {
-                        // Test, if the Entity matches Group filter.
-                        bool entityMatch{grp->filter().match(components)};
-                        // Test, if the Entity is withing this Group already.
-                        bool groupTest{groups.test(grp->id())};
-                        if (!groupTest && entityMatch)
-                        { // Entity is entering the Group.
-                            em.setGroup(id, grp->id());
-                            grp->add(id);
-                        }
-                        else if (groupTest && !entityMatch)
-                        { // Entity is leaving the Group.
-                            em.resetGroup(id, grp->id());
-                            grp->remove(id);
-                        }
-                        else
-                        { /* Nothing needs to be done. */ }
+        // Every Group has to check for changes in Entities.
+        for (EntityGroup *grp : mActiveGroups)
+        {
+            const EntityFilter &filter(grp->filter());
+            const u64 groupId{grp->id()};
+            for (EntityId id : changed)
+            {
+                // Tests, if the Entity has been destroyed
+                bool exists{em.valid(id)};
+                // Tests, if the Entity is currently in the Group.
+                bool inGroup{em.inGroup(id, groupId)};
+
+                if (!exists && inGroup)
+                { // Entity is within the Group, but has been destroyed.
+                    grp->remove(id);
+                    em.resetGroup(id, groupId);
+                }
+                else if (exists)
+                {
+                    FilterBitset entInfo{em.compressInfo(filter, id.index())};
+                    bool passed{filter.match(entInfo)};
+
+                    if (passed && !inGroup)
+                    { // Not in Group, but should be.
+                        grp->add(id);
+                        em.setGroup(id, groupId);
+                    }
+                    else if (!passed && inGroup)
+                    { // In Group, but shouldn't be.
+                        grp->remove(id);
+                        em.resetGroup(id, groupId);
                     }
                 }
             }
@@ -234,35 +227,35 @@ namespace ent
         // Some of the new Groups may not be in used any more...
         removeInactive(mNewGroups);
 
+        // TODO - maybe use block-wise parallelism?
         /*
          * New groups need to go through all active Entities and
          * test, if they belong into the new Group.
          */
-        if (!mNewGroups.empty())
+        for (EntityGroup *grp : mNewGroups)
         {
-            for (ActiveEntityIterator it = em.activeEntities();
-                 it.active(); ++it)
-            { // Over all active Entities.
-                for (EntityGroup *grp : mNewGroups)
-                { // Over all new Groups.
-                    bool entityMatch{grp->filter().match(it.record().comp())};
+            const EntityFilter &filter(grp->filter());
+            const u64 groupId{grp->id()};
+            ValidEntityIterator it{em.validEntities()};
 
-                    // Check, if the last Group has been cleaned.
-                    ENT_ASSERT_SLOW(!it.record().testGrp(grp->id()));
+            while (it.valid())
+            {
+                FilterBitset entInfo{em.compressInfo(filter, it.index())};
+                bool passed{filter.match(entInfo)};
 
-                    if (entityMatch)
-                    { // Entity is entering the Group.
-                        EntityId id{it.id()};
-                        em.setGroup(id, grp->id());
-                        grp->add(id);
-                    }
+                if (passed)
+                {
+                    EntityId id(it.index(), em.currentGen(it.index()));
+
+                    grp->add(id);
+                    em.setGroup(id, groupId);
                 }
             }
-
-            // Move the new Groups to the active list.
-            mActiveGroups.insert(mActiveGroups.end(), mNewGroups.begin(), mNewGroups.end());
-            mNewGroups.clear();
         }
+
+        // Move the new Groups to the active list.
+        mActiveGroups.insert(mActiveGroups.end(), mNewGroups.begin(), mNewGroups.end());
+        mNewGroups.clear();
     }
 
     template <typename UT>

@@ -9,6 +9,96 @@
 /// Main Entropy namespace
 namespace ent
 {
+    // ValidEntityIterator implementation.
+    ValidEntityIterator::ValidEntityIterator(const MetadataBitset *begin,
+                                             const MetadataBitset *end) :
+        mIt{begin}, mEnd{end}, mCurrentInd{0u}
+    { increment(); }
+
+    EIdType ValidEntityIterator::index() const
+    { return mCurrentInd; }
+
+    bool ValidEntityIterator::valid() const
+    { return mIt != mEnd; }
+
+    bool ValidEntityIterator::increment()
+    {
+        // TODO - refactor, rethink.
+
+        if (!valid())
+        { // Invalid stays invalid.
+            return false;
+        }
+
+        // Move onto the next index.
+        mCurrentInd++;
+
+        if (mCurrentInd % MetadataBitset::size() == 0u)
+        { // If we got into the next block.
+            // Move onto the next block.
+            ++mIt;
+
+            while (mIt != mEnd && !mIt->any())
+            { // Find the next block with valid Entities.
+                ++mIt;
+                mCurrentInd += MetadataBitset::size();
+            }
+
+            if (!valid())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // ValidEntityIterator implementation end.
+
+    // EntityFilter implementation.
+    EntityFilter::EntityFilter() :
+        mValue{0u}, mCompPos{0u},
+        mCompPosUsed{0u}
+    { }
+
+    void EntityFilter::setRequiredActivity(bool activity)
+    {
+        mValue.set(ACTIVITY_BIT, activity);
+    }
+
+    void EntityFilter::requireComponent(CIdType cId)
+    {
+        ENT_ASSERT_FAST(mCompPosUsed < ENT_GROUP_FILTER_BITS);
+        mValue.set(mCompPosUsed);
+        mCompPos[mCompPosUsed] = cId;
+    }
+
+    void EntityFilter::rejectComponent(CIdType cId)
+    {
+        ENT_ASSERT_FAST(mCompPosUsed < ENT_GROUP_FILTER_BITS);
+        // Zero initialized - should not be required.
+        //mValue.reset(mCompPosUsed);
+        mCompPos[mCompPosUsed] = cId;
+    }
+
+    bool EntityFilter::match(const FilterBitset &bitset) const
+    {
+        return mValue == bitset;
+    }
+
+    const CIdType *EntityFilter::compPositions() const
+    { return mCompPos; }
+
+    const u64 EntityFilter::compPositionsUsed() const
+    { return mCompPosUsed; }
+
+    std::ostream &operator<<(std::ostream &out, const EntityFilter &rhs)
+    {
+        out << "val: " << rhs.mValue;
+        return out;
+    }
+    // EntityFilter implementation end.
+
     // MetadataGroup implementation.
     MetadataGroup::MetadataGroup(u64 columns, u64 rows) :
         mColumns{0u}, mEntities{0u}, mEntityCapacity{0u},
@@ -343,14 +433,17 @@ namespace ent
         return EntityId(index, gen);
     }
 
-    void EntityMetadata::addComponent(EntityId id, u64 compId)
+    void EntityMetadata::addComponent(EntityId id, CIdType compId)
     { ENT_ASSERT_SLOW(validImpl(id)); setCompInd(id.index(), compId, true); }
 
-    void EntityMetadata::removeComponent(EntityId id, u64 compId)
+    void EntityMetadata::removeComponent(EntityId id, CIdType compId)
     { ENT_ASSERT_SLOW(validInd(id.index())); setCompInd(id.index(), compId, false); }
 
-    bool EntityMetadata::hasComponent(EntityId id, u64 compId) const
+    bool EntityMetadata::hasComponent(EntityId id, CIdType compId) const
     { ENT_ASSERT_SLOW(validInd(id.index())); return getCompInd(id.index(), compId); }
+
+    EIdType EntityMetadata::currentGen(EIdType index) const
+    { ENT_ASSERT_SLOW(validInd(index)); return genInd(index); }
 
     bool EntityMetadata::setActivity(EntityId id, bool activity)
     { ENT_ASSERT_SLOW(validImpl(id)); return setActivityInd(id.index(), activity); }
@@ -383,6 +476,9 @@ namespace ent
     bool EntityMetadata::active(EntityId id) const
     { return valid(id) && activityInd(id.index()); }
 
+    bool EntityMetadata::inGroup(EntityId id, u64 groupId) const
+    { ENT_ASSERT_SLOW(validInd(id.index())); getGroupInd(id.index(), groupId); }
+
     void EntityMetadata::setGroup(EntityId id, u64 groupId)
     { ENT_ASSERT_SLOW(validInd(id.index())); setGroupInd(id.index(), groupId, true); }
 
@@ -411,6 +507,32 @@ namespace ent
     {
         mMetadata.groups.setZero(groupId);
         mFreeGroupIds.insertUnique(groupId);
+    }
+
+    FilterBitset EntityMetadata::compressInfo(
+        const EntityFilter &filter, EIdType index) const
+    {
+        FilterBitset result{0u};
+
+        const CIdType *comps{filter.compPositions()};
+        u64 compSize{filter.compPositionsUsed()};
+
+        for (u64 iii = 0; iii < compSize; ++iii)
+        {
+            result.set(iii, getCompInd(index, comps[iii]));
+        }
+
+        result.set(EntityFilter::ACTIVITY_BIT, activityInd(index));
+
+        return result;
+    }
+
+    ValidEntityIterator EntityMetadata::validEntities() const
+    {
+        return ValidEntityIterator(
+            mMetadata.flags.begin(Flags::CREATED),
+            mMetadata.flags.end(Flags::CREATED)
+        );
     }
 
     EIdType EntityMetadata::pushEntity()
@@ -514,11 +636,11 @@ namespace ent
         return true;
     }
 
-    void EntityMetadata::setCompInd(EIdType index, u64 groupId, bool value)
-    { mMetadata.components.setBit(groupId, index, value); }
+    void EntityMetadata::setCompInd(EIdType index, CIdType compId, bool value)
+    { mMetadata.components.setBit(compId, index, value); }
 
-    bool EntityMetadata::getCompInd(EIdType index, u64 groupId) const
-    { return mMetadata.components.bit(groupId, index); }
+    bool EntityMetadata::getCompInd(EIdType index, CIdType compId) const
+    { return mMetadata.components.bit(compId, index); }
 
     bool EntityMetadata::validImpl(EntityId id) const
     { return validInd(id.index()) && validGen(id.index(), id.generation()); }

@@ -40,5 +40,11 @@ namespace ent
 
     ENT_CONSTEXPR_FUN EIdType EntityId::combineGenIndex(EIdType lGen, EIdType index)
     { return lGen | index; }
+
+    std::ostream &operator<<(std::ostream &out, const EntityId &id)
+    {
+        out << "E(" << id.index() << ":" << id.generation() << ")";
+        return out;
+    }
     // EntityId implementation end.
 } // namespace ent

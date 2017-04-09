@@ -668,7 +668,7 @@ namespace ent
         { return countImpl(); }
 
         /// Are all bits set to true?
-        bool all() const;
+        inline bool all() const;
 
         /// Are any bits set to true?
         bool any() const
@@ -699,27 +699,27 @@ namespace ent
          * Copy bits from other bitset.
          * @param other The other bitset.
          */
-        void copy(const InfoBitset &other);
+        inline void copy(const InfoBitset &other);
 
         /**
          * Swap bits between 2 bitsets.
          * @param other The other bitset.
          */
-        void swap(InfoBitset &other);
+        inline void swap(InfoBitset &other);
 
         /// Convert this bitset to string.
-        std::string toString() const;
+        inline std::string toString() const;
 
         /// Binary AND operator.
-        InfoBitset operator&(const InfoBitset &rhs) const;
-        InfoBitset &operator&=(const InfoBitset &rhs);
+        inline InfoBitset operator&(const InfoBitset &rhs) const;
+        inline InfoBitset &operator&=(const InfoBitset &rhs);
 
         /// Binary OR operator.
-        InfoBitset operator|(const InfoBitset &rhs) const;
-        InfoBitset &operator|=(const InfoBitset &rhs);
+        inline InfoBitset operator|(const InfoBitset &rhs) const;
+        inline InfoBitset &operator|=(const InfoBitset &rhs);
 
         /// Comparison operator.
-        bool operator==(const InfoBitset &rhs) const;
+        inline bool operator==(const InfoBitset &rhs) const;
 
         /// Comparison operator.
         bool operator!=(const InfoBitset &rhs) const
@@ -733,7 +733,7 @@ namespace ent
          * Move bits from other bitset.
          * @param other The other bitset.
          */
-        void move(InfoBitset &other)
+        inline void move(InfoBitset &other)
         { copy(other); }
 
         /**
@@ -753,48 +753,48 @@ namespace ent
          * @param val Value to copy.
          */
         template <typename T>
-        void fromVal(const T &val);
+        inline void fromVal(const T &val);
 
         /**
          * Set all bits to true.
          */
-        void setImpl();
+        inline void setImpl();
 
         /**
          * Set bit on given position to true.
          * @param pos Position of the bit.
          */
-        void setImpl(u64 pos);
+        inline void setImpl(u64 pos);
 
         /**
          * Set bit on given position to given value.
          * @param pos Position of the bit.
          * @param val The value.
          */
-        void setImpl(u64 pos, bool val);
+        inline void setImpl(u64 pos, bool val);
 
         /**
          * Set all bits to false.
          */
-        void resetImpl();
+        inline void resetImpl();
 
         /**
          * Set bit on given position to false.
          * @param pos Position of the bit.
          */
-        void resetImpl(u64 pos);
+        inline void resetImpl(u64 pos);
 
         /**
          * Count the number of bits set to true.
          * @return The number of bits set to true.
          */
-        u64 countImpl() const;
+        inline u64 countImpl() const;
 
         /**
          * Test the bits, if none of the are set to true.
          * @return Returns true iff none of the bits are set to true.
          */
-        bool noneImpl() const;
+        inline bool noneImpl() const;
 
         /**
          * Test bit on given position and return its value.
@@ -809,21 +809,17 @@ namespace ent
          * @param val The new value.
          * @return The old value.
          */
-        bool testAndSetImpl(std::size_t pos, bool val);
+        inline bool testAndSetImpl(std::size_t pos, bool val);
     protected:
         /// Memory blocks containing the bits.
         BMBType mMemory[NUM_BLOCKS];
     }; // InfoBitset
 
-    /// Bitset, where each bit represents either a present, or absent Component.
-    using ComponentBitset = InfoBitset<ENT_MAX_COMPONENTS>;
-
-    /// Bitset, where each bit represents Entity presence in a group. +1 for the activity flag.
-    using GroupBitset = InfoBitset<ENT_MAX_GROUPS + 1u>;
-    static constexpr u64 ENT_ACTIVITY_BIT{ENT_MAX_GROUPS};
-
     /// Bitset used for metadata storage.
     using MetadataBitset = InfoBitset<ENT_BITSET_GROUP_SIZE>;
+
+    /// Bitset used in EntityGroup filtering.
+    using FilterBitset = InfoBitset<ENT_GROUP_FILTER_BITS>;
 
     /**
      * Get the next higher or equal number, which is power of two.

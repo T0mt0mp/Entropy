@@ -73,7 +73,7 @@ namespace ent
         { return index() >= rhs.index(); }
 
         /// Print operator.
-        friend std::ostream &operator<<(std::ostream &out, const EntityId &id);
+        friend inline std::ostream &operator<<(std::ostream &out, const EntityId &id);
     private:
         /**
          * Take generation number aligned to the right (least significant bits) and

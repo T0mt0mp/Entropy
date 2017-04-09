@@ -20,6 +20,114 @@
 namespace ent
 {
     /**
+     * ComponentFilter is used for filtering Entities by their
+     * present/missing Components and activity.
+     */
+    class EntityFilter final : NonCopyable
+    {
+    public:
+        /// Bits used in other ways than the Component bits.
+        static constexpr u64 USED_BITS{1u};
+        /// Index of bit representing activity.
+        static constexpr u64 ACTIVITY_BIT{ENT_GROUP_FILTER_BITS - 1u};
+        /// Size of array containing mapping of Components.
+        static constexpr u64 COMP_POS_SIZE{ENT_GROUP_FILTER_BITS - USED_BITS};
+
+        /// Create empty filter.
+        inline EntityFilter();
+
+        /**
+         * Set the activity value (active or inactive) for this
+         * filter.
+         * @param activity The activity value.
+         */
+        inline void setRequiredActivity(bool activity);
+
+        /**
+         * Add new required Component type.
+         * @param cId ID of the Component.
+         */
+        inline void requireComponent(CIdType cId);
+
+        /**
+         * Add new rejected Component type.
+         * @param cId ID of the Component.
+         */
+        inline void rejectComponent(CIdType cId);
+
+        /**
+         * Check if the given bitset passes this filter.
+         * @param bitset Bitset to check.
+         * @return Returns true, if the bitset passes through this filter.
+         */
+        inline bool match(const FilterBitset &bitset) const;
+
+        /// Get array of Component positions.
+        const CIdType *compPositions() const;
+
+        /// Get number of used elements in the Component position array.
+        const u64 compPositionsUsed() const;
+
+        /// Print operator.
+        friend inline std::ostream &operator<<(std::ostream &out, const EntityFilter &rhs);
+    private:
+        /// Required value in order to pass this filter.
+        FilterBitset mValue;
+        /// List of Component position within the filter.
+        CIdType mCompPos[COMP_POS_SIZE];
+        /// How many Component bits are in use.
+        u64 mCompPosUsed;
+    protected:
+    }; // class EntityFilter
+
+    /**
+     * Iterator for read-only iteration over all valid
+     * Entities and their metadata.
+     */
+    class ValidEntityIterator
+    {
+    public:
+        /**
+         * Create iterator for given range.
+         * The range has to be over CREATED metadata
+         * bitsets.
+         * @param begin Starting iterator over
+         *   CREATED metadata bitsets.
+         * @param end End iterator over CREATED
+         *   metadata bitsets.
+         */
+        inline ValidEntityIterator(const MetadataBitset *begin,
+                                   const MetadataBitset *end);
+
+        /**
+         * Get the current valid Entity index.
+         * @return Returns index for valid Entity.
+         */
+        inline EIdType index() const;
+
+        /**
+         * Is this iterator currently valid?
+         * @return Returns true, if the iterator
+         *   has a valid next index value.
+         */
+        inline bool valid() const;
+
+        /**
+         * Move to the next valid index.
+         * @return Returns validity.
+         */
+        inline bool increment();
+    private:
+        /// Current state iterator.
+        const MetadataBitset *mIt;
+        /// End iterator.
+        const MetadataBitset *mEnd;
+        /// Current Entity index.
+        EIdType mCurrentInd;
+    protected:
+    }; // class ActiveEntityIterator
+
+    /**
      * Metadata group is a table with one or more
      * columns of metadata bitsets.
      * The number of columns can be changes on runtime.
@@ -376,7 +484,7 @@ namespace ent
          * @param numComponents Number of Component
          *   types.
          */
-        inline void init(u64 numComponents);
+        inline void init(CIdType numComponents);
 
         /**
          * Refresh the metadata.
@@ -394,14 +502,14 @@ namespace ent
          * @param id ID of the Entity.
          * @param compId Index of the Component.
          */
-        inline void addComponent(EntityId id, u64 compId);
+        inline void addComponent(EntityId id, CIdType compId);
 
         /**
          * Mark component as not present for given Entity.
          * @param id ID of the Entity.
          * @param compId Index of the Component.
          */
-        inline void removeComponent(EntityId id, u64 compId);
+        inline void removeComponent(EntityId id, CIdType compId);
 
         /**
          * Does given Entity have the Component?
@@ -409,7 +517,15 @@ namespace ent
          * @param compId Index of the Component.
          * @return Returns true, if the Component is present.
          */
-        inline bool hasComponent(EntityId id, u64 compId) const;
+        inline bool hasComponent(EntityId id, CIdType compId) const;
+
+        /**
+         * Get the current generation for given
+         * Entity index.
+         * @param index Index of the Entity.
+         * @return Returns the current generation.
+         */
+        inline EIdType currentGen(EIdType index) const;
 
         /**
          * Set activity of given Entity to
@@ -457,6 +573,15 @@ namespace ent
         inline bool active(EntityId id) const;
 
         /**
+         * Is given Entity in specified group?
+         * @param id ID of the Entity.
+         * @param groupId ID of the Entity Group.
+         * @return Returns true, if the Entity is in
+         *   specified Entity Group.
+         */
+        inline bool inGroup(EntityId id, u64 groupId) const;
+
+        /**
          * Set Entity group flag.
          * @param id ID of the Entity.
          * @param groupId ID of the group. Starting at 0.
@@ -480,7 +605,24 @@ namespace ent
          * Remove EntityGroup metadata column.
          * @param groupId Index of the column.
          */
-        inline void removeGroup(u64 groupId);
+        inline void removeGroup(EIdType groupId);
+
+        /**
+         * Create a compressed filter value used for
+         * filtering Entities.
+         * @param filter Filter which will be used.
+         * @param id Index of the Entity.
+         * @return Returns compressed filter value, which
+         *   can be used with provided filter.
+         */
+        inline FilterBitset compressInfo(
+            const EntityFilter &filter, EIdType id) const;
+
+        /**
+         * Get iterator for all valid Entities.
+         * @return Returns the iterator.
+         */
+        inline ValidEntityIterator validEntities() const;
     private:
         /**
          * Push new Entity to the metadata list.
@@ -616,7 +758,7 @@ namespace ent
          * @param compId Component ID.
          * @param value Presence information.
          */
-        inline void setCompInd(EIdType index, u64 compId, bool value);
+        inline void setCompInd(EIdType index, CIdType compId, bool value);
 
         /**
          * Get Component flag for given Entity.
@@ -624,7 +766,7 @@ namespace ent
          * @param compId Component ID.
          * @return Returns the flag.
          */
-        inline bool getCompInd(EIdType index, u64 compId) const;
+        inline bool getCompInd(EIdType index, CIdType compId) const;
 
         /**
          * Check if given Entity ID is valid.

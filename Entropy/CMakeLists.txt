@@ -81,8 +81,6 @@ set(ENTROPY_HEADERS
         )
 
 set(ENTROPY_SOURCES
-        ${ENTROPY_SOURCE_DIR}/Entropy/ComponentManager.cpp
-        ${ENTROPY_SOURCE_DIR}/Entropy/EntityId.cpp
         ${ENTROPY_SOURCE_DIR}/Entropy/EntityManager.cpp
         )
 

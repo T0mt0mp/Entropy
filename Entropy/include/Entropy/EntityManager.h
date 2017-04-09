@@ -425,6 +425,8 @@ namespace ent
         void refresh()
         { mEntities.refresh(); }
 
+#ifdef ENT_NOT_IMPLEMENTED
+
         /**
          * TODO - implement.
          * Try to create Entity with given ID (without generation), if
@@ -461,6 +463,8 @@ namespace ent
         EntityHolder::SequenceRecord createSequential(EIdType startId, u64 size)
         { return mEntities.createSequential(startId, size); }
 
+#endif
+
         /**
          * Mark component as present for given Entity.
          * @param id ID of the Entity.
@@ -485,6 +489,15 @@ namespace ent
          */
         bool hasComponent(EntityId id, u64 index) const
         { return mEntities.hasComponent(id, index); }
+
+        /**
+         * Get the current generation for given
+         * Entity index.
+         * @param index Index of the Entity.
+         * @return Returns the current generation.
+         */
+        EIdType currentGen(EIdType index) const
+        { return mEntities.currentGen(index); }
 
         /**
          * Set activity of given Entity to
@@ -540,20 +553,25 @@ namespace ent
         { return mEntities.active(id); }
 
         /**
-         * Get Component bitset for given Entity.
-         * @param id ID of the Entity.
-         * @return Returns reference to the bitset.
+         * Create a compressed filter value used for
+         * filtering Entities.
+         * @param filter Filter which will be used.
+         * @param id Index of the Entity.
+         * @return Returns compressed filter value, which
+         *   can be used with provided filter.
          */
-        const ComponentBitset &components(EntityId id) const
-        { return mEntities.components(id); }
+        FilterBitset compressInfo(const EntityFilter &filter, EIdType index) const
+        { return mEntities.compressInfo(filter, index); }
 
         /**
-         * Get Groups bitset for given Entity.
+         * Is given Entity in specified group?
          * @param id ID of the Entity.
-         * @return Returns reference to the bitset.
+         * @param groupId ID of the Entity Group.
+         * @return Returns true, if the Entity is in
+         *   specified Entity Group.
          */
-        const GroupBitset &groups(EntityId id)
-        { return mEntities.groups(id); }
+        bool inGroup(EntityId id, u64 groupId) const
+        { return mEntities.inGroup(id, groupId); }
 
         /**
          * Set Entity group flag.
@@ -572,18 +590,11 @@ namespace ent
         { mEntities.resetGroup(id, groupId); }
 
         /**
-         * Get iterator for all active Entities.
-         * @return Iterator for all active Entities.
+         * Get iterator for all valid Entities.
+         * @return Returns the iterator.
          */
-        ActiveEntityIterator activeEntities()
-        { return mEntities.activeEntities(); }
-
-        /**
-         * Apply andMask to the Group metadata.
-         * @param andMask AND mask applied to the Group metadata.
-         */
-        void resetGroups(const GroupBitset &andMask)
-        { mEntities.resetGroups(andMask); }
+        ValidEntityIterator validEntities() const
+        { return mEntities.validEntities(); }
 
         /**
          * Add metadata for new EntityGroup.
@@ -601,7 +612,7 @@ namespace ent
     private:
     protected:
         /// Container for the Entities.
-        EntityHolder mEntities;
+        EntityMetadata mEntities;
     };// EntityManager
 } // namespace ent
 
