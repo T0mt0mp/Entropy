@@ -162,6 +162,13 @@ namespace ent
         inline CIdType id() const;
 
         /**
+         * Get the number of registered Component types.
+         * @return Returns the number of currently
+         *   registered Component types.
+         */
+        inline CIdType numRegistered() const;
+
+        /**
          * Check, if given Component type is registered in this manager.
          * @tparam ComponentT Type of the Component.
          * @return Returns true, if the Component has been registered.

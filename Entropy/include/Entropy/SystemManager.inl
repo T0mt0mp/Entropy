@@ -59,12 +59,7 @@ namespace ent
             gm.template addGroup<
                 typename Extract::RequireT,
                 typename Extract::RejectT
-            >(gm.template buildFilter<
-                  typename Extract::RequireT,
-                  typename Extract::RejectT
-              >(cm), em
-            )
-        );
+            >(cm, em));
 
         mDestructOnReset.emplace_back(system<SystemT>().destructLater());
 
@@ -132,7 +127,7 @@ namespace ent
     { return mGroup->foreachRemoved(mUniverse); }
 
     template <typename UT>
-    const ComponentFilter &System<UT>::filter() const
+    const EntityFilter &System<UT>::filter() const
     { ENT_ASSERT_FAST(isInitialized()); return mGroup->filter(); }
 
     template <typename UT>

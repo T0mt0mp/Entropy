@@ -55,7 +55,8 @@ namespace ent
          * moved around.
          * @tparam RequireT List of required Component types.
          * @tparam RejectT List of rejected Component types.
-         * @param f Filter corresponding to the template parameters.
+         * @param cm ComponentManager used for generation of
+         *   filter, if required.
          * @param em EntityManager used for adding Group metadata.
          * @return Returns ptr to the requested Entity Group. If the
          *   Group already exists, no new groups are created.
@@ -64,7 +65,8 @@ namespace ent
          */
         template<typename RequireT,
             typename RejectT>
-        inline EntityGroup *addGroup(const ComponentFilter &f, EntityManager &em);
+        inline EntityGroup *addGroup(const ComponentManager<UniverseT> &cm,
+                                     EntityManager &em);
 
         /**
          * Is there an EntityGroup with given filter?
@@ -112,8 +114,9 @@ namespace ent
          */
         template <typename RequireT,
                   typename RejectT>
-        inline ComponentFilter buildFilter(const ComponentManager<UniverseT> &cm) const;
+        inline EntityFilter buildFilter(const ComponentManager<UniverseT> &cm) const;
     private:
+#ifdef ENT_NOT_USED
         /**
          * Build a filter bitset using template magic.
          * Takes a type list of Component types - ContainerT
@@ -125,6 +128,13 @@ namespace ent
          *   of Component types.
          */
         template<typename ContainerT>
+        struct FilterBuilder;
+#endif
+        /**
+         * Build a filter using template type list.
+         * @tparam ContainerT Container for the Component types.
+         */
+        template <typename ContainerT>
         struct FilterBuilder;
 
         /**
@@ -164,7 +174,7 @@ namespace ent
          */
         template<typename RequireT,
             typename RejectT>
-        inline void initGroup(const ComponentFilter &f, EntityManager &em);
+        inline void initGroup(const EntityFilter &f, EntityManager &em);
 
         /**
          * Check, if there is no EntityGroup already using this
@@ -176,7 +186,7 @@ namespace ent
          * @return Returns true, if there already is a EntityGroup
          *   with same filter.
          */
-        inline bool checkGrpRedundancy(const ComponentFilter &f);
+        inline bool checkGrpRedundancy(const EntityFilter &f);
 
         /**
          * Remove inactive Groups from given list.

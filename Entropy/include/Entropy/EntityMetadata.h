@@ -23,7 +23,7 @@ namespace ent
      * ComponentFilter is used for filtering Entities by their
      * present/missing Components and activity.
      */
-    class EntityFilter final : NonCopyable
+    class EntityFilter final
     {
     public:
         /// Bits used in other ways than the Component bits.
@@ -56,6 +56,15 @@ namespace ent
         inline void rejectComponent(CIdType cId);
 
         /**
+         * Add Component to this filter with specified
+         * required value.
+         * @param cId ID of the Component.
+         * @param required If true, the Component will
+         *   be required.
+         */
+        inline void addComponent(CIdType cId, bool required);
+
+        /**
          * Check if the given bitset passes this filter.
          * @param bitset Bitset to check.
          * @return Returns true, if the bitset passes through this filter.
@@ -63,14 +72,26 @@ namespace ent
         inline bool match(const FilterBitset &bitset) const;
 
         /// Get array of Component positions.
-        const CIdType *compPositions() const;
+        inline const CIdType *compPositions() const;
 
         /// Get number of used elements in the Component position array.
-        const u64 compPositionsUsed() const;
+        inline const u64 compPositionsUsed() const;
+
+        /// Compare 2 filters.
+        inline bool operator==(const EntityFilter &rhs) const;
 
         /// Print operator.
         friend inline std::ostream &operator<<(std::ostream &out, const EntityFilter &rhs);
     private:
+        /**
+         * Check, if the given Component positions array
+         * is the same as in this filter.
+         * The provided array has to be the same length.
+         * @param rhsCompPos The other array.
+         * @return Returns true, if they are the same.
+         */
+        inline bool compPosEqual(const CIdType *rhsCompPos) const;
+
         /// Required value in order to pass this filter.
         FilterBitset mValue;
         /// List of Component position within the filter.
@@ -95,9 +116,11 @@ namespace ent
          *   CREATED metadata bitsets.
          * @param end End iterator over CREATED
          *   metadata bitsets.
+         * @param last The end Entity index.
          */
         inline ValidEntityIterator(const MetadataBitset *begin,
-                                   const MetadataBitset *end);
+                                   const MetadataBitset *end,
+                                   EIdType last);
 
         /**
          * Get the current valid Entity index.
@@ -124,6 +147,8 @@ namespace ent
         const MetadataBitset *mEnd;
         /// Current Entity index.
         EIdType mCurrentInd;
+        /// Ending Entity index.
+        EIdType mEndInd;
     protected:
     }; // class ActiveEntityIterator
 
@@ -172,8 +197,6 @@ namespace ent
          * of the data from the old columns is copied
          * and the new column is zero initialized.
          * @param columns The new number of columns.
-         * @remarks If the requested number of columns
-         *   is zero, all rows are deleted!
          */
         inline void setColumns(u64 columns);
 
@@ -324,6 +347,7 @@ namespace ent
          *   bitset in requested column.
          */
         inline MetadataBitset *begin(u64 column);
+        inline MetadataBitset *begin(u64 column) const;
 
         /**
          * Get pointer one past the last bitset in
@@ -333,6 +357,7 @@ namespace ent
          *   bitset in requested column.
          */
         inline MetadataBitset *end(u64 column);
+        inline MetadataBitset *end(u64 column) const;
 
         /**
          * Get pointer to the beginning of bitset data.
@@ -605,7 +630,7 @@ namespace ent
          * Remove EntityGroup metadata column.
          * @param groupId Index of the column.
          */
-        inline void removeGroup(EIdType groupId);
+        inline void removeGroup(u64 groupId);
 
         /**
          * Create a compressed filter value used for
@@ -770,6 +795,7 @@ namespace ent
 
         /**
          * Check if given Entity ID is valid.
+         * Entity needs to be created in order to be valid.
          * @param id ID of the Entity.
          * @return Returns true, if the ID is valid.
          */
@@ -777,7 +803,6 @@ namespace ent
 
         /**
          * Check validity of given Entity index.
-         * Entity needs to be created in order to be valid.
          * @param index Index of the Entity.
          * @return Returns true, if the index is valid.
          */
@@ -824,7 +849,7 @@ namespace ent
         /// Contains the currently used metadata.
         MetadataContainer mMetadata;
         /// Indexes of free Entity IDs.
-        ent::List<EIdType> mFreeIndexes;
+        std::deque<EIdType> mFreeIndexes;
         /// Free EntityGroup indexes.
         ent::SortedList<u64, std::greater<u64>> mFreeGroupIds;
         /// How many new groups will be created on refresh.

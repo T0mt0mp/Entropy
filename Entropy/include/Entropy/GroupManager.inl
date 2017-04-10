@@ -41,17 +41,16 @@ namespace ent
     template <typename UT>
     template <typename RequireT,
         typename RejectT>
-    EntityGroup *GroupManager<UT>::addGroup(const ComponentFilter &f, EntityManager &em)
+    EntityGroup *GroupManager<UT>::addGroup(const ComponentManager<UT> &cm,
+                                            EntityManager &em)
     {
         if (!hasGroup<RequireT, RejectT>())
         {
-            initGroup<RequireT, RejectT>(f, em);
+            initGroup<RequireT, RejectT>(buildFilter<RequireT, RejectT>(cm), em);
         }
 
         EntityGroup *result{getGroup<RequireT, RejectT>()};
         result->incUsage();
-        // Check for correctly set filter on the Group.
-        ENT_ASSERT_FAST(result->filter() == f);
         return getGroup<RequireT, RejectT>();
     }
 
@@ -79,6 +78,7 @@ namespace ent
         return getGroup<RequireT, RejectT>()->abandon() == 0u;
     }
 
+#ifdef ENT_NOT_USED
     template <typename UT>
     template <template<typename...> typename ContainerT,
         typename FirstT,
@@ -122,15 +122,60 @@ namespace ent
             return ComponentBitset();
         }
     };
+#endif
+
+    template <typename UT>
+    template <template<typename...> typename ContainerT,
+                                    typename FirstT,
+                                    typename... RestTs>
+    struct GroupManager<UT>::FilterBuilder<ContainerT<FirstT, RestTs...>>
+    {
+        static void process(const ComponentManager<UT> &cm, EntityFilter &f, bool required)
+        {
+            FilterBuilder<ContainerT<RestTs...>> next;
+            if (cm.template registered<FirstT>())
+            {
+                CIdType typeId{cm.template id<FirstT>()};
+                f.addComponent(typeId, required);
+            }
+            next.process(cm, f, required);
+        }
+    };
+
+    template <typename UT>
+    template <template<typename...> typename ContainerT,
+                                    typename LastT>
+    struct GroupManager<UT>::FilterBuilder<ContainerT<LastT>>
+    {
+        static void process(const ComponentManager<UT> &cm, EntityFilter &f, bool required)
+        {
+            if (cm.template registered<LastT>())
+            {
+                CIdType typeId{cm.template id<LastT>()};
+                f.addComponent(typeId, required);
+            }
+        }
+    };
+
+    template <typename UT>
+    template<template<typename...> typename ContainerT>
+    struct GroupManager<UT>::FilterBuilder<ContainerT<>>
+    {
+        static void process(const ComponentManager<UT> &cm, EntityFilter &f, bool required)
+        { }
+    };
 
     template <typename UT>
     template <typename RequireT,
         typename RejectT>
-    ComponentFilter GroupManager<UT>::buildFilter(const ComponentManager<UT> &cm) const
+    EntityFilter GroupManager<UT>::buildFilter(const ComponentManager<UT> &cm) const
     {
-        FilterBuilder<RequireT> fbRequire;
-        FilterBuilder<RejectT> fbReject;
-        return ComponentFilter(fbRequire.value(cm), fbReject.value(cm));
+        EntityFilter result;
+        FilterBuilder<RequireT>{}.process(cm, result, true);
+        FilterBuilder<RejectT>{}.process(cm, result, false);
+        // TODO - make this flag changeable for user.
+        result.setRequiredActivity(true);
+        return result;
     }
 
     template <typename UT>
@@ -153,21 +198,15 @@ namespace ent
 
         u64 lastActive{mActiveGroups.size() - 1u};
 
-        // AND reset mask.
-        GroupBitset resetMask;
-        resetMask.set();
-
         /*
          * Look for Groups which are not in use and remove then.
-         * At the same time build AND reset mask, for resetting
-         * Entity metadata.
          */
         for (u64 index = 0; index <= lastActive; )
         {
             EntityGroup *grp{mActiveGroups[index]};
             if (!grp->inUse())
             { // Group needs to be removed.
-                resetMask.reset(grp->id());
+                em.removeGroup(grp->id());
                 // Swap-remove and decrement the number of active Groups.
                 std::swap(mActiveGroups[index], mActiveGroups[lastActive--]);
                 mActiveGroups.pop_back();
@@ -177,9 +216,6 @@ namespace ent
                 index++;
             }
         }
-
-        // Give Entity Manager the reset mask to reset Group metadata.
-        em.resetGroups(resetMask);
     }
 
     template <typename UT>
@@ -250,6 +286,8 @@ namespace ent
                     grp->add(id);
                     em.setGroup(id, groupId);
                 }
+
+                it.increment();
             }
         }
 
@@ -270,7 +308,7 @@ namespace ent
     template <typename UT>
     template <typename RequireT,
         typename RejectT>
-    void GroupManager<UT>::initGroup(const ComponentFilter &f, EntityManager &em)
+    void GroupManager<UT>::initGroup(const EntityFilter &f, EntityManager &em)
     {
         if (group<RequireT, RejectT>().constructed())
         { // Prevent double initialized Entity Groups.
@@ -298,7 +336,7 @@ namespace ent
     }
 
     template <typename UT>
-    bool GroupManager<UT>::checkGrpRedundancy(const ComponentFilter &filter)
+    bool GroupManager<UT>::checkGrpRedundancy(const EntityFilter &filter)
     {
         for (const EntityGroup *grp : mActiveGroups)
         {

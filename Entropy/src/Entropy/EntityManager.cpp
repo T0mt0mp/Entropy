@@ -9,6 +9,7 @@
 /// Main Entropy namespace
 namespace ent
 {
+#ifdef ENT_NOT_USED
     // EntityHolder implementation.
     EntityHolder::EntityHolder()
     {
@@ -115,4 +116,5 @@ namespace ent
         return {};
     }
     // EntityHolder implementation end.
+#endif
 } // namespace ent

@@ -10,7 +10,7 @@
 namespace ent
 {
     // EntityGroup implementation.
-    EntityGroup::EntityGroup(const ComponentFilter &filter, u64 groupId) :
+    EntityGroup::EntityGroup(const EntityFilter &filter, u64 groupId) :
         mFilter{filter},
         mId{groupId},
         mUsageCounter{0u}

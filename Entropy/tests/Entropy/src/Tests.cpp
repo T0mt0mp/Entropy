@@ -373,44 +373,64 @@ TU_Begin(EntropyEntity)
     TU_Case(Universe0, "Testing the Universe class")
     {
         using Universe = FirstUniverse;
-        Universe::UniverseT &u{Universe::instance()};
+        Universe::UniverseT u;
+        u.init();
         TC_Require(u.addSystem<FirstTestSystem>(1)->mNum == 1);
         TC_RequireNoException(u.removeSystem<FirstTestSystem>());
         u64 id1{(u.registerComponent<TestComponent1>(1))};
         u64 id2{(u.registerComponent<TestComponent2>(2))};
-        TC_RequireEqual(id1, 2u);
-        TC_RequireEqual(id2, 3u);
+        TC_RequireEqual(id1, 0u);
+        TC_RequireEqual(id2, 1u);
         TC_RequireEqual((TestComponentHolder<TestComponent1, int>::mInstantiated), 1u);
         TC_RequireEqual((TestComponentHolder<TestComponent1, int>::mNum), 1u);
         TC_RequireEqual((TestComponentHolder<TestComponent2, int>::mInstantiated), 1u);
         TC_RequireEqual((TestComponentHolder<TestComponent2, int>::mNum), 2u);
     }
 
-    TU_Case(ComponentBitset0, "Testing the ComponentBitset class")
+    TU_Case(FilterBitset0, "Testing the FilterBitset class")
     {
-        ent::ComponentBitset cbs;
+        ent::FilterBitset cbs;
         TC_Require(!cbs.any());
         TC_Require(cbs.none());
-        TC_Require(cbs.size() == ent::ENT_MAX_COMPONENTS);
+        TC_Require(cbs.size() == ent::ENT_GROUP_FILTER_BITS);
         cbs.set(0);
         TC_Require(cbs.test(0) == true && cbs.any());
         TC_Require(cbs.all() == false);
         TC_Require(cbs.none() == false);
         cbs.reset();
         TC_Require(cbs.none() == true);
-        ent::ComponentBitset cbs2(15);
+        ent::FilterBitset cbs2(15);
         TC_Require(cbs2.count() == 4);
     }
 
-    TU_Case(ComponentFilter0, "Testing the ComponentFilter class")
+    TU_Case(EntityFilter0, "Testing the EntityFilter class")
     {
-        ent::ComponentFilter filter(0b1010, 0b1100);
-        TC_Require(filter.match(0b1011));
-        TC_Require(filter.match(0b1010));
-        TC_Require(!filter.match(0b1111));
-        TC_Require(!filter.match(0b1001));
-        TC_Require(!filter.match(0b0000));
-        TC_Require(!filter.match(0b1100));
+        static constexpr u64 NUM_COMPS{ent::EntityFilter::COMP_POS_SIZE};
+        ent::EntityFilter filter;
+        ent::FilterBitset tester;
+        for (u64 iii = 0; iii < NUM_COMPS; ++iii)
+        {
+            bool val{iii % 2u};
+            filter.addComponent(iii, val);
+            tester.set(iii, val);
+        }
+
+        TC_RequireEqual(filter.compPositionsUsed(), NUM_COMPS);
+
+        for (u64 iii = 0; iii < NUM_COMPS; ++iii)
+        {
+            TC_RequireEqual(filter.compPositions()[iii], iii);
+        }
+
+        filter.setRequiredActivity(true);
+        tester.set(ent::EntityFilter::ACTIVITY_BIT, true);
+        TC_Require(filter.match(tester));
+
+        filter.setRequiredActivity(false);
+        TC_Require(!filter.match(tester));
+
+        tester.set(ent::EntityFilter::ACTIVITY_BIT, false);
+        TC_Require(filter.match(tester));
     }
 
     TU_Case(EntityId0, "Testing the EntityId class")
@@ -465,60 +485,64 @@ TU_Begin(EntropyEntity)
         TC_Require(ent22.universe() == un2 && ent22.id().index() == 1);
     }
 
-    TU_Case(EntityHolder0, "Testing the EntityHolder class")
+    TU_Case(EntityMetadata0, "Testing the EntityMetadata class")
     {
-        using ent::EntityHolder;
         using ent::EntityId;
+
         static constexpr u64 CREATE_NUM{100};
-        EntityHolder h1;
+        ent::EntityMetadata em1;
+        em1.init(0u);
 
         for (u64 iii = 1; iii <= CREATE_NUM; ++iii)
         {
-            TC_RequireEqual(h1.create(), EntityId(iii, 0));
-            TC_Require(h1.active(EntityId(iii, 0)));
+            TC_RequireEqual(em1.create(), EntityId(iii, 0));
+            TC_Require(em1.active(EntityId(iii, 0)));
         }
-        TC_Require(!h1.destroy(EntityId()));
+        TC_Require(!em1.destroy(EntityId()));
         for (u64 iii = 1; iii <= ent::ENT_MIN_FREE; ++iii)
         {
-            TC_RequireEqual(h1.create(), EntityId(CREATE_NUM + iii, 0));
-            TC_Require(h1.destroy(EntityId(iii, 0)));
+            TC_RequireEqual(em1.create(), EntityId(CREATE_NUM + iii, 0));
+            TC_Require(em1.destroy(EntityId(iii, 0)));
         }
-        TC_RequireEqual(h1.create(), EntityId(1, 1));
-        TC_RequireEqual(h1.create(), EntityId(CREATE_NUM + ent::ENT_MIN_FREE + 1, 0));
-        TC_Require(h1.valid(EntityId(1, 1)));
+        TC_RequireEqual(em1.create(), EntityId(1, 1));
+        TC_RequireEqual(em1.create(), EntityId(CREATE_NUM + ent::ENT_MIN_FREE + 1, 0));
+        TC_Require(em1.valid(EntityId(1, 1)));
         for (u64 iii = 2; iii <= ent::ENT_MIN_FREE; ++iii)
         {
-            TC_Require(!h1.valid(EntityId(iii, 0)));
+            TC_Require(!em1.valid(EntityId(iii, 0)));
         }
         for (u64 iii = ent::ENT_MIN_FREE + 1; iii <= CREATE_NUM + ent::ENT_MIN_FREE + 1; ++iii)
         {
-            TC_Require(h1.valid(EntityId(iii, 0)));
-            TC_Require(h1.active(EntityId(iii, 0)));
+            TC_Require(em1.valid(EntityId(iii, 0)));
+            TC_Require(em1.active(EntityId(iii, 0)));
         }
-        TC_Require(!h1.valid(EntityId(CREATE_NUM + ent::ENT_MIN_FREE + 2)));
+        TC_Require(!em1.valid(EntityId(CREATE_NUM + ent::ENT_MIN_FREE + 2)));
 
-        EntityHolder h2;
+        ent::EntityMetadata em2;
+        em2.init(0u);
         for (u64 iii = 1; iii <= 10; ++iii)
         {
-            TC_RequireEqual(h2.create(), EntityId(iii, 0));
+            TC_RequireEqual(em2.create(), EntityId(iii, 0));
         }
         for (u64 iii = 1; iii <= 10; ++iii)
         {
-            TC_Require(h2.valid(EntityId(iii, 0)));
-            TC_Require(h2.active(EntityId(iii, 0)));
-            h2.deactivate(EntityId(iii, 0));
-            TC_Require(h2.valid(EntityId(iii, 0)));
-            TC_Require(!h2.active(EntityId(iii, 0)));
-            h2.activate(EntityId(iii, 0));
-            TC_Require(h2.valid(EntityId(iii, 0)));
-            TC_Require(h2.active(EntityId(iii, 0)));
+            TC_Require(em2.valid(EntityId(iii, 0)));
+            TC_Require(em2.active(EntityId(iii, 0)));
+            em2.deactivate(EntityId(iii, 0));
+            TC_Require(em2.valid(EntityId(iii, 0)));
+            TC_Require(!em2.active(EntityId(iii, 0)));
+            em2.activate(EntityId(iii, 0));
+            TC_Require(em2.valid(EntityId(iii, 0)));
+            TC_Require(em2.active(EntityId(iii, 0)));
         }
     }
 
     TU_Case(EntityManager0, "Testing the EntityManager class")
     {
-        FirstUniverse::UniverseT  &u{FirstUniverse::instance()};
+        FirstUniverse::UniverseT u;
         using Entity = FirstUniverse::EntityT;
+
+        u.init();
 
         for (u64 iii = 1u; iii <= ent::ENT_MIN_FREE + 1; ++iii)
         {
@@ -547,14 +571,12 @@ TU_Begin(EntropyEntity)
 
     TU_Case(ComponentManager0, "Testing the ComponentHolder class")
     {
-        SecondUniverse::UniverseT &u{SecondUniverse::instance()};
+        SecondUniverse::UniverseT u;
         using Entity = SecondUniverse::EntityT;
         TC_RequireEqual(u.registerComponent<TestComponent<0>>(), 0u);
         TC_RequireEqual(u.registerComponent<TestComponent<1>>(), 1u);
         TC_RequireEqual(u.registerComponent<TestComponent<2>>(), 2u);
-        TC_RequireEqual(u.componentMask<TestComponent<0>>(), 1u);
-        TC_RequireEqual(u.componentMask<TestComponent<1>>(), 2u);
-        TC_RequireEqual(u.componentMask<TestComponent<2>>(), 4u);
+        u.init();
 
         for (u32 iii = 0; iii < 100; ++iii)
         {
@@ -616,13 +638,12 @@ TU_Begin(EntropyEntity)
 
     TU_Case(SystemManager0, "Testing the SystemManager class")
     {
-        SecondUniverse::UniverseT &u{SecondUniverse::instance()};
+        SecondUniverse::UniverseT u;
         TC_RequireEqual(u.registerComponent<TestComponent<0>>(), 0u);
         TC_RequireEqual(u.registerComponent<TestComponent<1>>(), 1u);
         TC_RequireEqual(u.registerComponent<TestComponent<2>>(), 2u);
-        TC_RequireEqual(u.componentMask<TestComponent<0>>(), 1u);
-        TC_RequireEqual(u.componentMask<TestComponent<1>>(), 2u);
-        TC_RequireEqual(u.componentMask<TestComponent<2>>(), 4u);
+
+        u.init();
 
         TestSystem *sys1 = u.addSystem<TestSystem>(1u);
         TestSystem2<0> *sys2 = u.addSystem<TestSystem2<0>>(2u);
@@ -636,9 +657,18 @@ TU_Begin(EntropyEntity)
         TC_Require(sys2->mNum == 2u);
         TC_Require(sys3->mNum == 3u);
 
-        TC_RequireEqual(sys1->getFilter(), ent::ComponentFilter({}, {}));
-        TC_RequireEqual(sys2->getFilter(), ent::ComponentFilter(1u, 2u));
-        TC_RequireEqual(sys3->getFilter(), ent::ComponentFilter(1u, 2u));
+        ent::FilterBitset tester;
+
+        tester.set(ent::EntityFilter::ACTIVITY_BIT, true);
+        TC_Require(sys1->getFilter().match(tester));
+
+        tester.set(0u, true);
+        TC_Require(sys2->getFilter().match(tester));
+        TC_Require(sys3->getFilter().match(tester));
+
+        tester.set(1u, true);
+        TC_Require(!sys2->getFilter().match(tester));
+        TC_Require(!sys3->getFilter().match(tester));
 
         TC_RequireEqual(sys1->getGroupId(), 0u);
         TC_RequireEqual(sys2->getGroupId(), 1u);
@@ -647,15 +677,13 @@ TU_Begin(EntropyEntity)
 
     TU_Case(ComplexTest0, "Testing Universe initialization")
     {
-        RealUniverse1::UniverseT &u{RealUniverse1::instance()};
+        RealUniverse1::UniverseT u;
 
         TC_RequireEqual(u.registerComponent<TestComponent<0>>(), 0u);
         TC_RequireEqual(u.registerComponent<TestComponent<1>>(), 1u);
         TC_RequireEqual(u.registerComponent<TestComponent<2>>(), 2u);
 
-        TC_RequireEqual(u.componentMask<TestComponent<0>>(), 1u);
-        TC_RequireEqual(u.componentMask<TestComponent<1>>(), 2u);
-        TC_RequireEqual(u.componentMask<TestComponent<2>>(), 4u);
+        u.init();
 
         RealTestSystem *sys1 = u.addSystem<RealTestSystem>(1u);
         RealTestSystem2<0> *sys2 = u.addSystem<RealTestSystem2<0>>(2u);
@@ -664,8 +692,6 @@ TU_Begin(EntropyEntity)
         TC_Require(sys1);
         TC_Require(sys2);
         TC_Require(sys3);
-
-        u.init();
 
         u.refresh();
     }
@@ -677,16 +703,16 @@ TU_Begin(EntropyEntity)
         using Universe = RealUniverse2::UniverseT;
         using Entity = RealUniverse2::EntityT;
 
-        Universe &u{RealUniverse2::instance()};
+        Universe u;
 
         TC_RequireEqual(u.registerComponent<Position>(), 0u);
         TC_RequireEqual(u.registerComponent<Velocity>(), 1u);
 
+        u.init();
+
         MovementSystem *sys{u.addSystem<MovementSystem>()};
         TC_Require(sys);
         TC_Require(sys->isInitialized());
-
-        u.init();
 
         TC_Require(sys->foreach().size() == 0);
 
@@ -792,6 +818,8 @@ TU_Begin(EntropyEntity)
 
             TC_RequireEqual(u.registerComponent<DestructionC>(), 0u);
 
+            u.init();
+
             TC_RequireEqual(Holder::sConstructed, 1u);
             TC_RequireEqual(Holder::sDestructed, 0u);
 
@@ -799,8 +827,6 @@ TU_Begin(EntropyEntity)
 
             TC_RequireEqual(DestructionSystem::sConstructed, 1u);
             TC_RequireEqual(DestructionSystem::sDestructed, 0u);
-
-            u.init();
 
             TC_Require(sys1->isInitialized());
             TC_RequireEqual(sys1->foreach().size(), 0u);
@@ -827,6 +853,8 @@ TU_Begin(EntropyEntity)
 
             TC_RequireEqual(u.registerComponent<DestructionC>(), 0u);
 
+            u.init();
+
             TC_RequireEqual(Holder::sConstructed, 2u);
             TC_RequireEqual(Holder::sDestructed, 1u);
 
@@ -834,8 +862,6 @@ TU_Begin(EntropyEntity)
 
             TC_RequireEqual(DestructionSystem::sConstructed, 2u);
             TC_RequireEqual(DestructionSystem::sDestructed, 1u);
-
-            u.init();
 
             TC_Require(sys2->isInitialized());
             TC_RequireEqual(sys1, sys2);
@@ -861,12 +887,15 @@ TU_Begin(EntropyEntity)
         {
             RealUniverse3 u;
             TC_RequireEqual(u.registerComponent<DestructionC>(), 0u);
+            u.init();
             TC_RequireEqual(u.addSystem<DestructionSystem>(), sys1);
             u.reset();
             TC_RequireEqual(u.registerComponent<DestructionC>(), 0u);
+            u.init();
             TC_RequireEqual(u.addSystem<DestructionSystem>(), sys1);
             u.reset();
             TC_RequireEqual(u.registerComponent<DestructionC>(), 0u);
+            u.init();
             TC_RequireEqual(u.addSystem<DestructionSystem>(), sys1);
         }
     }

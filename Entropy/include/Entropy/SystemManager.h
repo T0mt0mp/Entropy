@@ -143,7 +143,7 @@ namespace ent
         EntityList<UniverseT, EntityGroup::RemovedListT> foreachRemoved();
 
         /// Filter getter.
-        const ComponentFilter &filter() const;
+        const EntityFilter &filter() const;
 
         /// Group ID getter.
         u64 groupId() const;

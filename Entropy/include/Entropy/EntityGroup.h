@@ -305,7 +305,7 @@ namespace ent
         { std::swap(mEntities, mEntitiesBack); }
 
         /// Filter specifying which Entities belong into this group.
-        ComponentFilter mFilter;
+        EntityFilter mFilter;
         /// ID of this Group.
         u64 mId;
         /// List of Entities, corresponding with the filter.

@@ -191,16 +191,6 @@ namespace ent
         u64 registerComponent(CArgTs... args);
 
         /**
-         * Get bitset mask for given Component type.
-         * @tparam ComponentT Type of the Component.
-         * @return Mask containing one set bit. If the Component has not been registered the mask will contain
-         *   zero set bits.
-         * @remarks Thread-safe, if no other thread is registering Components.
-         */
-        template <typename ComponentT>
-        inline const ComponentBitset &componentMask() const;
-
-        /**
          * Check, if the given Component type has been registered.
          * @tparam ComponentT Type of the Component.
          * @return Returns true, if the Component has been registered.

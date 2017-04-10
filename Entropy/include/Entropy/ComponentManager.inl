@@ -12,7 +12,7 @@ namespace ent
 {
     // ComponentManager implementation.
     template <typename UT>
-    u64 ComponentManager<UT>::sComponentIdCounter{0};
+    CIdType ComponentManager<UT>::sComponentIdCounter{0};
 
     template <typename UT>
     ComponentManager<UT>::ComponentManager()
@@ -114,6 +114,12 @@ namespace ent
     {
         ENT_ASSERT_SLOW(registered<ComponentT>());
         return componentInfo<ComponentT>()().id;
+    }
+
+    template <typename UT>
+    CIdType ComponentManager<UT>::numRegistered() const
+    {
+        return sComponentIdCounter;
     }
 
     template <typename UT>

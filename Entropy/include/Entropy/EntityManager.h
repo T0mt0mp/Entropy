@@ -16,6 +16,7 @@
 /// Main Entropy namespace
 namespace ent
 {
+#ifdef ENT_NOT_USED
     /// Record about state of a single Entity
     class EntityRecord
     {
@@ -395,6 +396,7 @@ namespace ent
         u64 mLastGroupId;
     protected:
     };
+#endif
 
     /**
      * EntityManager is a part of Entropy ECS Universe.
@@ -412,6 +414,13 @@ namespace ent
          */
         EntityId create()
         { return mEntities.create(); }
+
+        /**
+         * Initialize Metadata.
+         * @param numComponents Number of Components.
+         */
+        void init(CIdType numComponents)
+        { mEntities.init(numComponents); }
 
         /**
          * Reset the Entities.

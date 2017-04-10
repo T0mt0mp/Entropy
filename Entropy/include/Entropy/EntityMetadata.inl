@@ -11,15 +11,16 @@ namespace ent
 {
     // ValidEntityIterator implementation.
     ValidEntityIterator::ValidEntityIterator(const MetadataBitset *begin,
-                                             const MetadataBitset *end) :
-        mIt{begin}, mEnd{end}, mCurrentInd{0u}
+                                             const MetadataBitset *end,
+                                             EIdType last) :
+        mIt{begin}, mEnd{end}, mCurrentInd{0u}, mEndInd{last}
     { increment(); }
 
     EIdType ValidEntityIterator::index() const
     { return mCurrentInd; }
 
     bool ValidEntityIterator::valid() const
-    { return mIt != mEnd; }
+    { return mCurrentInd != mEndInd && mIt != mEnd; }
 
     bool ValidEntityIterator::increment()
     {
@@ -70,7 +71,7 @@ namespace ent
     {
         ENT_ASSERT_FAST(mCompPosUsed < ENT_GROUP_FILTER_BITS);
         mValue.set(mCompPosUsed);
-        mCompPos[mCompPosUsed] = cId;
+        mCompPos[mCompPosUsed++] = cId;
     }
 
     void EntityFilter::rejectComponent(CIdType cId)
@@ -78,7 +79,14 @@ namespace ent
         ENT_ASSERT_FAST(mCompPosUsed < ENT_GROUP_FILTER_BITS);
         // Zero initialized - should not be required.
         //mValue.reset(mCompPosUsed);
-        mCompPos[mCompPosUsed] = cId;
+        mCompPos[mCompPosUsed++] = cId;
+    }
+
+    void EntityFilter::addComponent(CIdType cId, bool required)
+    {
+        ENT_ASSERT_FAST(mCompPosUsed < ENT_GROUP_FILTER_BITS);
+        mValue.set(mCompPosUsed, required);
+        mCompPos[mCompPosUsed++] = cId;
     }
 
     bool EntityFilter::match(const FilterBitset &bitset) const
@@ -91,6 +99,25 @@ namespace ent
 
     const u64 EntityFilter::compPositionsUsed() const
     { return mCompPosUsed; }
+
+    bool EntityFilter::operator==(const EntityFilter &rhs) const
+    {
+        return mCompPosUsed == rhs.mCompPosUsed &&
+               compPosEqual(rhs.mCompPos) &&
+               mValue == rhs.mValue;
+    }
+
+    bool EntityFilter::compPosEqual(const CIdType *rhsCompPos) const
+    {
+        for (u64 index = 0; index < mCompPosUsed; ++index)
+        {
+            if (mCompPos[index] != rhsCompPos[index])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 
     std::ostream &operator<<(std::ostream &out, const EntityFilter &rhs)
     {
@@ -129,12 +156,12 @@ namespace ent
         { // Nothing to be done.
             return;
         }
-        else if (rows == 0u)
+        else if (rows == 0u || columns == 0u)
         { // No data allocation needed.
             mData.reclaim();
             mColumns = columns;
-            mEntities = 0u;
-            mEntityCapacity = 0u;
+            mEntities = mEntities < rows ? mEntities : rows;
+            mEntityCapacity = rows;
             mColumnSize = 0u;
             return;
         }
@@ -184,6 +211,7 @@ namespace ent
 
     void MetadataGroup::pushBackRow()
     {
+        ENT_ASSERT_SLOW(mEntities < mEntityCapacity);
         reserve(mEntities++);
     }
 
@@ -196,7 +224,7 @@ namespace ent
     {
         std::pair<u64, u64> r{bitsetRowIndex(row)};
         u64 index{mColumnSize * column + r.first};
-        ENT_ASSERT_SLOW(row < mEntityCapacity && index < mData.size());
+        ENT_ASSERT_SLOW(row < mEntities && index < mData.size());
         return mData[index].test(r.second);
     }
 
@@ -204,7 +232,7 @@ namespace ent
     {
         std::pair<u64, u64> r{bitsetRowIndex(row)};
         u64 index{mColumnSize * column + r.first};
-        ENT_ASSERT_SLOW(row < mEntityCapacity && index < mData.size());
+        ENT_ASSERT_SLOW(row < mEntities && index < mData.size());
         mData[index].set(r.second);
     }
 
@@ -212,7 +240,7 @@ namespace ent
     {
         std::pair<u64, u64> r{bitsetRowIndex(row)};
         u64 index{mColumnSize * column + r.first};
-        ENT_ASSERT_SLOW(row < mEntityCapacity && index < mData.size());
+        ENT_ASSERT_SLOW(row < mEntities && index < mData.size());
         mData[index].set(r.second, val);
     }
 
@@ -220,7 +248,7 @@ namespace ent
     {
         std::pair<u64, u64> r{bitsetRowIndex(row)};
         u64 index{mColumnSize * column + r.first};
-        ENT_ASSERT_SLOW(row < mEntityCapacity && index < mData.size());
+        ENT_ASSERT_SLOW(row < mEntities && index < mData.size());
         return mData[index].testAndSet(r.second, val);
     }
 
@@ -228,7 +256,7 @@ namespace ent
     {
         std::pair<u64, u64> r{bitsetRowIndex(row)};
         u64 index{mColumnSize * column + r.first};
-        ENT_ASSERT_SLOW(row < mEntityCapacity && index < mData.size());
+        ENT_ASSERT_SLOW(row < mEntities && index < mData.size());
         mData[index].reset(r.second);
     }
 
@@ -236,7 +264,7 @@ namespace ent
     {
         std::pair<u64, u64> r{bitsetRowIndex(row)};
         u64 index{mColumnSize * column + r.first};
-        ENT_ASSERT_SLOW(row < mEntityCapacity && index < mData.size());
+        ENT_ASSERT_SLOW(row < mEntities && index < mData.size());
         bitIndex = r.second;
         return mData[index];
     }
@@ -322,11 +350,17 @@ namespace ent
     MetadataBitset *MetadataGroup::begin(u64 column)
     { ENT_ASSERT_SLOW(column < mColumns); return begin(column, mColumnSize, mData); }
 
+    MetadataBitset *MetadataGroup::begin(u64 column) const
+    { return const_cast<MetadataGroup*>(this)->begin(column); }
+
     MetadataBitset *MetadataGroup::begin(u64 column, u64 columnSize, ent::List<MetadataBitset> &data)
     { return begin(data) + column * columnSize; }
 
     MetadataBitset *MetadataGroup::end(u64 column)
     { ENT_ASSERT_SLOW(column < mColumns); return end(column, mColumnSize, mData); }
+
+    MetadataBitset *MetadataGroup::end(u64 column) const
+    { return const_cast<MetadataGroup*>(this)->end(column); }
 
     MetadataBitset *MetadataGroup::end(u64 column, u64 columnSize, ent::List<MetadataBitset> &data)
     { return begin(data) + (column + 1u) * columnSize; }
@@ -360,17 +394,18 @@ namespace ent
         mMetadata.flags.reset();
         mMetadata.generations.reclaim();
 
-        mFreeIndexes.reclaim();
+        mFreeIndexes.clear();
         mFreeGroupIds.reclaim();
         mNewGroupRequests = 0u;
     }
 
-    void EntityMetadata::init(u64 numComponents)
+    void EntityMetadata::init(CIdType numComponents)
     {
         mMetadata.components.setColumns(numComponents);
         mMetadata.flags.setColumns(Flags::NUM_FLAGS);
         // Create the first Entity, valid Entities start at 1.
         pushEntity();
+        ENT_ASSERT_FAST(mEntityLast == 1u);
     }
 
     void EntityMetadata::refresh()
@@ -397,10 +432,15 @@ namespace ent
         {
             mMetadata.groups.setColumns(finalGroups);
         }
+
+        mNewGroupRequests = 0u;
     }
 
     EntityId EntityMetadata::create()
     {
+        // If initialized, value should not be zero.
+        ENT_ASSERT_SLOW(mEntityLast);
+
         EIdType index{0u};
         EIdType gen{EntityId::START_GEN};
 
@@ -422,6 +462,7 @@ namespace ent
         else
         {
             index = pushEntity();
+            ENT_ASSERT_SLOW(index);
 
             createInd(index);
             activateInd(index);
@@ -477,7 +518,7 @@ namespace ent
     { return valid(id) && activityInd(id.index()); }
 
     bool EntityMetadata::inGroup(EntityId id, u64 groupId) const
-    { ENT_ASSERT_SLOW(validInd(id.index())); getGroupInd(id.index(), groupId); }
+    { ENT_ASSERT_SLOW(validInd(id.index())); return getGroupInd(id.index(), groupId); }
 
     void EntityMetadata::setGroup(EntityId id, u64 groupId)
     { ENT_ASSERT_SLOW(validInd(id.index())); setGroupInd(id.index(), groupId, true); }
@@ -496,7 +537,7 @@ namespace ent
         }
         else
         { // We will need to create a new one.
-            result = mMetadata.groups.columns();
+            result = mMetadata.groups.columns() + mNewGroupRequests;
             mNewGroupRequests++;
         }
 
@@ -531,7 +572,8 @@ namespace ent
     {
         return ValidEntityIterator(
             mMetadata.flags.begin(Flags::CREATED),
-            mMetadata.flags.end(Flags::CREATED)
+            mMetadata.flags.end(Flags::CREATED),
+            mEntityLast
         );
     }
 
@@ -547,29 +589,30 @@ namespace ent
             ENT_ASSERT_SLOW(mEntityCapacity == mMetadata.flags.rows());
             ENT_ASSERT_SLOW(mEntityCapacity == mMetadata.generations.size());
 
+            mMetadata.components.reserve(mEntityCapacity + ENT_PUSH_NUM);
+            mMetadata.groups.reserve(mEntityCapacity + ENT_PUSH_NUM);
+            mMetadata.flags.reserve(mEntityCapacity + ENT_PUSH_NUM);
+            mMetadata.generations.resize(mEntityCapacity + ENT_PUSH_NUM, 0u);
             mEntityCapacity += ENT_PUSH_NUM;
-            mMetadata.components.reserve(mEntityCapacity);
-            mMetadata.components.pushBackRow();
-            mMetadata.groups.reserve(mEntityCapacity);
-            mMetadata.groups.pushBackRow();
-            mMetadata.flags.reserve(mEntityCapacity);
-            mMetadata.flags.pushBackRow();
-            mMetadata.generations.resize(mEntityCapacity, 0u);
         }
+
+        mMetadata.groups.pushBackRow();
+        mMetadata.components.pushBackRow();
+        mMetadata.flags.pushBackRow();
 
         ENT_ASSERT_SLOW(mEntityLast < EntityId::MAX_INDEX);
         return mEntityLast++;
     }
 
     void EntityMetadata::pushFreeIndex(EIdType index)
-    { mFreeIndexes.pushBack(index); }
+    { mFreeIndexes.push_back(index); }
 
     EIdType EntityMetadata::popFreeIndex()
     {
         ENT_ASSERT_SLOW(mFreeIndexes.size());
 
-        EIdType result{mFreeIndexes.back()};
-        mFreeIndexes.popBack();
+        EIdType result{mFreeIndexes.front()};
+        mFreeIndexes.pop_front();
 
         return result;
     }
@@ -643,10 +686,10 @@ namespace ent
     { return mMetadata.components.bit(compId, index); }
 
     bool EntityMetadata::validImpl(EntityId id) const
-    { return validInd(id.index()) && validGen(id.index(), id.generation()); }
+    { return validInd(id.index()) && createdInd(id.index()) && validGen(id.index(), id.generation()); }
 
     bool EntityMetadata::validInd(EIdType index) const
-    { return index < mEntityLast && createdInd(index); }
+    { return index < mEntityLast; }
 
     bool EntityMetadata::validGen(EIdType index, EIdType gen) const
     { return genInd(index) == gen; }

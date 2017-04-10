@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 cmake_policy(VERSION 2.8)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 
-project(Entropy)
+project(Entropy C CXX)
 
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
@@ -81,10 +81,10 @@ set(ENTROPY_HEADERS
         )
 
 set(ENTROPY_SOURCES
-        ${ENTROPY_SOURCE_DIR}/Entropy/EntityManager.cpp
         )
 
-add_library(ENTROPY ${ENTROPY_SOURCES} ${ENTROPY_HEADERS})
+add_library(ENTROPY STATIC ${ENTROPY_SOURCES} ${ENTROPY_HEADERS})
+set_target_properties(ENTROPY PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(ENTROPY ${THREAD_LIB})
 
 # Testing

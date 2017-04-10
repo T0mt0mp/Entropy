@@ -9,6 +9,7 @@
 /// Main Entropy namespace
 namespace ent
 {
+#ifdef ENT_NOT_USED
     // EntityRecord implementation.
     void EntityRecord::reset()
     { std::memset(this, 0u, sizeof(EntityRecord)); }
@@ -228,4 +229,5 @@ namespace ent
         mFreeGroupIds.insertUnique(groupId);
     }
     // EntityHolder implementation end.
+#endif
 }

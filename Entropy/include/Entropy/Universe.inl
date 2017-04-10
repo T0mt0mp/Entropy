@@ -17,7 +17,11 @@ namespace ent
 
     template <typename T>
     Universe<T>::~Universe()
-    { }
+    {
+#ifdef ENT_STATS_ENABLED
+        mStats.reset();
+#endif
+    }
 
     template <typename T>
     void Universe<T>::init()
@@ -26,7 +30,10 @@ namespace ent
         {
             mStats.univInits++;
             ENT_CHECK_STATS(mStats);
+            ENT_ASSERT_FAST(mStats.compRegistered == mCM.numRegistered());
         }
+
+        mEM.init(mCM.numRegistered());
 
         refresh();
     }
@@ -56,7 +63,10 @@ namespace ent
         mAC.applyChangeSets(this);
 
         mCM.refresh();
+
         mGM.refresh(mChanged, mEM);
+
+        mChanged.clear();
     }
 
     template <typename T>
@@ -151,7 +161,7 @@ namespace ent
     {
         if (!mGM.template hasGroup<RequireT, RejectT>())
         {
-            mGM.template addGroup<RequireT, RejectT>(mGM.template buildFilter<RequireT, RejectT>(mCM), mEM);
+            mGM.template addGroup<RequireT, RejectT>(mCM, mEM);
             if (LOG_STATS)
             {
                 mStats.grpActive++;
@@ -203,11 +213,6 @@ namespace ent
 
         return cId;
     }
-
-    template <typename T>
-    template <typename ComponentT>
-    const ComponentBitset &Universe<T>::componentMask() const
-    { return mCM.template mask<ComponentT>(); }
 
     template <typename T>
     template <typename ComponentT>
@@ -561,7 +566,6 @@ namespace ent
 
         if (result)
         {
-            mCM.entityDestroyed(id, mEM.components(id));
             entityChanged(id);
         }
 

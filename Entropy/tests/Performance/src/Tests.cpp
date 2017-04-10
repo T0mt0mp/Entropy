@@ -78,12 +78,12 @@ TU_Begin(EntropyPerformance)
         universe.registerComponent<MediumComponent>();
         universe.registerComponent<LargeComponent>();
 
+        universe.init();
+
         emptySystem = universe.addSystem<EmptySystem>();
         smallSystem = universe.addSystem<SmallSystem>();
         mediumSystem = universe.addSystem<MediumSystem>();
         largeSystem = universe.addSystem<LargeSystem>();
-
-        universe.init();
     }
 
     TU_Teardown

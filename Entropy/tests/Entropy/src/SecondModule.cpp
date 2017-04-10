@@ -81,7 +81,7 @@ TU_Begin(EntropyEntityModule)
         PROF_SCOPE("UniverseSecondModule");
 
         using Universe = FirstUniverse;
-        Universe::UniverseT &u{Universe::instance()};
+        Universe::UniverseT u;
 
         u64 id1{(u.registerComponent<TestComponent3>())};
         u64 id2{(u.registerComponent<TestComponent4>(1))};

@@ -12,42 +12,18 @@
 
 class FirstUniverse : public ent::Universe<FirstUniverse>
 {
-public:
-    static UniverseT &instance()
-    {
-        static UniverseT u;
-        return u;
-    }
 };
 
 class SecondUniverse : public ent::Universe<SecondUniverse>
 {
-public:
-    static UniverseT &instance()
-    {
-        static UniverseT u;
-        return u;
-    }
 };
 
 class RealUniverse1 : public ent::Universe<RealUniverse1>
 {
-public:
-    static UniverseT &instance()
-    {
-        static UniverseT u;
-        return u;
-    }
 };
 
 class RealUniverse2 : public ent::Universe<RealUniverse2>
 {
-public:
-    static UniverseT &instance()
-    {
-        static UniverseT u;
-        return u;
-    }
 };
 
 class RealUniverse3 : public ent::Universe<RealUniverse3>
