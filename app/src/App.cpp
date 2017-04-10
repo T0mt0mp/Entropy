@@ -199,8 +199,6 @@ void App::run()
     TransformS *transformSystem{u.addSystem<TransformS>()};
     RenderS *renderSystem{u.addSystem<RenderS>()};
 
-    u.init();
-
     static constexpr f32 X_SPACE{3.0f};
     static constexpr u64 X_SIZE{30};
     static constexpr f32 X_START{-1.0f * ((X_SIZE - 1) * X_SPACE / 2.0f)};

@@ -29,6 +29,7 @@
 
 #include "util/Types.h"
 
+#include "testing/Testing.h"
 #include "ECS.h"
 
 #endif //ECS_FIT_TYPES_H

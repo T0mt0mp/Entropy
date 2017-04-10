@@ -18,9 +18,6 @@
 #include "GLSLProgram.h"
 #include "Camera.h"
 
-#include "Entropy/Entropy.h"
-#include "testing/Testing.h"
-
 /// Renderable triangle.
 class Triangle
 {

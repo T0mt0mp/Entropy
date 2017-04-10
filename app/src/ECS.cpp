@@ -14,4 +14,6 @@ void Universe::initialize()
     registerComponent<VelocityC>();
     registerComponent<RotSpeedC>();
     registerComponent<TransformC>();
+
+    init();
 }

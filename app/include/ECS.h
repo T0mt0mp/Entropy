@@ -9,6 +9,8 @@
 
 #include <glm/glm.hpp>
 
+#include "testing/Testing.h"
+
 #define NO_ENT_WARNING
 #include <Entropy/Entropy.h>
 
