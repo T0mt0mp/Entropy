@@ -91,7 +91,7 @@
   year=2017,             %rok odevzdání / year of submission
   date=\today,           %datum odevzdani / submission date
   %Nazev prace / thesis title
-  title.cs={Komponentní systém pro herní grafický engine},  %nazev prace v cestine ci slovenstine (dle zadani) / thesis title in czech language (according to assignment)
+  title.cs={Komponentní systém pro herní grafický \\engine},  %nazev prace v cestine ci slovenstine (dle zadani) / thesis title in czech language (according to assignment)
   title.en={Graphic Engine Based on Entity Component System}, %nazev prace v anglictine / thesis title in english
   %Autor / Author
   author={Tomáš Polášek},   %cele jmeno a prijmeni autora / full name and surname of the author
@@ -130,8 +130,7 @@
 
 %Abstrakt (cesky, slovensky ci anglicky) / Abstract (in czech, slovak or english)
 \abstract[cs]{Cílem této práce je návrh a implementace knihovny pro správu entit tvořených pomocí kompozice z menších částí. Součástí práce je analýza dnes používaných technik pro práci s entitami -- \emph{objektově orientovaná dědičnost}, \emph{objektově orientovaná kompozice} a \emph{datově orientovaná kompozice} -- a jejich porovnání. \\
-Práce představuje návrh komponentního systému a zdůvodnění vybraných rozhodnutí. Dále je představena implementace v programovacím jazyce \emph{C++}. Nakonec je ukázáno možné využití vytvořené knihovny a návrh hry za použití \emph{datově orientované kompozice}. \\
-Vytvořené řešení umožňuje dynamickou kompozici entit za běhu aplikace z komponent definovaných za jejího překladu. Navržený systém je možné začlenit do již existujících projektů, umožňuje paralelní přístup a je uživatelsky rozšiřitelný. \\
+Práce navrhuje komponentní systém pro jazyk C++, který je možno začlenit do existujících projektů. Vytvořené řešení umožňuje dynamickou kompozici entit za běhu aplikace z komponent definovaných za jejího překladu. Systém je navržen s ohledem na snadnou paralelizaci .Navržený systém je možné začlenit do již existujících projektů, umožňuje paralelní přístup a je uživatelsky rozšiřitelný. \\
 Výsledná knihovna umožňuje návrh aplikací za použití \emph{datově orientované kompozice}, bez nutnosti implementace vlastního systému.}
 \abstract[en]{The goal of this bachelor thesis is to design and implement a library for management of entities created using \emph{dat-oriented composition}. Analysis of the ways entities are used in todays software is performed -- \emph{object-oriented inheritance}, \emph{object-oriented composition} and \emph{data-oriented composition}. \\
 Possible design of such composition system is presented and chosen decisions are discussed. The aforementioned design is then implemented in the \emph{C++} programming language. In the end a demo game implementation is presented using the \emph{data-oriented composition} pattern. \\
@@ -169,6 +168,8 @@ Uvedl jsem všechny literární prameny a publikace, ze kterých jsem čerpal.}
   \maketitle
   % Obsah
   % ----------------------------------------------
+  \setcounter{tocdepth}{1}
+  \setcounter{secnumdepth}{1}
   \tableofcontents
   
   % Seznam obrazku a tabulek (pokud prace obsahuje velke mnozstvi obrazku, tak se to hodi)
