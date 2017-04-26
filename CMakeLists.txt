@@ -12,7 +12,8 @@ set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++1z -pedantic -Wall -Werror")
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -pedantic -Wall -Werror")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -pedantic -Wall -Werror")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
@@ -24,7 +25,8 @@ if(MSVC)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -pedantic -Wall -Werror")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -pedantic -Wall -Werror")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
@@ -32,10 +34,12 @@ endif()
 set(ECS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(ECS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-set(ENGINE_INCLUDE ${ECS_INCLUDE_DIR})
-
 add_subdirectory(external)
 add_subdirectory(Entropy)
+
+set(ENGINE_INCLUDE
+        ${ECS_INCLUDE_DIR}
+        ${ENTROPY_INCLUDE})
 
 # Engine library
 
@@ -82,12 +86,12 @@ set(ECS_SOURCES
         )
 
 add_library(ECS-FIT ${ECS_SOURCES} ${ECS_HEADERS})
-target_link_libraries(ECS-FIT ENTROPY)
-
-# Testing
-
-add_subdirectory(tests)
+#target_link_libraries(ECS-FIT ENTROPY)
 
 # Application
 
 add_subdirectory(app)
+
+# Testing
+
+add_subdirectory(tests)

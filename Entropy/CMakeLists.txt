@@ -86,6 +86,3 @@ set(ENTROPY_SOURCES
 add_library(ENTROPY STATIC ${ENTROPY_SOURCES} ${ENTROPY_HEADERS})
 set_target_properties(ENTROPY PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(ENTROPY ${THREAD_LIB})
-
-# Testing
-add_subdirectory(tests)

@@ -81,7 +81,7 @@ set(APP_HEADERS
         ${PROJECT_INCLUDE_DIR}/App.h)
 
 add_executable(${PROJECT_NAME} ${APP_SOURCES} ${APP_HEADERS})
-target_link_libraries(${PROJECT_NAME} ECS-FIT ${GL_LIB} glew_static glfw)
+target_link_libraries(${PROJECT_NAME} ECS-FIT ENTROPY ${GL_LIB} glew_static glfw)
 
 add_custom_target(
         copyShaders

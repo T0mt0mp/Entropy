@@ -5,3 +5,12 @@
 	path = app/external/glm
 	url = https://github.com/g-truc/glm
 	branch = 0.9.8
+[submodule "tests/Comparison/external/entityx"]
+	path = tests/Comparison/external/entityx
+	url = https://github.com/alecthomas/entityx
+[submodule "tests/Comparison/external/artemis"]
+	path = tests/Comparison/external/artemis
+	url = https://github.com/vinova/Artemis-Cpp
+[submodule "tests/Comparison/external/anax"]
+	path = tests/Comparison/external/anax
+	url = https://github.com/miguelmartin75/anax

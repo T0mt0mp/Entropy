@@ -100,7 +100,7 @@ namespace ent
      */
     static constexpr std::size_t ENT_BITSET_GROUP_SIZE{64u};
     /// How much capacity should EntityHolder keep.
-    static constexpr std::size_t ENT_PUSH_NUM{64u};
+    static constexpr std::size_t ENT_PUSH_NUM{256u};
 } // namespace ent
 
 #endif //ECS_FIT_TYPES_H

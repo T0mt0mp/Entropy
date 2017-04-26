@@ -173,6 +173,7 @@ namespace ent
         u64 realColumnSize{realSize / columns};
         // Real number or rows after allocation.
         u64 realRows{realColumnSize * ENT_PER_BITSET};
+        ENT_ASSERT_SLOW(rows <= realRows);
 
         decltype(mData) newData;
         newData.resize(realSize);
@@ -211,8 +212,8 @@ namespace ent
 
     void MetadataGroup::pushBackRow()
     {
-        ENT_ASSERT_SLOW(mEntities < mEntityCapacity);
-        reserve(mEntities++);
+        reserve(mEntities + 1u);
+        mEntities++;
     }
 
     bool MetadataGroup::inSameBitset(u64 first, u64 second) const

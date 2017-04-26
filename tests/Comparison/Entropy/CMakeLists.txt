@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 cmake_policy(VERSION 2.8)
 
-project(TestEntropyMisc)
-
-#add_definitions(-DDEBUGGER_PRESENT)
+project(ComparisonEntropy)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -12,12 +10,12 @@ set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 include_directories(${PROJECT_INCLUDE_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
-include_directories(${ENGINE_INCLUDE})
+include_directories(${COMMON_INCLUDE})
 
 set(TESTS_SOURCES
-        ${PROJECT_SOURCE_DIR}/Tests.cpp)
+        ${PROJECT_SOURCE_DIR}/Comp.cpp)
 set(TESTS_HEADERS
-        ${PROJECT_INCLUDE_DIR}/Tests.h)
+        ${PROJECT_INCLUDE_DIR}/Comp.h)
 
 add_executable(${PROJECT_NAME} ${TESTS_SOURCES} ${TESTS_HEADERS})
 target_link_libraries(${PROJECT_NAME} ECS-FIT ENTROPY)

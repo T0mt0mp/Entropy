@@ -416,6 +416,7 @@ namespace ent
     protected:
     }; // class ChangeSet
 
+#ifdef ENT_UNUSED
     /**
      * Used for aggregation of actions from parallel threads.
      */
@@ -450,6 +451,7 @@ namespace ent
         std::unique_ptr<ChangeSet> mCurrectChangeSet;
     protected:
     }; // class ActionsContainer
+#endif
 } // namespace ent
 
 #include "ChangeSet.inl"

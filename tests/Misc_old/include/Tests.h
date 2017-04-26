@@ -11,6 +11,4 @@
 
 #include "testing/Testing.h"
 
-#include <Entropy/Entropy.h>
-
 #endif //Tests_H
