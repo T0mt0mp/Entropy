@@ -157,4 +157,126 @@ namespace ent
         }
     }
     // ActionsCache implementation end.
+
+    // ChangedEntitiesHolder implementation.
+    template <typename UT>
+    std::mutex ChangedEntitiesHolder<UT>::sChangesMutex;
+    template <typename UT>
+    std::vector<std::pair<std::unique_ptr<SortedList<EntityId>>, bool>>
+        ChangedEntitiesHolder<UT>::sChanges;
+    template <typename UT>
+    SortedList<EntityId> ChangedEntitiesHolder<UT>::sResultList;
+
+    template <typename UT>
+    ChangedEntitiesHolder<UT>::ChangedEntitiesHolder() :
+        mChangedEntities{new SortedList<EntityId>}
+    {
+        registerList(mChangedEntities);
+    }
+
+    template <typename UT>
+    ChangedEntitiesHolder<UT>::~ChangedEntitiesHolder()
+    {
+        if (mChangedEntities)
+        {
+            unregisterList(mChangedEntities);
+        }
+    }
+
+    template <typename UT>
+    void ChangedEntitiesHolder<UT>::refresh()
+    {
+        std::lock_guard<std::mutex> g(sChangesMutex);
+
+        /*
+         * Delete the lists marked for removal, but
+         * call delete on them first.
+         */
+        sChanges.erase(std::remove_if(sChanges.begin(),
+                                      sChanges.end(),
+            [] (std::pair<std::unique_ptr<SortedList<EntityId>>, bool> &p)
+                                      {
+                                          /*
+                                          if (p.second)
+                                          {
+                                              delete p.first;
+                                          }
+                                           */
+                                          return p.second;
+                                      }
+        ), sChanges.end());
+    }
+
+    template <typename UT>
+    void ChangedEntitiesHolder<UT>::reset()
+    {
+        std::lock_guard<std::mutex> g(sChangesMutex);
+
+        for (auto &p : sChanges)
+        { // Clear the individual lists.
+            p.first->reclaim();
+        }
+        // TODO - What about the registered lists?
+
+        sResultList.reclaim();
+    }
+
+    template <typename UT>
+    void ChangedEntitiesHolder<UT>::entityChanged(EntityId id)
+    { mChangedEntities->insertUnique(id); }
+
+    template <typename UT>
+    SortedList<EntityId> &ChangedEntitiesHolder<UT>::createResultList()
+    {
+        std::lock_guard<std::mutex> g(sChangesMutex);
+
+        sResultList.clear();
+
+        if (sChanges.size())
+        {
+            // Get the content of the first list.
+            sResultList = (*(sChanges[0].first));
+
+            // TODO - optimized implementation.
+            for (u64 iii = 1; iii < sChanges.size(); ++iii)
+            { // Merge the rest into it.
+                for (EntityId id : (*sChanges[iii].first))
+                {
+                    sResultList.insertUnique(id);
+                }
+            }
+
+            // Clear the individual lists.
+            for (auto &p : sChanges)
+            {
+                p.first->clear();
+            }
+        }
+
+        return sResultList;
+    }
+
+    template <typename UT>
+    void ChangedEntitiesHolder<UT>::registerList(SortedList<EntityId> *list)
+    {
+        std::lock_guard<std::mutex> g(sChangesMutex);
+
+        sChanges.push_back(std::make_pair(
+            std::unique_ptr<SortedList<EntityId>>(list), false));
+    }
+
+    template <typename UT>
+    void ChangedEntitiesHolder<UT>::unregisterList(SortedList<EntityId> *list)
+    {
+        std::lock_guard<std::mutex> g(sChangesMutex);
+
+        for (auto &p : sChanges)
+        {
+            if (p.first.get() == list)
+            {
+                p.second = true;
+            }
+        }
+    }
+    // ChangedEntitiesHolder implementation end.
 } // namespace ent

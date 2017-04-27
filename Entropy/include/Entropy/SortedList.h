@@ -126,7 +126,7 @@ namespace ent
         template <typename SearchT>
         inline void erase(const SearchT &val);
 
-        inline void swap(SortedList &&other);
+        inline void swap(SortedList &other);
 
         /// Explicitly sort the list.
         inline void sort();

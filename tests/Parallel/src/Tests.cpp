@@ -86,9 +86,9 @@ TU_Begin(EntropyEntity)
 
         TC_Require(e.active());
 
-        TC_Require(ps->foreach().size() == 0u);
-        TC_Require(vs->foreach().size() == 0u);
-        TC_Require(pvs->foreach().size() == 1u);
+        TC_RequireEqual(ps->foreach().size(), 0u);
+        TC_RequireEqual(vs->foreach().size(), 0u);
+        TC_RequireEqual(pvs->foreach().size(), 1u);
 
         TC_Require(e.get<Position>()->x == 1.0f && e.get<Position>()->y == 1.0f);
         TC_Require(e.get<Velocity>()->x == 1.0f && e.get<Velocity>()->y == 1.0f);

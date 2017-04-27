@@ -640,7 +640,7 @@ namespace ent
     { setActivityInd(index, false); }
 
     bool EntityMetadata::setActivityInd(EIdType index, bool activity)
-    { return mMetadata.flags.testSetBit(Flags::ACTIVITY, index, activity); }
+    { return mMetadata.flags.testSetBit(Flags::ACTIVITY, index, activity) != activity; }
 
     EIdType &EntityMetadata::genInd(EIdType index)
     { return mMetadata.generations[index]; }

@@ -164,7 +164,7 @@ namespace ent
     }
 
     template <typename T, typename C, typename A>
-    void SortedList<T, C, A>::swap(SortedList &&other)
+    void SortedList<T, C, A>::swap(SortedList &other)
     {
         std::swap(mCmp, other.mCmp);
         std::swap(mList, other.mList);

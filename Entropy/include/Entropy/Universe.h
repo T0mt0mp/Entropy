@@ -644,7 +644,9 @@ namespace ent
         ActionsCache<UniverseT> mAC;
 
         /// List of changed Entities since the last refresh.
-        SortedList<EntityId> mChanged;
+        //static thread_local SortedList<EntityId> mChanged;
+        //SortedList<EntityId> mChanged;
+        static thread_local ChangedEntitiesHolder<UniverseT> tChanges;
     protected:
     }; // Universe
 } // namespace ent

@@ -11,6 +11,9 @@ namespace ent
 {
     // Universe implementation.
     template <typename T>
+    thread_local ChangedEntitiesHolder<Universe<T>> Universe<T>::tChanges;
+
+    template <typename T>
     Universe<T>::Universe() :
         mEM(), mCM(), mGM(), mSM(), mAC()
     { }
@@ -18,6 +21,7 @@ namespace ent
     template <typename T>
     Universe<T>::~Universe()
     {
+        tChanges.reset();
 #ifdef ENT_STATS_ENABLED
         mStats.reset();
 #endif
@@ -64,9 +68,15 @@ namespace ent
 
         mCM.refresh();
 
+        mGM.refresh(tChanges.createResultList(), mEM);
+
+        tChanges.refresh();
+
+        /*
         mGM.refresh(mChanged, mEM);
 
         mChanged.clear();
+         */
     }
 
     template <typename T>
@@ -77,12 +87,14 @@ namespace ent
         mGM.reset();
         mEM.reset();
         mCM.reset();
+        tChanges.refresh();
         resetSelf();
     }
 
     template <typename T>
     void Universe<T>::printStatus(std::ostream &out)
     {
+#ifdef ENT_NOT_USED
         out << "Information about Universe: \n";
 
         mStats.print(out);
@@ -105,6 +117,7 @@ namespace ent
             }
         }
         out << std::endl;
+#endif
     }
 
     template <typename T>
@@ -601,7 +614,7 @@ namespace ent
     template <typename T>
     void Universe<T>::resetSelf()
     {
-        mChanged.reclaim();
+        //mChanged.reclaim();
 #ifdef ENT_STATS_ENABLED
         mStats.reset();
 #endif
@@ -611,7 +624,8 @@ namespace ent
     void Universe<T>::entityChanged(EntityId id)
     {
         // TODO - Performance, sorted insert without moving immediately?
-        mChanged.insertUnique(id);
+        //mChanged.insertUnique(id);
+        tChanges.entityChanged(id);
     }
     // Universe implementation end.
 } // namespace ent
