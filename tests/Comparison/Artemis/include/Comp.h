@@ -37,18 +37,32 @@ struct MovementC : public artemis::Component
 class MovementSystem : public artemis::EntityProcessingSystem
 {
 public:
-    MovementSystem();
+    MovementSystem(artemis::World *world);
+    virtual void initialize();
+    virtual void processEntity(artemis::Entity &e);
+private:
+    artemis::ComponentMapper<PositionC> mPosMapper;
+    artemis::ComponentMapper<MovementC> mMovMapper;
+protected:
+};
+
+class PositionSystem : public artemis::EntityProcessingSystem
+{
+public:
+    PositionSystem(artemis::World *world, std::mt19937_64 &rng,
+                   std::uniform_real_distribution<f64> &uniform, float percentage);
     virtual void initialize();
     virtual void processEntity(artemis::Entity &e);
 
-    static void setWorld(artemis::World *world);
-
-    static std::size_t sCounter;
+    std::size_t counter1{0u};
+    std::size_t counter2{0u};
 private:
     artemis::ComponentMapper<PositionC> mPosMapper;
     artemis::ComponentMapper<MovementC> mMovMapper;
 
-    static artemis::World *sWorld;
+    const float mPercentage;
+    std::mt19937_64 &mRng;
+    std::uniform_real_distribution<f64> &mUniform;
 protected:
 };
 

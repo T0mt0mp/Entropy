@@ -10,8 +10,10 @@
 namespace ent
 {
     // Universe implementation.
+#ifdef ENT_THREADED_CHANGES
     template <typename T>
     thread_local ChangedEntitiesHolder<Universe<T>> Universe<T>::tChanges;
+#endif
 
     template <typename T>
     Universe<T>::Universe() :
@@ -21,7 +23,9 @@ namespace ent
     template <typename T>
     Universe<T>::~Universe()
     {
+#ifdef ENT_THREADED_CHANGES
         tChanges.reset();
+#endif
 #ifdef ENT_STATS_ENABLED
         mStats.reset();
 #endif
@@ -68,15 +72,15 @@ namespace ent
 
         mCM.refresh();
 
+#ifdef ENT_THREADED_CHANGES
         mGM.refresh(tChanges.createResultList(), mEM);
 
         tChanges.refresh();
-
-        /*
+#else
         mGM.refresh(mChanged, mEM);
 
         mChanged.clear();
-         */
+#endif
     }
 
     template <typename T>
@@ -87,7 +91,9 @@ namespace ent
         mGM.reset();
         mEM.reset();
         mCM.reset();
+#ifdef ENT_THREADED_CHANGES
         tChanges.refresh();
+#endif
         resetSelf();
     }
 
@@ -614,7 +620,9 @@ namespace ent
     template <typename T>
     void Universe<T>::resetSelf()
     {
-        //mChanged.reclaim();
+#ifndef ENT_THREADED_CHANGES
+        mChanged.reclaim();
+#endif
 #ifdef ENT_STATS_ENABLED
         mStats.reset();
 #endif
@@ -624,8 +632,11 @@ namespace ent
     void Universe<T>::entityChanged(EntityId id)
     {
         // TODO - Performance, sorted insert without moving immediately?
-        //mChanged.insertUnique(id);
+#ifdef ENT_THREADED_CHANGES
         tChanges.entityChanged(id);
+#else
+        mChanged.insertUnique(id);
+#endif
     }
     // Universe implementation end.
 } // namespace ent

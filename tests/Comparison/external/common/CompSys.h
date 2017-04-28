@@ -11,6 +11,9 @@
 
 using CompFun = void(*)(int argc, char *argv[]);
 
+/// Number used as a random seed
+static constexpr std::size_t RANDOM_SEED{4007};
+
 /*
  * Prototypes of called comparison functions.
  */
@@ -18,14 +21,19 @@ using CompFun = void(*)(int argc, char *argv[]);
 // 3 parameters for number of entities created - start, delta and max
 void createEntities(int argc, char *argv[]);
 
-// 4 parameters number of entities, number of repeats
+// 5 parameters number of entities, number of repeats
 // and percentage in use - start, delta and max
 void movementSystem(int argc, char *argv[]);
+
+// 5 parameters number of entities, number of repeats
+// and percentage to change - start, delta and max
+void advancedMovementSystem(int argc, char *argv[]);
 
 // Mapping for the functions.
 static constexpr CompFun functions[] = {
     createEntities,
-    movementSystem
+    movementSystem,
+    advancedMovementSystem
 };
 static constexpr std::size_t numFunctions()
 { return sizeof(functions) / sizeof(CompFun); }

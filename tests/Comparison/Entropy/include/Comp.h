@@ -14,6 +14,7 @@
 
 #define NO_ENT_WARNING
 #define NDEBUG
+#define ENT_THREADED_CHANGES
 #include <Entropy/Entropy.h>
 
 struct PositionC
@@ -47,6 +48,11 @@ class Universe : public ent::Universe<Universe>
 public:
 private:
 protected:
+};
+
+struct PositionSystem : public Universe::SystemT
+{
+    using Require = ent::Require<PositionC>;
 };
 
 struct MovementSystem : public Universe::SystemT

@@ -43,4 +43,13 @@ private:
 protected:
 };
 
+class PositionSystem : public anax::System<anax::Requires<PositionC>>
+{
+public:
+    const std::vector<anax::Entity> &foreach()
+    { return getEntities(); }
+private:
+protected:
+};
+
 #endif //COMP_H
