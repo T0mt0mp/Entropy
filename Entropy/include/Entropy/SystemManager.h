@@ -130,10 +130,26 @@ namespace ent
         EntityList<UniverseT, EntityGroup::EntityListT> foreach();
 
         /**
+         * Get object used for parallel iteration over Entities.
+         * @param numThreads How many threads will be used.
+         * @return Returns the generator object, which can be used (forThread method) to
+         *   get the iteration objects.
+         */
+        EntityListParallel<UniverseT, EntityGroup::EntityListT, false> foreachP(u64 numThreads);
+
+        /**
          * Iterator for iterating trough Entities which were added since the last refresh.
          * @return Returns iterator for iterating through Entities which were added since the last refresh.
          */
         EntityList<UniverseT, EntityGroup::AddedListT> foreachAdded();
+
+        /**
+         * Get object used for parallel iteration over added Entities.
+         * @param numThreads How many threads will be used.
+         * @return Returns the generator object, which can be used (forThread method) to
+         *   get the iteration objects.
+         */
+        EntityListParallel<UniverseT, EntityGroup::AddedListT, false> foreachAddedP(u64 numThreads);
 
         /**
          * Iterator for iterating trough Entities which were removed since the last refresh.
@@ -141,6 +157,14 @@ namespace ent
          * @return Returns iterator for iterating through Entities which were removed since the last refresh.
          */
         EntityList<UniverseT, EntityGroup::RemovedListT> foreachRemoved();
+
+        /**
+         * Get object used for parallel iteration over removed Entities.
+         * @param numThreads How many threads will be used.
+         * @return Returns the generator object, which can be used (forThread method) to
+         *   get the iteration objects.
+         */
+        EntityListParallel<UniverseT, EntityGroup::RemovedListT, false> foreachRemovedP(u64 numThreads);
 
         /// Filter getter.
         const EntityFilter &filter() const;

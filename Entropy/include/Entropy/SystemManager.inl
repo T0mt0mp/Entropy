@@ -119,12 +119,24 @@ namespace ent
     { return mGroup->foreach(mUniverse); }
 
     template <typename UT>
+    EntityListParallel<UT, EntityGroup::EntityListT, false> System<UT>::foreachP(u64 numThreads)
+    { return mGroup->foreachP(mUniverse, numThreads); }
+
+    template <typename UT>
     EntityList<UT, EntityGroup::AddedListT> System<UT>::foreachAdded()
     { return mGroup->foreachAdded(mUniverse); }
 
     template <typename UT>
+    EntityListParallel<UT, EntityGroup::AddedListT, false> System<UT>::foreachAddedP(u64 numThreads)
+    { return mGroup->foreachAddedP(mUniverse, numThreads); }
+
+    template <typename UT>
     EntityList<UT, EntityGroup::RemovedListT> System<UT>::foreachRemoved()
     { return mGroup->foreachRemoved(mUniverse); }
+
+    template <typename UT>
+    EntityListParallel<UT, EntityGroup::RemovedListT, false> System<UT>::foreachRemovedP(u64 numThreads)
+    { return mGroup->foreachRemovedP(mUniverse, numThreads); }
 
     template <typename UT>
     const EntityFilter &System<UT>::filter() const

@@ -299,6 +299,8 @@ TU_Begin(EntropyEntity)
             threads[iii].join();
         }
 
+        threads.clear();
+
         PROF_BLOCK("Refresh");
         u.refresh();
         PROF_BLOCK_END();
@@ -306,6 +308,44 @@ TU_Begin(EntropyEntity)
         TC_RequireEqual(ps->foreach().size(), 0u);
         TC_RequireEqual(vs->foreach().size(), 0u);
         TC_RequireEqual(pvs->foreach().size(), (NUM_THREADS + 1u) * NUM_ENTITIES);
+
+        std::mutex counterMutex;
+        u64 counter{0u};
+
+        auto parallelIterator{pvs->foreachP(NUM_THREADS)};
+        for (u64 iii = 1; iii <= NUM_THREADS; ++iii)
+        {
+            threads.emplace_back([&, iii] () {
+                PROF_THREAD(THREAD_NAMES[iii]);
+
+                u64 localCounter{0u};
+
+                PROF_BLOCK("Parallel iteration work");
+                for (auto &e : parallelIterator.forThread(iii - 1u))
+                {
+                    Position* pos{e.get<Position>()};
+                    Velocity* vel{e.get<Velocity>()};
+                    localCounter++;
+
+                    pos->x += vel->x;
+                    pos->y += vel->y;
+                }
+                PROF_BLOCK_END();
+
+                std::lock_guard<std::mutex> g(counterMutex);
+                std::cout << parallelIterator.forThread(iii - 1u).size() << std::endl;
+                counter += localCounter;
+            });
+        }
+
+        for (u64 iii = 0; iii < NUM_THREADS; ++iii)
+        {
+            threads[iii].join();
+        }
+
+        threads.clear();
+
+        TC_RequireEqual(counter, (NUM_THREADS + 1u) * NUM_ENTITIES);
     }
 
 TU_End(EntropyEntity)

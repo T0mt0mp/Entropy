@@ -216,7 +216,7 @@ namespace ent
         mEntities++;
     }
 
-    bool MetadataGroup::inSameBitset(u64 first, u64 second) const
+    bool MetadataGroup::inSameBitset(u64 first, u64 second)
     {
         return bitsetIndex(first) == bitsetIndex(second);
     }
@@ -339,7 +339,7 @@ namespace ent
         std::memcpy(dest, src, numBitsets * sizeof(MetadataBitset));
     }
 
-    u64 MetadataGroup::bitsetIndex(u64 row) const
+    u64 MetadataGroup::bitsetIndex(u64 row)
     { return row / ENT_PER_BITSET; }
 
     std::pair<u64, u64> MetadataGroup::bitsetRowIndex(u64 row) const

@@ -9,6 +9,62 @@
 /// Main Entropy namespace
 namespace ent
 {
+    // EntityListParallel implementation.
+    template <typename UniverseT,
+              typename IteratedT,
+              bool IsConst>
+    typename EntityListParallel<UniverseT, IteratedT, IsConst>::IterationHelper
+        EntityListParallel<UniverseT, IteratedT, IsConst>::sEmptyHelper{nullptr, nullptr};
+
+    template <typename UniverseT,
+              typename IteratedT,
+              bool IsConst>
+    EntityListParallel<UniverseT, IteratedT, IsConst>::
+        EntityListParallel(UniverseT *uni, IteratedT &it, u64 numThreads) :
+        mUniverse{uni}
+    {
+        u64 size{it.size()};
+        u64 sizePerThread{size / numThreads};
+        // TODO - choose proper iterator, when IsConst == true.
+        auto iter{it.begin()};
+        auto end{it.end()};
+
+        for (u64 threadId = 0; threadId < numThreads; ++threadId)
+        {
+            auto start{iter};
+            iter += sizePerThread;
+            if (iter > end)
+            {
+                iter = end;
+            }
+
+            auto last{iter};
+            while (iter != end && MetadataGroup::inSameBitset(last->index(), iter->index()))
+            {
+                iter++;
+            }
+
+            mHelpers.emplace_back(start, iter);
+        }
+    }
+
+    template <typename UniverseT,
+              typename IteratedT,
+              bool IsConst>
+    auto EntityListParallel<UniverseT, IteratedT, IsConst>::forThread(u64 threadId) ->
+        EntityList<UniverseT, IterationHelper>
+    {
+        if (threadId < mHelpers.size())
+        {
+            return EntityList<UniverseT, IterationHelper>(mUniverse, mHelpers[threadId]);
+        }
+        else
+        {
+            return EntityList<UniverseT, IterationHelper>(mUniverse, sEmptyHelper);
+        }
+    }
+    // EntityListParallel implementation end.
+
     // EntityGroup implementation.
     EntityGroup::EntityGroup(const EntityFilter &filter, u64 groupId) :
         mFilter{filter},
@@ -74,7 +130,7 @@ namespace ent
 
         // Assure the size for the back buffer.
         entitiesBack()->resize(entitiesFront()->size() + mAdded.size());
-        // Sort the new list into the back buffer.
+
         auto ait = mAdded.cbegin();
         auto aeit = mAdded.cend();
         auto rit = mRemoved.cbegin();
@@ -119,6 +175,7 @@ namespace ent
         ENT_ASSERT_SLOW(rit == reit);
         ENT_ASSERT_SLOW(fit == feit);
 
+        // Sort the new list into the back buffer.
         u64 finalSize{static_cast<u64>(oit - entitiesBack()->begin())};
         entitiesBack()->resize(finalSize);
 

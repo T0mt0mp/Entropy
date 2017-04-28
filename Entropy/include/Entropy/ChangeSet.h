@@ -231,7 +231,7 @@ namespace ent
         const auto &changes() const
         { return mChanges; }
 
-        /// Get list of requested tempoary Entity activity changes.
+        /// Get list of requested temporary Entity activity changes.
         const auto &tempChanges() const
         { return mTempChanges; }
 

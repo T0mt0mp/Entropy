@@ -169,7 +169,77 @@ namespace ent
         /// Object to iterate over.
         IteratedT &mIt;
     protected:
-    };
+    }; // class EntityList
+
+    /**
+     * Helper object, used in parallel foreach loops.
+     * @tparam UniverseT Type of the Universe.
+     * @tparam IteratedT Over which type does it iterate?
+     * @tparam IsConst Is this constant iterator?
+     */
+    template <typename UniverseT,
+              typename IteratedT,
+              bool IsConst>
+    class EntityListParallel
+    {
+    private:
+        using IteratorT = typename std::conditional<IsConst,
+            typename IteratedT::const_iterator,
+            typename IteratedT::iterator>::type;
+
+        class IterationHelper
+        {
+        public:
+            using iterator = IteratorT;
+            using const_iterator = const IteratorT;
+
+            IterationHelper(IteratorT beginIt, IteratorT endIt) :
+                mBegin{beginIt}, mEnd{endIt}
+            { }
+
+            IteratorT begin()
+            { return mBegin; }
+            IteratorT end()
+            { return mEnd; }
+
+            typename std::enable_if<
+                std::is_same<typename std::iterator_traits<IteratorT>::iterator_category,
+                    std::random_access_iterator_tag>::value,
+                typename std::iterator_traits<IteratorT>::difference_type>::type
+            size()
+            { return mEnd - mBegin; };
+        private:
+            IteratorT mBegin;
+            IteratorT mEnd;
+        protected:
+        };
+    public:
+        /**
+         * Initialize the parallel iterators.
+         * @param uni Universe pointer.
+         * @param it List of EntityIds.
+         * @param numThreads How many threads will be used.
+         */
+        EntityListParallel(UniverseT *uni, IteratedT &it, u64 numThreads);
+
+        /**
+         * Get foreach object for given thread.
+         * @param threadId Which thread is being used.
+         * @return Returns the foreach object, which can be
+         *   used in ranged for loop.
+         */
+        EntityList<UniverseT, IterationHelper> forThread(u64 threadId);
+    private:
+        /// Universe instance pointer.
+        UniverseT *mUniverse;
+
+        /// List of iteration helpers, for each thread.
+        std::vector<IterationHelper> mHelpers;
+
+        /// Empty helper returned when something goes wrong.
+        static IterationHelper sEmptyHelper;
+    protected:
+    }; // class EntityListParallel
 
     /**
      * EntityGroup class contains a list of Entities, which pass
@@ -235,6 +305,18 @@ namespace ent
         { return EntityList<UT, EntityListT>(uni, *entitiesFront()); }
 
         /**
+         * Get foreach parallel iterator object.
+         * @tparam UT Universe type.
+         * @param uni Universe ptr.
+         * @param numThreads How many iterable objects should be created.
+         * @return Returns object which generates iterable objects
+         *   for each thread.
+         */
+        template <typename UT>
+        EntityListParallel<UT, EntityListT, false> foreachP(UT *uni, u64 numThreads)
+        { return EntityListParallel<UT, EntityListT, false>(uni, *entitiesFront(), numThreads); }
+
+        /**
          * Get foreach iterator object, iterating over added Entities.
          * @tparam UT Universe type.
          * @param uni Universe ptr.
@@ -245,6 +327,18 @@ namespace ent
         { return EntityList<UT, AddedListT>(uni, mAdded); }
 
         /**
+         * Get foreach parallel iterator object for list of added Entities.
+         * @tparam UT Universe type.
+         * @param uni Universe ptr.
+         * @param numThreads How many iterable objects should be created.
+         * @return Returns object which generates iterable objects
+         *   for each thread.
+         */
+        template <typename UT>
+        EntityListParallel<UT, EntityListT, false> foreachAddedP(UT *uni, u64 numThreads)
+        { return EntityListParallel<UT, EntityListT, false>(uni, mAdded, numThreads); }
+
+        /**
          * Get foreach iterator object, iterating over removed Entities.
          * @tparam UT Universe type.
          * @param uni Universe ptr.
@@ -253,6 +347,18 @@ namespace ent
         template <typename UT>
         EntityList<UT, RemovedListT> foreachRemoved(UT *uni)
         { return EntityList<UT, RemovedListT>(uni, mRemoved); }
+
+        /**
+         * Get foreach parallel iterator object for list of removed Entities.
+         * @tparam UT Universe type.
+         * @param uni Universe ptr.
+         * @param numThreads How many iterable objects should be created.
+         * @return Returns object which generates iterable objects
+         *   for each thread.
+         */
+        template <typename UT>
+        EntityListParallel<UT, EntityListT, false> foreachRemovedP(UT *uni, u64 numThreads)
+        { return EntityListParallel<UT, EntityListT, false>(uni, mRemoved, numThreads); }
     private:
         /**
          * Increment the usage counter.
@@ -352,7 +458,7 @@ namespace ent
 
         using RequireT = typename RequireGetter::RequireT;
         using RejectT = typename RejectGetter::RejectT;
-    };
+    }; // struct RequireRejectExtractor
 } // namespace ent
 
 #include "EntityGroup.inl"

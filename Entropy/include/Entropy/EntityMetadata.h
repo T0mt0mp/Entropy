@@ -228,7 +228,7 @@ namespace ent
          *   same bitset.
          * @remarks Does not actualy check index validity!
          */
-        inline bool inSameBitset(u64 first, u64 second) const;
+        static inline bool inSameBitset(u64 first, u64 second);
 
         /**
          * Get bit located at given column and row.
@@ -413,7 +413,7 @@ namespace ent
          * @return Returns index of bitset which
          *   containes given row.
          */
-        inline u64 bitsetIndex(u64 row) const;
+        static inline u64 bitsetIndex(u64 row);
 
         /**
          * Get index of a bitset and a bit
