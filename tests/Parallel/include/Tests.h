@@ -21,6 +21,8 @@ class ParUniverse0 : public ent::Universe<ParUniverse0>
 
 struct Position
 {
+    using HolderT = ent::ComponentHolderList<Position>;
+
     Position() :
         x{0.0f}, y{0.0f}
     { }
@@ -34,6 +36,8 @@ struct Position
 
 struct Velocity
 {
+    using HolderT = ent::ComponentHolderList<Velocity>;
+
     Velocity() :
         x{0.0f}, y{0.0f}
     { }

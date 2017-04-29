@@ -14,12 +14,96 @@
 
 #define NO_ENT_WARNING
 #define NDEBUG
-#define ENT_THREADED_CHANGES
 #include <Entropy/Entropy.h>
+
+// Sizes in bytes.
+static constexpr std::size_t SMALL_COMP_SIZE{16u};
+static constexpr std::size_t MEDIUM_COMP_SIZE{64u};
+static constexpr std::size_t LARGE_COMP_SIZE{128u};
+
+struct SmallCM
+{
+    using HolderT = ent::ComponentHolder<SmallCM>;
+    char data[SMALL_COMP_SIZE];
+};
+
+struct MediumCM
+{
+    using HolderT = ent::ComponentHolder<MediumCM>;
+    char data[MEDIUM_COMP_SIZE];
+};
+
+struct LargeCM
+{
+    using HolderT = ent::ComponentHolder<LargeCM>;
+    char data[LARGE_COMP_SIZE];
+};
+
+struct SmallCML
+{
+    using HolderT = ent::ComponentHolderMapList<SmallCM>;
+    char data[SMALL_COMP_SIZE];
+};
+
+struct MediumCML
+{
+    using HolderT = ent::ComponentHolderMapList<MediumCM>;
+    char data[MEDIUM_COMP_SIZE];
+};
+
+struct LargeCML
+{
+    using HolderT = ent::ComponentHolderMapList<LargeCM>;
+    char data[LARGE_COMP_SIZE];
+};
+
+struct SmallCL
+{
+    using HolderT = ent::ComponentHolderList<SmallCM>;
+    char data[SMALL_COMP_SIZE];
+};
+
+struct MediumCL
+{
+    using HolderT = ent::ComponentHolderList<MediumCM>;
+    char data[MEDIUM_COMP_SIZE];
+};
+
+struct LargeCL
+{
+    using HolderT = ent::ComponentHolderList<LargeCM>;
+    char data[LARGE_COMP_SIZE];
+};
+
+struct PositionCMain
+{
+    using HolderT = ent::ComponentHolderList<PositionCMain>;
+
+    PositionCMain() = default;
+    PositionCMain(float posX, float posY) :
+        x{posX}, y{posY}
+    { }
+
+    float x;
+    float y;
+};
+
+struct MovementCMain
+{
+    using HolderT = ent::ComponentHolderList<MovementCMain>;
+
+    MovementCMain() = default;
+    MovementCMain(float movX, float movY) :
+        dX{movX}, dY{movY}
+    { }
+
+    float dX;
+    float dY;
+};
 
 struct PositionC
 {
-    using HolderT = ent::ComponentHolderList<PositionC>;
+    using HolderT = ent::ComponentHolder<PositionC>;
 
     PositionC() = default;
     PositionC(float posX, float posY) :
@@ -32,7 +116,7 @@ struct PositionC
 
 struct MovementC
 {
-    using HolderT = ent::ComponentHolderList<MovementC>;
+    using HolderT = ent::ComponentHolder<MovementC>;
 
     MovementC() = default;
     MovementC(float movX, float movY) :
@@ -52,12 +136,12 @@ protected:
 
 struct PositionSystem : public Universe::SystemT
 {
-    using Require = ent::Require<PositionC>;
+    using Require = ent::Require<PositionCMain>;
 };
 
 struct MovementSystem : public Universe::SystemT
 {
-    using Require = ent::Require<PositionC, MovementC>;
+    using Require = ent::Require<PositionCMain, MovementCMain>;
 };
 
 #endif //COMP_H

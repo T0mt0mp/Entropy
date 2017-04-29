@@ -8,7 +8,7 @@
 
 void createEntities(int argc, char *argv[])
 {
-    static constexpr std::size_t ATTEMPTS{10};
+    static constexpr std::size_t ATTEMPTS{20};
 
     ASSERT_FATAL(argc >= 4);
 
@@ -48,7 +48,7 @@ void createEntities(int argc, char *argv[])
 
         std::cout << creating << "\t"
                   << nanoseconds << "\t"
-                  << static_cast<std::size_t>(static_cast<double>(nanoseconds) / creating) << "\t"
+                  << static_cast<std::size_t>(static_cast<double>(nanoseconds) / creating)
                   << std::endl;
     }
 }
@@ -158,7 +158,7 @@ void movementSystem(int argc, char *argv[])
 
         std::size_t nanoseconds{t.nanoseconds()};
         std::cout << usage << "\t"
-                  << static_cast<std::size_t>(static_cast<double>(nanoseconds) / repeats) << "\t"
+                  << static_cast<std::size_t>(static_cast<double>(nanoseconds) / repeats)
                   << std::endl;
     }
 }
@@ -212,11 +212,17 @@ void advancedMovementSystem(int argc, char *argv[])
 
         std::size_t nanoseconds{t.nanoseconds()};
         std::cout << change << "\t"
-                  << static_cast<std::size_t>(static_cast<double>(nanoseconds) / repeats) << "\t"
-                  << ps->counter1 << "\t" << ps->counter2
+                  << static_cast<std::size_t>(static_cast<double>(nanoseconds) / repeats)
                   << std::endl;
     }
 }
+
+void parallelEntity(int argc, char *argv[])
+{ std::cout << "Not supported" << std::endl; }
+void parallelChangeset(int argc, char *argv[])
+{ std::cout << "Not supported" << std::endl; }
+void holders(int argc, char *argv[])
+{ std::cout << "Not implemented" << std::endl; }
 
 int main(int argc, char* argv[])
 {

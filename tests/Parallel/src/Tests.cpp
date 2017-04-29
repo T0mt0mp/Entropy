@@ -320,15 +320,40 @@ TU_Begin(EntropyEntity)
 
                 u64 localCounter{0u};
 
+                PROF_BLOCK("Foreach creation");
+                auto foreach = parallelIterator.forThread(iii - 1u);
+                PROF_BLOCK_END();
+
                 PROF_BLOCK("Parallel iteration work");
-                for (auto &e : parallelIterator.forThread(iii - 1u))
+                PROF_BLOCK("Iterator initialization");
+                auto it = foreach.begin();
+                auto end = foreach.end();
+                PROF_BLOCK_END();
+                //for (auto &e : foreach)
+                while (it != end)
                 {
+                    PROF_BLOCK("Cycle body");
+
+                    PROF_BLOCK("Deref iterator");
+                    auto &e = *it;
+                    PROF_BLOCK_END();
+
+                    PROF_BLOCK("Get");
                     Position* pos{e.get<Position>()};
                     Velocity* vel{e.get<Velocity>()};
                     localCounter++;
+                    PROF_BLOCK_END();
 
+                    PROF_BLOCK("Change");
                     pos->x += vel->x;
                     pos->y += vel->y;
+                    PROF_BLOCK_END();
+
+                    PROF_BLOCK("Increment iterator");
+                    it++;
+                    PROF_BLOCK_END();
+
+                    PROF_BLOCK_END();
                 }
                 PROF_BLOCK_END();
 
