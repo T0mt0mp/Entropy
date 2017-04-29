@@ -7,6 +7,7 @@
 #ifndef ECS_FIT_ENTROPY_H
 #define ECS_FIT_ENTROPY_H
 
+#define ENT_THREADED_CHANGES
 #include "Universe.h"
 
 #endif //ECS_FIT_ENTROPY_H

@@ -44,6 +44,12 @@ namespace ent
         inline void setRequiredActivity(bool activity);
 
         /**
+         * Get the activity value for this filter.
+         * @return Returns the activity value.
+         */
+        inline bool getRequiredActivity();
+
+        /**
          * Add new required Component type.
          * @param cId ID of the Component.
          */

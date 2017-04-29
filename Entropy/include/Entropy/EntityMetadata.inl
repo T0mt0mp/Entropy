@@ -67,6 +67,11 @@ namespace ent
         mValue.set(ACTIVITY_BIT, activity);
     }
 
+    bool EntityFilter::getRequiredActivity()
+    {
+        return mValue.test(ACTIVITY_BIT);
+    }
+
     void EntityFilter::requireComponent(CIdType cId)
     {
         ENT_ASSERT_FAST(mCompPosUsed < ENT_GROUP_FILTER_BITS);

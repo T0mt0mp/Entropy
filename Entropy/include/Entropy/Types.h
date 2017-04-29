@@ -92,7 +92,7 @@ namespace ent
      * filtering purposes.
      * Should be multiple of 64.
      */
-    static constexpr std::size_t ENT_GROUP_FILTER_BITS{8u};
+    static constexpr std::size_t ENT_GROUP_FILTER_BITS{64u};
     /**
      * How many Entities share a single bitset, changes
      * granularity of inner parallelism.
