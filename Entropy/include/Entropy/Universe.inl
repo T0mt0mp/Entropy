@@ -12,13 +12,13 @@ namespace ent
     // Universe implementation.
 #ifdef ENT_THREADED_CHANGES
     template <typename T>
-    ChangedEntitiesHolder<Universe<T>> Universe<T>::tChanges;
+    thread_local ChangedEntitiesHolder<Universe<T>> Universe<T>::tChanges;
 #endif
 
     template <typename T>
     Universe<T>::Universe() :
         mEM(), mCM(), mGM(), mSM(), mAC()
-    { }
+    { tChanges.reset(); }
 
     template <typename T>
     Universe<T>::~Universe()

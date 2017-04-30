@@ -63,11 +63,20 @@ TU_Begin(EntropyEntity)
         TC_Require(!e.hasD<Position>());
         TC_Require(!e.hasD<Velocity>());
 
+        TC_RequireEqual(ps->foreach().size(), 0u);
+        TC_RequireEqual(vs->foreach().size(), 0u);
+        TC_RequireEqual(pvs->foreach().size(), 0u);
+
         u.refresh();
+
+        TC_RequireEqual(ps->foreach().size(), 0u);
+        TC_RequireEqual(vs->foreach().size(), 0u);
+        TC_RequireEqual(pvs->foreach().size(), 1u);
 
         TC_Require(e.active());
 
         u.commitChangeSet();
+
         u.refresh();
 
         TC_Require(!e.active());
@@ -358,7 +367,6 @@ TU_Begin(EntropyEntity)
                 PROF_BLOCK_END();
 
                 std::lock_guard<std::mutex> g(counterMutex);
-                std::cout << parallelIterator.forThread(iii - 1u).size() << std::endl;
                 counter += localCounter;
             });
         }
