@@ -5,3 +5,5 @@
  */
 
 #include "TestUniverse.h"
+
+template class ent::Universe<FirstUniverse>;

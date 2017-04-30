@@ -18,7 +18,7 @@ namespace ent
     template <typename T>
     Universe<T>::Universe() :
         mEM(), mCM(), mGM(), mSM(), mAC()
-    { tChanges.reset(); }
+    { }
 
     template <typename T>
     Universe<T>::~Universe()

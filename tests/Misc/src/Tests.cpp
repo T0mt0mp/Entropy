@@ -42,7 +42,6 @@ TU_Begin(EntropyMisc)
 
     TU_Setup
     {
-
     }
 
     TU_Teardown

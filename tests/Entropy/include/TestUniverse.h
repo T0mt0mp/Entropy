@@ -14,6 +14,8 @@ class FirstUniverse : public ent::Universe<FirstUniverse>
 {
 };
 
+extern template class ent::Universe<FirstUniverse>;
+
 class SecondUniverse : public ent::Universe<SecondUniverse>
 {
 };
