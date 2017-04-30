@@ -161,11 +161,12 @@ struct OpStruct2
 
 void codeBloat1(i64 &result, i64 val)
 {
-    static f64 workArray[50];
+    static constexpr u64 ARR_SIZE{50};
+    static f64 workArray[ARR_SIZE];
     f64 thing{0.0f};
     thing = sin(val);
     thing += cos(val);
-    for (u64 index = 0; index < std::size(workArray); ++index)
+    for (u64 index = 0; index < ARR_SIZE; ++index)
     {
         u64 swVal{(index + val) % 10};
         switch (swVal)
@@ -214,11 +215,12 @@ void codeBloat1(i64 &result, i64 val)
 
 void codeBloat2(i64 &result, i64 val)
 {
-    static f64 workArray[20];
+    static constexpr u64 ARR_SIZE{20};
+    static f64 workArray[ARR_SIZE];
     f64 thing{0.0f};
     thing = sin(val);
     thing += cos(val);
-    for (u64 index = 0; index < std::size(workArray); ++index)
+    for (u64 index = 0; index < ARR_SIZE; ++index)
     {
         u64 swVal{(index + val) % 10};
         switch (swVal)
