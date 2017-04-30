@@ -12,7 +12,7 @@ namespace ent
 {
     // ComponentManager implementation.
     template <typename UT>
-    CIdType ComponentManager<UT>::sComponentIdCounter{0};
+    CIdType ComponentManager<UT>::sComponentIdCounter = 0u;
 
     template <typename UT>
     ComponentManager<UT>::ComponentManager()
