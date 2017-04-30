@@ -192,7 +192,7 @@ void advancedMovementSystem(int argc, char *argv[])
     }
 }
 
-#define USE_THREAD_POOL
+//#define USE_THREAD_POOL
 #ifdef USE_THREAD_POOL
 class ThreadPool
 {
@@ -403,11 +403,13 @@ void parProcessCSB(Universe::EntityT &e)
     p->y += m->dY;
 }
 
-void parProcessCSP(Universe::EntityT &e)
+void parProcessCSP(Universe::EntityT &e, Universe &u)
 {
     PositionC *pos{e.get<PositionC>()};
     MovementC *mov{e.get<MovementC>()};
     e.addD<PositionC>(pos->x + mov->dX, pos->y + mov->dY);
+
+    u.commitChangeSet();
 }
 
 #undef USE_THREAD_POOL
@@ -456,7 +458,8 @@ void parallelChangeset(int argc, char *argv[])
         Timer t;
         for (std::size_t rep = 0; rep < repeats; ++rep)
         {
-            u.refresh();
+            // Refresh is not finished yet.
+            //u.refresh();
 
             if (threads > 1)
             {
@@ -473,11 +476,11 @@ void parallelChangeset(int argc, char *argv[])
                         }
                     }));
 #else
-                    threadList.emplace_back([iii, &parForeach] () {
+                    threadList.emplace_back([iii, &parForeach, &u] () {
                     auto foreach = parForeach.forThread(iii);
                     for (auto &e : foreach)
                     {
-                        parProcess(e);
+                        parProcessCSP(e, u);
                     }
                     });
 #endif
@@ -485,7 +488,7 @@ void parallelChangeset(int argc, char *argv[])
 
                 for (auto &e : parForeach.forThread(0))
                 {
-                    parProcessCSP(e);
+                    parProcessCSP(e, u);
                 }
 
 

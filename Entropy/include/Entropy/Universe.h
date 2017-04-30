@@ -645,7 +645,7 @@ namespace ent
 
         /// List of changed Entities since the last refresh.
 #ifdef ENT_THREADED_CHANGES
-        static thread_local ChangedEntitiesHolder<UniverseT> tChanges;
+        static ChangedEntitiesHolder<UniverseT> tChanges;
 #else
         SortedList<EntityId> mChanged;
 #endif

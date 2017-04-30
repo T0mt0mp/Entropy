@@ -11,6 +11,11 @@ inputFolder <- args[1]
 
 dataTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec9", sep=""), sep="\t", header=TRUE)
 
+baseVal <- dataTable$Entropy[1]
+#print(dataTable)
+#dataTable <- transform(dataTable, Entropy=paste((baseVal / Entropy * 100), "%"))
+#print(dataTable)
+
 #dataTable <- data.frame(Entities=entropyTable$Entities, Entropy=entropyTable$EntropyPerEnt, Anax=anaxTable$AnaxPerEnt, Artemis=artemisTable$ArtemisPerEnt, EntityX=entityxTable$EntityXPerEnt)
 #dataTable <- data.frame(Entities=entropyTable$Entities, Entropy=entropyTable$Entropy, Anax=anaxTable$Anax, Artemis=artemisTable$Artemis, EntityX=entityxTable$EntityX)
 

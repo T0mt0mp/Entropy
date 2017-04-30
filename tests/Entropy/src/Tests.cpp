@@ -410,7 +410,7 @@ TU_Begin(EntropyEntity)
         ent::FilterBitset tester;
         for (u64 iii = 0; iii < NUM_COMPS; ++iii)
         {
-            bool val{iii % 2u};
+            bool val = iii % 2u;
             filter.addComponent(iii, val);
             tester.set(iii, val);
         }

@@ -166,11 +166,13 @@ namespace ent
         ChangedEntitiesHolder<UT>::sChanges;
     template <typename UT>
     SortedList<EntityId> ChangedEntitiesHolder<UT>::sResultList;
+    template <typename UT>
+    thread_local SortedList<EntityId> *ChangedEntitiesHolder<UT>::mChangedEntities;
 
     template <typename UT>
-    ChangedEntitiesHolder<UT>::ChangedEntitiesHolder() :
-        mChangedEntities{new SortedList<EntityId>}
+    ChangedEntitiesHolder<UT>::ChangedEntitiesHolder()
     {
+        mChangedEntities = new SortedList<EntityId>;
         registerList(mChangedEntities);
     }
 

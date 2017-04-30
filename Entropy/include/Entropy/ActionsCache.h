@@ -133,7 +133,7 @@ namespace ent
         inline void unregisterList(SortedList<EntityId> *list);
 
         /// List of changed Entities since the last refresh.
-        SortedList<EntityId> *mChangedEntities;
+        static thread_local SortedList<EntityId> *mChangedEntities;
 
         /// Mutex for the list of change lists.
         static std::mutex sChangesMutex;

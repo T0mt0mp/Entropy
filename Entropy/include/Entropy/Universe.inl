@@ -12,7 +12,7 @@ namespace ent
     // Universe implementation.
 #ifdef ENT_THREADED_CHANGES
     template <typename T>
-    thread_local ChangedEntitiesHolder<Universe<T>> Universe<T>::tChanges;
+    ChangedEntitiesHolder<Universe<T>> Universe<T>::tChanges;
 #endif
 
     template <typename T>
@@ -228,7 +228,7 @@ namespace ent
             mStats.compRegistered++;
         }
 
-        mAC.registerComponent<ComponentT>(cId);
+        mAC.template registerComponent<ComponentT>(cId);
 
         return cId;
     }
@@ -322,7 +322,7 @@ namespace ent
     ComponentT *Universe<T>::addComponentD(EntityId id)
     {
         // TODO - check existence of the Entity?
-        return mAC.changeSet().addComponent<ComponentT>(mCM.template id<ComponentT>(), id);
+        return mAC.changeSet().template addComponent<ComponentT>(mCM.template id<ComponentT>(), id);
     }
 
     template <typename T>
@@ -330,7 +330,7 @@ namespace ent
     ComponentT *Universe<T>::addComponentT(EntityId id)
     {
         // TODO - check existence of the Entity?
-        return mAC.changeSet().addComponentT<ComponentT>(mCM.template id<ComponentT>(), id);
+        return mAC.changeSet().template addComponentT<ComponentT>(mCM.template id<ComponentT>(), id);
     }
 
     template <typename T>
@@ -339,7 +339,7 @@ namespace ent
     ComponentT *Universe<T>::addComponentD(EntityId id, CArgTs... cArgs)
     {
         // TODO - check existence of the Entity?
-        return mAC.changeSet().addComponent<ComponentT>(mCM.template id<ComponentT>(), id, std::forward<CArgTs>(cArgs)...);
+        return mAC.changeSet().template addComponent<ComponentT>(mCM.template id<ComponentT>(), id, std::forward<CArgTs>(cArgs)...);
     }
 
     template <typename T>
@@ -348,7 +348,7 @@ namespace ent
     ComponentT *Universe<T>::addComponentT(EntityId id, CArgTs... cArgs)
     {
         // TODO - check existence of the Entity?
-        return mAC.changeSet().addComponentT<ComponentT>(mCM.template id<ComponentT>(), id, std::forward<CArgTs>(cArgs)...);
+        return mAC.changeSet().template addComponentT<ComponentT>(mCM.template id<ComponentT>(), id, std::forward<CArgTs>(cArgs)...);
     }
 
     template <typename T>
@@ -388,14 +388,14 @@ namespace ent
     ComponentT *Universe<T>::getComponentD(EntityId id)
     {
 #ifdef ENT_COMP_EXCEPT
-        ComponentT *result{mAC.changeSet().getComponent<ComponentT>(mCM.template id<ComponentT>(), id)};
+        ComponentT *result{mAC.changeSet().template getComponent<ComponentT>(mCM.template id<ComponentT>(), id)};
         if (result == nullptr)
         {
             throw std::runtime_error("Component for given Entity does not exist!");
         }
         return result;
 #else
-        return mAC.changeSet().getComponent<ComponentT>(mCM.template id<ComponentT>(), id);
+        return mAC.changeSet().template getComponent<ComponentT>(mCM.template id<ComponentT>(), id);
 #endif
     }
 
@@ -404,14 +404,14 @@ namespace ent
     ComponentT *Universe<T>::getComponentT(EntityId id)
     {
 #ifdef ENT_COMP_EXCEPT
-        ComponentT *result{mAC.changeSet().getComponentT<ComponentT>(mCM.template id<ComponentT>(), id)};
+        ComponentT *result{mAC.changeSet().template getComponentT<ComponentT>(mCM.template id<ComponentT>(), id)};
         if (result == nullptr)
         {
             throw std::runtime_error("Component for given Entity does not exist!");
         }
         return result;
 #else
-        return mAC.changeSet().getComponentT<ComponentT>(mCM.template id<ComponentT>(), id);
+        return mAC.changeSet().template getComponentT<ComponentT>(mCM.template id<ComponentT>(), id);
 #endif
     }
 
@@ -423,12 +423,12 @@ namespace ent
     template <typename T>
     template <typename ComponentT>
     bool Universe<T>::hasComponentD(EntityId id)
-    { return mAC.changeSet().hasComponent<ComponentT>(mCM.template id<ComponentT>(), id); }
+    { return mAC.changeSet().template hasComponent<ComponentT>(mCM.template id<ComponentT>(), id); }
 
     template <typename T>
     template <typename ComponentT>
     bool Universe<T>::hasComponentT(EntityId id)
-    { return mAC.changeSet().hasComponentT<ComponentT>(mCM.template id<ComponentT>(), id); }
+    { return mAC.changeSet().template hasComponentT<ComponentT>(mCM.template id<ComponentT>(), id); }
 
     template <typename T>
     template <typename ComponentT>
@@ -455,21 +455,21 @@ namespace ent
     template <typename ComponentT>
     void Universe<T>::removeComponentD(EntityId id)
     {
-        mAC.changeSet().removeComponent<ComponentT>(mCM.template id<ComponentT>(), id);
+        mAC.changeSet().template removeComponent<ComponentT>(mCM.template id<ComponentT>(), id);
     }
 
     template <typename T>
     template <typename ComponentT>
     void Universe<T>::removeTempComponent(EntityId id)
     {
-        mAC.changeSet().removeTempComponent<ComponentT>(mCM.template id<ComponentT>(), id);
+        mAC.changeSet().template removeTempComponent<ComponentT>(mCM.template id<ComponentT>(), id);
     }
 
     template <typename T>
     template <typename ComponentT>
     void Universe<T>::removeTempComponentT(EntityId id)
     {
-        mAC.changeSet().removeTempComponentT<ComponentT>(mCM.template id<ComponentT>(), id);
+        mAC.changeSet().template removeTempComponentT<ComponentT>(mCM.template id<ComponentT>(), id);
     }
 
     template <typename T>

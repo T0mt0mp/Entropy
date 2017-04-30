@@ -587,7 +587,7 @@ namespace ent
          * Get number of bits.
          * @return The number of bits in this bitset.
          */
-        static ENT_CONSTEXPR_FUN u64 size()
+        static constexpr u64 size()
         { return NUM_BITS; }
 
         /**

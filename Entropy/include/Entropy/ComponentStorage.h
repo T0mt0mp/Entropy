@@ -288,7 +288,7 @@ namespace ent
          * @param id Id of the Entity.
          * @return Returns pointer to the Component.
          */
-        virtual inline ComponentT *add(EntityId id) noexcept;
+        virtual inline ComponentT *add(EntityId id) noexcept override;
 
         /**
          * Add/replace Component of given Entity with a copy of given Component.
@@ -317,7 +317,7 @@ namespace ent
          * @param id Id of the Entity.
          * @return Returns pointer to the Component, or nullptr, if it does not exist.
          */
-        virtual inline ComponentT *get(EntityId id) noexcept;
+        virtual inline ComponentT *get(EntityId id) noexcept override;
         virtual inline const ComponentT *get(EntityId id) const noexcept override;
 
         /**
@@ -327,7 +327,7 @@ namespace ent
          * @return Returns true, if there are no more Components of this type
          *   for given Entity.
          */
-        virtual inline bool remove(EntityId id) noexcept;
+        virtual inline bool remove(EntityId id) noexcept override;
 
         /**
          * Refresh the Component holder.
