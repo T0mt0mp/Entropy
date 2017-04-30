@@ -16,12 +16,14 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+	set(THREAD_LIB pthread)
 endif()
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     set(CMAKE_CXX_FLAGS_DEBUG "-Zi -DEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "/O2")
+	set(THREAD_LIB "")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -29,6 +31,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+	set(THREAD_LIB pthread)
 endif()
 
 set (CMAKE_CXX_STANDARD 14)
@@ -88,7 +91,7 @@ set(ECS_SOURCES
         )
 
 add_library(ECS-FIT ${ECS_SOURCES} ${ECS_HEADERS})
-target_link_libraries(ECS-FIT ENTROPY pthread)
+target_link_libraries(ECS-FIT ENTROPY ${THREAD_LIB})
 
 # Application
 
