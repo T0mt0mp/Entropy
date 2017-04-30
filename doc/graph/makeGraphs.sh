@@ -14,32 +14,44 @@ EXECUTABLES=(
 
 COMP_PARAMS=(
 #    CompNum, Start, delta and max entities
-    "0 10000 20000 100000"
+#    "0 10000 20000 100000"
 #    CompNum, Number of entities, iterations, start, delta and max usage %
-    "1 10000 10 25 10 75"
+#    "1 10000 10 25 10 75"
 #    CompNum, Number of entities, iterations, start, delta and max usage %
-    "2 10000 10 1 1 10"
-    "2 10000 10 10 5 50"
+#    "2 10000 10 1 1 10"
+#    "2 10000 10 10 5 50"
 )
 
 NUM_COMP=${#COMP_PARAMS[@]}
 
 COMP_PARAMS_ENTROPY=(
-    "5 10000 20000 100000 20 5 sm"
-    "5 10000 20000 100000 20 5 mm"
-    "5 10000 20000 100000 20 5 lm"
+    "5 10000 10000 100000 20 5 sm 0"
+    "5 10000 10000 100000 20 5 mm 0"
+    "5 10000 10000 100000 20 5 lm 0"
 
-    "5 10000 20000 100000 20 5 sml"
-    "5 10000 20000 100000 20 5 mml"
-    "5 10000 20000 100000 20 5 lml"
+    "5 10000 10000 100000 20 5 sml 0"
+    "5 10000 10000 100000 20 5 mml 0"
+    "5 10000 10000 100000 20 5 lml 0"
 
-    "5 10000 20000 100000 20 5 sl"
-    "5 10000 20000 100000 20 5 ml"
-    "5 10000 20000 100000 20 5 ll"
+    "5 10000 10000 100000 20 5 sl 0"
+    "5 10000 10000 100000 20 5 ml 0"
+    "5 10000 10000 100000 20 5 ll 0"
 
     "3 10000 100 1 1 12"
 
     "4 10000 100 1 1 12"
+
+    "5 10000 10000 100000 20 5 sm 1"
+    "5 10000 10000 100000 20 5 mm 1"
+    "5 10000 10000 100000 20 5 lm 1"
+
+    "5 10000 10000 100000 20 5 sml 1"
+    "5 10000 10000 100000 20 5 mml 1"
+    "5 10000 10000 100000 20 5 lml 1"
+
+    "5 10000 10000 100000 20 5 sl 1"
+    "5 10000 10000 100000 20 5 ml 1"
+    "5 10000 10000 100000 20 5 ll 1"
 )
 
 GRAPH_SCRIPTS=(
@@ -50,6 +62,7 @@ GRAPH_SCRIPTS=(
     "holders.r"
     "entityParallel.r"
     "entityChangeset.r"
+    "holdersR.r"
 )
 
 NUM_COMP_ENT=${#COMP_PARAMS_ENTROPY[@]}
@@ -83,7 +96,7 @@ for (( index=0; index<${#COMP_PARAMS[@]}; index++ )); do
     echo "Running comparison experiment number ${index}, parameters \"${params}\""
     for exec in "${EXECUTABLES[@]}"; do
         echo "Running comparison for \"${exec}\""
-        sudo nice -n -20 ${BUILD_PATH}/${exec} ${params} \
+        sudo nice -20 ${BUILD_PATH}/${exec} ${params} \
             > ${BUILD_PATH}/${OUTPUT_DIR}/${exec}${index}
     done
 done
@@ -93,7 +106,7 @@ echo "${NUM_COMP_ENT} comparison parameter lists specific to Entropy found."
 for (( index=0; index<${#COMP_PARAMS_ENTROPY[@]}; index++ )); do
     params="${COMP_PARAMS_ENTROPY[${index}]}"
     echo "Running Entropy comparison experiment number ${index}, parameters \"${params}\""
-    sudo nice -n -20 ${BUILD_PATH}/${ENTROPY_EXEC} ${params} \
+    sudo nice -20 ${BUILD_PATH}/${ENTROPY_EXEC} ${params} \
         > ${BUILD_PATH}/${OUTPUT_DIR}/${ENTROPY_EXEC}Spec${index}
 done
 

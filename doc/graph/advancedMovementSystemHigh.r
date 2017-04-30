@@ -15,7 +15,7 @@ dataTable <- data.frame(Entities=entropyTable$Change, Entropy=entropyTable$Entro
 xRange <- range(dataTable$Entities)
 yRange <- range(0, max(dataTable$Entropy, dataTable$Anax, dataTable$Artemis, dataTable$EntityX))
 
-plot(dataTable$Entropy~dataTable$Entities, log="y", type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(1000, yRange[2] * 100), ann=FALSE, axes=FALSE)
+plot(dataTable$Entropy~dataTable$Entities, log="y", type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(100000, 30000000), ann=FALSE, axes=FALSE)
 axis(1, at=seq(from=xRange[1], to=xRange[2], by=5), lwd=2)
 #yTicks <- seq()
 axis(2, lwd=2)

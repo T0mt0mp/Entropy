@@ -2,17 +2,17 @@
 args <- commandArgs(trailingOnly = TRUE)
 inputFolder <- args[1]
 
-smTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec0", sep=""), sep="\t", header=TRUE)
-mmTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec1", sep=""), sep="\t", header=TRUE)
-lmTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec2", sep=""), sep="\t", header=TRUE)
+smTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec11", sep=""), sep="\t", header=TRUE)
+mmTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec12", sep=""), sep="\t", header=TRUE)
+lmTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec13", sep=""), sep="\t", header=TRUE)
 
-smlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec3", sep=""), sep="\t", header=TRUE)
-mmlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec4", sep=""), sep="\t", header=TRUE)
-lmlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec5", sep=""), sep="\t", header=TRUE)
+smlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec14", sep=""), sep="\t", header=TRUE)
+mmlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec15", sep=""), sep="\t", header=TRUE)
+lmlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec16", sep=""), sep="\t", header=TRUE)
 
-slTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec6", sep=""), sep="\t", header=TRUE)
-mlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec7", sep=""), sep="\t", header=TRUE)
-llTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec8", sep=""), sep="\t", header=TRUE)
+slTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec17", sep=""), sep="\t", header=TRUE)
+mlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec18", sep=""), sep="\t", header=TRUE)
+llTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec19", sep=""), sep="\t", header=TRUE)
 
 #dataTable <- data.frame(Entities=entropyTable$Entities, Entropy=entropyTable$EntropyPerEnt, Anax=anaxTable$AnaxPerEnt, Artemis=artemisTable$ArtemisPerEnt, EntityX=entityxTable$EntityXPerEnt)
 dataTable <- data.frame(Entities=smTable$Entities, 
@@ -27,9 +27,9 @@ dataTable <- data.frame(Entities=smTable$Entities,
                         ll=llTable$EntropyPerEnt)
 
 xRange <- range(dataTable$Entities)
-yRange <- range(200, 400)
+yRange <- range(300, 650)
 
-pdf(file="holdersS.pdf")
+pdf(file="holdersRS.pdf")
 
 plot(dataTable$sm~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(yRange[1], yRange[2]), ann=FALSE, axes=FALSE)
 axis(1, at=seq(from=xRange[1], to=xRange[2], by=10000), lwd=2)
@@ -41,7 +41,7 @@ points(dataTable$sl~dataTable$Entities, type="o", lwd=2, col="orange", pch=18)
 legend("bottomright", pch=c(19, 15, 18), lty=c(1,1,1), legend=c("Map", "MapList", "List"), col=c("blue","green","orange"), pt.lwd=2, box.lwd=2)
 title(main="Small component (16B)", xlab="Number of entities", ylab="Time per entity [ns]")
 
-pdf(file="holdersM.pdf")
+pdf(file="holdersRM.pdf")
 
 plot(dataTable$sm~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(yRange[1], yRange[2]), ann=FALSE, axes=FALSE)
 axis(1, at=seq(from=xRange[1], to=xRange[2], by=10000), lwd=2)
@@ -53,7 +53,7 @@ points(dataTable$ml~dataTable$Entities, type="o", lwd=2, col="orange", pch=18)
 legend("bottomright", pch=c(19, 15, 18), lty=c(1,1,1), legend=c("Map", "MapList", "List"), col=c("blue","green","orange"), pt.lwd=2, box.lwd=2)
 title(main="Medium component (64B)", xlab="Number of entities", ylab="Time per entity [ns]")
 
-pdf(file="holdersL.pdf")
+pdf(file="holdersRL.pdf")
 
 plot(dataTable$sm~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(yRange[1], yRange[2]), ann=FALSE, axes=FALSE)
 axis(1, at=seq(from=xRange[1], to=xRange[2], by=10000), lwd=2)

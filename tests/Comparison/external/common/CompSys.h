@@ -85,14 +85,14 @@ void parallelChangesetCheck(int argc, char *argv[])
     }
 }
 
-// 6 parameters number of entities - start delta and max, repeats, operation size and type of component/holder
+// 7 parameters number of entities - start delta and max, repeats, operation size and type of component/holder
 void holders(int argc, char *argv[]);
 void holdersCheck(int argc, char *argv[])
 {
-    if (argc != 8)
+    if (argc != 9)
     {
         std::cout << "Need 6 parameters: number of entities (start, delta and max), repeats, operation size"
-                  << " and component/holder type: sm, mm, lm, sml, mml, lml, sl, ml, ll"  << std::endl;
+                  << " and component/holder type: sm, mm, lm, sml, mml, lml, sl, ml, ll; random"  << std::endl;
         std::exit(1);
     }
 }

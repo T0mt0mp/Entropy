@@ -403,13 +403,11 @@ void parProcessCSB(Universe::EntityT &e)
     p->y += m->dY;
 }
 
-void parProcessCSP(Universe::EntityT &e, Universe &u)
+void parProcessCSP(Universe::EntityT &e)
 {
     PositionC *pos{e.get<PositionC>()};
     MovementC *mov{e.get<MovementC>()};
     e.addD<PositionC>(pos->x + mov->dX, pos->y + mov->dY);
-
-    u.commitChangeSet();
 }
 
 #undef USE_THREAD_POOL
@@ -477,19 +475,22 @@ void parallelChangeset(int argc, char *argv[])
                     }));
 #else
                     threadList.emplace_back([iii, &parForeach, &u] () {
-                    auto foreach = parForeach.forThread(iii);
-                    for (auto &e : foreach)
-                    {
-                        parProcessCSP(e, u);
-                    }
+                        auto foreach = parForeach.forThread(iii);
+                        for (auto &e : foreach)
+                        {
+                            parProcessCSP(e);
+
+                        }
+                        u.commitChangeSet();
                     });
 #endif
                 }
 
                 for (auto &e : parForeach.forThread(0))
                 {
-                    parProcessCSP(e, u);
+                    parProcessCSP(e);
                 }
+                u.commitChangeSet();
 
 
 #ifdef USE_THREAD_POOL
@@ -507,8 +508,9 @@ void parallelChangeset(int argc, char *argv[])
             {
                 for (auto &e : ms->foreach())
                 {
-                    parProcessCSB(e);
+                    parProcessCSP(e);
                 }
+                u.commitChangeSet();
             }
         }
 
@@ -527,8 +529,14 @@ void holdersHelper(int argc, char *argv[])
     const std::size_t max{static_cast<size_t>(atol(argv[4]))};
     const std::size_t numRepeats{static_cast<size_t>(atol(argv[5]))};
     const std::size_t operations{static_cast<size_t>(atol(argv[6]))};
+    const std::size_t doRand{static_cast<size_t>(atol(argv[8]))};
 
     std::cout << "Entities\tEntropy\tEntropyPerEnt" << std::endl;
+
+    std::mt19937_64 rng;
+    std::uniform_real_distribution<f64> uniform(0.0f, 1.0f);
+
+    rng.seed(RANDOM_SEED);
 
     for (std::size_t creating = start;
          creating <= max;
@@ -550,8 +558,17 @@ void holdersHelper(int argc, char *argv[])
             }
             //u.refresh();
 
-            for (std::size_t idx = 0; idx < creating; idx++)
+            std::size_t idx;
+            for (std::size_t iii = 0; iii < creating; iii++)
             {
+                if (doRand)
+                {
+                    idx = static_cast<std::size_t>(uniform(rng) * creating);
+                }
+                else
+                {
+                    idx = iii;
+                }
                 ComponentT *c{u.getComponent<ComponentT>(ent::EntityId(idx + 1u, 0u))};
                 for (u64 iii = 0; iii < operations; ++iii)
                 {
@@ -588,7 +605,7 @@ std::pair<const char*, HoldersCmpFun> holderCallArray[] = {
 
 void holders(int argc, char *argv[])
 {
-    ASSERT_FATAL(argc >= 8);
+    ASSERT_FATAL(argc >= 9);
     const char *type{argv[7]};
 
     for (auto &p : holderCallArray)

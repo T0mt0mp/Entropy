@@ -15,10 +15,10 @@ dataTable <- data.frame(Entities=entropyTable$InUse, Entropy=entropyTable$Entrop
 xRange <- range(dataTable$Entities)
 yRange <- range(0, max(dataTable$Entropy, dataTable$Anax, dataTable$Artemis, dataTable$EntityX))
 
-plot(dataTable$Entropy~dataTable$Entities, log="y", type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(1000, yRange[2] * 100), ann=FALSE, axes=FALSE)
+plot(dataTable$Anax~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(0, yRange[2] + 200000), ann=FALSE, axes=FALSE)
 axis(1, at=seq(from=xRange[1], to=xRange[2], by=10), lwd=2)
 #yTicks <- seq()
-axis(2, lwd=2)
+axis(2, at=seq(from=0, to=yRange[2] + 200000, by=200000), lwd=2)
 #axis(2, at=seq(from=0, to=yRange[2], by=100), lwd=2)
 #lines(dataTable$Entropy~dataTable$Entities, lwd=2, col="blue")
 points(dataTable$Entropy~dataTable$Entities, type="o", lwd=2, col="blue", pch=19)
