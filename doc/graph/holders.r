@@ -39,7 +39,7 @@ points(dataTable$sml~dataTable$Entities, type="o", lwd=2, col="green", pch=15)
 points(dataTable$sl~dataTable$Entities, type="o", lwd=2, col="orange", pch=18)
 
 legend("bottomright", pch=c(19, 15, 18), lty=c(1,1,1), legend=c("Map", "MapList", "List"), col=c("blue","green","orange"), pt.lwd=2, box.lwd=2)
-title(main="Small component (16B)", xlab="Number of entities", ylab="Time per entity [ns]")
+title(main="Small component (16B) - sequential", xlab="Number of entities", ylab="Time per entity [ns]")
 
 pdf(file="holdersM.pdf")
 
@@ -51,7 +51,7 @@ points(dataTable$mml~dataTable$Entities, type="o", lwd=2, col="green", pch=15)
 points(dataTable$ml~dataTable$Entities, type="o", lwd=2, col="orange", pch=18)
 
 legend("bottomright", pch=c(19, 15, 18), lty=c(1,1,1), legend=c("Map", "MapList", "List"), col=c("blue","green","orange"), pt.lwd=2, box.lwd=2)
-title(main="Medium component (64B)", xlab="Number of entities", ylab="Time per entity [ns]")
+title(main="Medium component (64B) - sequential", xlab="Number of entities", ylab="Time per entity [ns]")
 
 pdf(file="holdersL.pdf")
 
@@ -63,5 +63,5 @@ points(dataTable$lml~dataTable$Entities, type="o", lwd=2, col="green", pch=15)
 points(dataTable$ll~dataTable$Entities, type="o", lwd=2, col="orange", pch=18)
 
 legend("bottomright", pch=c(19, 15, 18), lty=c(1,1,1), legend=c("Map", "MapList", "List"), col=c("blue","green","orange"), pt.lwd=2, box.lwd=2)
-title(main="Large component (128B)", xlab="Number of entities", ylab="Time per entity [ns]")
+title(main="Large component (128B) - sequential", xlab="Number of entities", ylab="Time per entity [ns]")
 
