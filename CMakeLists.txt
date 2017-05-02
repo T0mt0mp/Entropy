@@ -100,3 +100,6 @@ add_subdirectory(app)
 # Testing
 
 add_subdirectory(tests)
+
+set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
+

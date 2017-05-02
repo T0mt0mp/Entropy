@@ -89,3 +89,7 @@ target_sources(ENTROPY INTERFACE ${ENTROPY_HEADERS})
 target_include_directories(ENTROPY INTERFACE ${ENTROPY_INCLUDE_DIR})
 #set_target_properties(ENTROPY PROPERTIES LINKER_LANGUAGE CXX)
 #target_link_libraries(ENTROPY ${THREAD_LIB})
+
+install(TARGETS ENTROPY DESTINATION .)
+install(DIRECTORY ./include/Entropy DESTINATION include/)
+

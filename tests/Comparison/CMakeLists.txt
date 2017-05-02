@@ -8,8 +8,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(external/anax)
 add_subdirectory(external/artemis)
 
-set(ENTITYX_BUILD_SHARED 0)
-set(ENTITYX_BUILD_TESTING 0)
+set(ENTITYX_BUILD_SHARED false)
+set(ENTITYX_BUILD_TESTING false)
 add_subdirectory(external/entityx)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
