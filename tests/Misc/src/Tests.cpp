@@ -7,6 +7,7 @@
 #include "Tests.h"
 
 #include <vector>
+#include <cmath>
 
 class Test : public ent::Universe<Test>
 {};
@@ -982,6 +983,84 @@ TU_Begin(EntropyMisc)
             TC_RequireEqual(bs1.count(), 2u);
             TC_RequireEqual(bs3.count(), 2u);
         }
+    }
+
+    TU_Case(Parallel0, "Testing parallel access 1")
+    {
+        PROF_SCOPE("Parallel0");
+        using Universe = ParUniverse0::UniverseT;
+        using Entity = ParUniverse0::EntityT;
+        using TempEntity = ParUniverse0::TempEntityT;
+
+        static constexpr u64 NUM_MAX_THREADS{8u};
+        static constexpr u64 NUM_THREADS{4u};
+        static constexpr u64 NUM_ENTITIES{1000u};
+        static constexpr const char *THREAD_NAMES[NUM_MAX_THREADS + 1u] = {
+            "Thread 0",
+            "Thread 1",
+            "Thread 2",
+            "Thread 3",
+            "Thread 4",
+            "Thread 5",
+            "Thread 6",
+            "Thread 7"
+        };
+
+        Universe u;
+        u.registerComponent<Position>();
+        u.registerComponent<Velocity>();
+
+        u.init();
+
+        PositionSystem *ps{u.addSystem<PositionSystem>()};
+        VelocitySystem *vs{u.addSystem<VelocitySystem>()};
+        PosVelSystem *pvs{u.addSystem<PosVelSystem>()};
+
+        u.refresh();
+
+        std::vector<std::thread> threads;
+
+        for (u64 entNum = 0; entNum < NUM_ENTITIES; ++entNum)
+        {
+            Entity e = u.createEntity();
+            e.add<Position>(0.0f, 0.0f);
+            e.add<Velocity>(0.0f, 0.0f);
+        }
+
+        u.refresh();
+
+        PROF_BLOCK("Work");
+
+        auto parallelIterator{pvs->foreachP(NUM_THREADS)};
+        for (u64 iii = 1; iii <= NUM_THREADS; ++iii)
+        {
+            threads.emplace_back([&, iii] () {
+                auto foreach = parallelIterator.forThread(iii - 1u);
+                for (auto &e : foreach)
+                {
+                    Position* pos{e.get<Position>()};
+                    Velocity* vel{e.get<Velocity>()};
+                    pos->x += vel->x;
+                    pos->y += vel->y;
+
+                    for (u64 iii = 0; iii < 100; ++iii)
+                    {
+                        pos->x += cos(pos->x + vel->x);
+                        pos->y += sin(pos->y + vel->y);
+                    }
+
+                }
+            });
+        }
+
+        for (u64 iii = 0; iii < NUM_THREADS; ++iii)
+        {
+            threads[iii].join();
+        }
+
+        threads.clear();
+
+        PROF_BLOCK_END();
     }
 
 TU_End(EntropyMisc)

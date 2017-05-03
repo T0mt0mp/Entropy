@@ -208,7 +208,20 @@ namespace ent
     template <typename CT>
     inline CT *ComponentHolderList<CT>::replace(EntityId id, const CT &comp) noexcept
     {
-        return add(id, std::forward<const CT&>(comp));
+        if (id.index() >= mList.size())
+        {
+            try {
+                mList.resize(id.index() + 1);
+            } catch(...) {
+                return nullptr;
+            }
+        }
+
+        CT *result{&mList[id.index()]};
+        *result = comp;
+
+        return result;
+        //return add(id, std::forward<const CT&>(comp));
     }
 
     template <typename CT>

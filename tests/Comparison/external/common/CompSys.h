@@ -18,6 +18,9 @@ using ParamCheckFun = void(*)(int argc, char *argv[]);
 /// Number used as a random seed
 static constexpr std::size_t RANDOM_SEED{4007};
 
+/// How hard is the computation task.
+static constexpr std::size_t TASK_HARDNESS{30};
+
 /*
  * Prototypes of called comparison functions.
  */
@@ -97,6 +100,32 @@ void holdersCheck(int argc, char *argv[])
     }
 }
 
+// 6 parameters number of entities, number of repeats, threads,
+// and percentage in use - start, delta and max
+void movementSystemP(int argc, char *argv[]);
+void movementSystemPCheck(int argc, char *argv[])
+{
+    if (argc != 8)
+    {
+        std::cout << "Need 6 parameters: number of entities, number of repeats, threads, "
+                  << "starting number, delta and max usage %" << std::endl;
+        std::exit(1);
+    }
+}
+
+// 6 parameters number of entities, number of repeats, threads,
+// and percentage to change - start, delta and max
+void advancedMovementSystemP(int argc, char *argv[]);
+void advancedMovementSystemPCheck(int argc, char *argv[])
+{
+    if (argc != 8)
+    {
+        std::cout << "Need 6 parameters: number of entities, number of repeats, threads, "
+                  << "starting number, delta and max change %" << std::endl;
+        std::exit(1);
+    }
+}
+
 // Mapping for the functions.
 static constexpr CompFun functions[] = {
     createEntities,
@@ -104,7 +133,9 @@ static constexpr CompFun functions[] = {
     advancedMovementSystem,
     parallelEntity,
     parallelChangeset,
-    holders
+    holders,
+    movementSystemP,
+    advancedMovementSystemP
 };
 static constexpr ParamCheckFun checkFunctions[] = {
     createEntitiesCheck,
@@ -112,7 +143,9 @@ static constexpr ParamCheckFun checkFunctions[] = {
     advancedMovementSystemCheck,
     parallelEntityCheck,
     parallelChangesetCheck,
-    holdersCheck
+    holdersCheck,
+    movementSystemPCheck,
+    advancedMovementSystemPCheck
 };
 static constexpr std::size_t numFunctions()
 { return sizeof(functions) / sizeof(CompFun); }

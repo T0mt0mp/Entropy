@@ -14,12 +14,12 @@ EXECUTABLES=(
 
 COMP_PARAMS=(
 #    CompNum, Start, delta and max entities
-#    "0 10000 20000 100000"
+    "0 10000 20000 100000"
 #    CompNum, Number of entities, iterations, start, delta and max usage %
-#    "1 10000 10 25 10 75"
+    "1 10000 10 25 10 75"
 #    CompNum, Number of entities, iterations, start, delta and max usage %
-#    "2 10000 10 1 1 10"
-#    "2 10000 10 10 5 50"
+    "2 10000 10 1 1 10"
+    "2 10000 10 10 5 50"
 )
 
 NUM_COMP=${#COMP_PARAMS[@]}
@@ -52,6 +52,14 @@ COMP_PARAMS_ENTROPY=(
     "5 10000 10000 100000 20 5 sl 1"
     "5 10000 10000 100000 20 5 ml 1"
     "5 10000 10000 100000 20 5 ll 1"
+
+    "6 10000 10 2 25 10 75"
+    "6 10000 10 4 25 10 75"
+
+    "7 10000 10 2 1 1 10"
+    "7 10000 10 4 1 1 10"
+    "7 10000 10 2 10 5 50"
+    "7 10000 10 4 10 5 50"
 )
 
 GRAPH_SCRIPTS=(

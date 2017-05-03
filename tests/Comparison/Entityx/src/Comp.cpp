@@ -101,6 +101,12 @@ void movementSystem(int argc, char *argv[])
                                                        MovementC &mov) {
                 pos.x += mov.dX;
                 pos.y += mov.dY;
+
+                for (u64 iii = 0; iii < TASK_HARDNESS; ++iii)
+                {
+                    pos.x += cos(pos.x + mov.dX);
+                    pos.y += sin(pos.y + mov.dY);
+                }
             });
         }
 
@@ -154,6 +160,12 @@ void advancedMovementSystem(int argc, char *argv[])
                                                     MovementC &mov) {
                 pos.x += mov.dX;
                 pos.y += mov.dY;
+
+                for (u64 iii = 0; iii < TASK_HARDNESS; ++iii)
+                {
+                    pos.x += cos(pos.x + mov.dX);
+                    pos.y += sin(pos.y + mov.dY);
+                }
             });
 
             ex.entities.each<PositionC>([&]
@@ -188,6 +200,10 @@ void parallelChangeset(int argc, char *argv[])
 { std::cout << "Not supported" << std::endl; }
 void holders(int argc, char *argv[])
 { std::cout << "Not implemented" << std::endl; }
+void movementSystemP(int argc, char *argv[])
+{ std::cout << "Not supported" << std::endl; }
+void advancedMovementSystemP(int argc, char *argv[])
+{ std::cout << "Not supported" << std::endl; }
 
 int main(int argc, char* argv[])
 {

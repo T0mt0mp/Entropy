@@ -380,7 +380,6 @@ TU_Begin(EntropyEntity)
 
         TC_RequireEqual(counter, (NUM_THREADS + 1u) * NUM_ENTITIES);
     }
-
 TU_End(EntropyEntity)
 
 int main(int argc, char* argv[])

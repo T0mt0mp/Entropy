@@ -68,8 +68,17 @@ void MovementSystem::initialize()
 
 void MovementSystem::processEntity(artemis::Entity &e)
 {
-    mPosMapper.get(e)->x += mMovMapper.get(e)->dX;
-    mPosMapper.get(e)->y += mMovMapper.get(e)->dY;
+    PositionC *p{mPosMapper.get(e)};
+    MovementC *m{mMovMapper.get(e)};
+
+    p->x += m->dX;
+    p->y += m->dY;
+
+    for (u64 iii = 0; iii < TASK_HARDNESS; ++iii)
+    {
+        p->x += cos(p->x + m->dX);
+        p->y += sin(p->y + m->dY);
+    }
 }
 
 PositionSystem::PositionSystem(artemis::World *world,
@@ -223,6 +232,10 @@ void parallelChangeset(int argc, char *argv[])
 { std::cout << "Not supported" << std::endl; }
 void holders(int argc, char *argv[])
 { std::cout << "Not implemented" << std::endl; }
+void movementSystemP(int argc, char *argv[])
+{ std::cout << "Not supported" << std::endl; }
+void advancedMovementSystemP(int argc, char *argv[])
+{ std::cout << "Not supported" << std::endl; }
 
 int main(int argc, char* argv[])
 {

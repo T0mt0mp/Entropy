@@ -75,6 +75,7 @@ struct LargeCL
     char data[LARGE_COMP_SIZE];
 };
 
+/*
 struct PositionCMain
 {
     using HolderT = ent::ComponentHolderList<PositionCMain>;
@@ -100,10 +101,11 @@ struct MovementCMain
     float dX;
     float dY;
 };
+ */
 
 struct PositionC
 {
-    using HolderT = ent::ComponentHolder<PositionC>;
+    using HolderT = ent::ComponentHolderList<PositionC>;
 
     PositionC() = default;
     PositionC(float posX, float posY) :
@@ -116,7 +118,7 @@ struct PositionC
 
 struct MovementC
 {
-    using HolderT = ent::ComponentHolder<MovementC>;
+    using HolderT = ent::ComponentHolderList<MovementC>;
 
     MovementC() = default;
     MovementC(float movX, float movY) :
@@ -136,12 +138,12 @@ protected:
 
 struct PositionSystem : public Universe::SystemT
 {
-    using Require = ent::Require<PositionCMain>;
+    using Require = ent::Require<PositionC>;
 };
 
 struct MovementSystem : public Universe::SystemT
 {
-    using Require = ent::Require<PositionCMain, MovementCMain>;
+    using Require = ent::Require<PositionC, MovementC>;
 };
 
 #endif //COMP_H

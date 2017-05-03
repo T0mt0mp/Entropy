@@ -10,6 +10,8 @@ inputFolder <- args[1]
 #entityxTable <- read.table(file=paste(inputFolder, "/ComparisonEntityx0", sep=""), sep="\t", header=TRUE)
 
 dataTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec10", sep=""), sep="\t", header=TRUE)
+baseVal <- dataTable$Entropy[1]
+dataTable <- transform(dataTable, Entropy=(baseVal / Entropy * 100))
 
 #dataTable <- data.frame(Entities=entropyTable$Entities, Entropy=entropyTable$EntropyPerEnt, Anax=anaxTable$AnaxPerEnt, Artemis=artemisTable$ArtemisPerEnt, EntityX=entityxTable$EntityXPerEnt)
 #dataTable <- data.frame(Entities=entropyTable$Entities, Entropy=entropyTable$Entropy, Anax=anaxTable$Anax, Artemis=artemisTable$Artemis, EntityX=entityxTable$EntityX)
@@ -17,11 +19,14 @@ dataTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec10", sep=
 xRange <- range(dataTable$Threads)
 yRange <- range(0, dataTable$Entropy)
 
-plot(dataTable$Entropy~dataTable$Threads, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(1, 1200000), ann=FALSE, axes=FALSE)
+plot(dataTable$Entropy~dataTable$Threads, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(100, 500), ann=FALSE, axes=FALSE)
 axis(1, at=seq(from=xRange[1], to=xRange[2], by=1), lwd=2)
 #yTicks <- seq()
-axis(2, lwd=2)
+#axis(2, lwd=2)
 #axis(2, at=seq(from=0, to=yRange[2], by=100), lwd=2)
+atTicks <- seq(from=100, to=500, by=50)
+myTicks <- transform(atTicks, Entropy=paste(round(atTicks / 100, 1), "x", sep=""))$Entropy
+axis(2, at=atTicks, labels=myTicks)
 
 points(dataTable$Entropy~dataTable$Threads, type="o", lwd=2, col="blue", pch=19)
 

@@ -27,7 +27,7 @@ dataTable <- data.frame(Entities=smTable$Entities,
                         ll=llTable$EntropyPerEnt)
 
 xRange <- range(dataTable$Entities)
-yRange <- range(200, 400)
+yRange <- range(150, 300)
 
 pdf(file="holdersS.pdf")
 

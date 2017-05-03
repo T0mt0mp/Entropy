@@ -95,11 +95,17 @@ void movementSystem(int argc, char *argv[])
 
             for (auto &e : entities)
             {
-                PositionC &pos = e.getComponent<PositionC>();
-                MovementC &mov = e.getComponent<MovementC>();
+                PositionC &p = e.getComponent<PositionC>();
+                MovementC &m = e.getComponent<MovementC>();
 
-                pos.x += mov.dX;
-                pos.y += mov.dY;
+                p.x += m.dX;
+                p.y += m.dY;
+
+                for (u64 iii = 0; iii < TASK_HARDNESS; ++iii)
+                {
+                    p.x += cos(p.x + m.dX);
+                    p.y += sin(p.y + m.dY);
+                }
             }
         }
 
@@ -159,11 +165,17 @@ void advancedMovementSystem(int argc, char *argv[])
 
             for (auto &e : entitiesMs)
             {
-                PositionC &pos = e.getComponent<PositionC>();
-                MovementC &mov = e.getComponent<MovementC>();
+                PositionC &p = e.getComponent<PositionC>();
+                MovementC &m = e.getComponent<MovementC>();
 
-                pos.x += mov.dX;
-                pos.y += mov.dY;
+                p.x += m.dX;
+                p.y += m.dY;
+
+                for (u64 iii = 0; iii < TASK_HARDNESS; ++iii)
+                {
+                    p.x += cos(p.x + m.dX);
+                    p.y += sin(p.y + m.dY);
+                }
             }
 
             for (auto &e : entitiesPs)
@@ -199,6 +211,10 @@ void parallelChangeset(int argc, char *argv[])
 { std::cout << "Not supported" << std::endl; }
 void holders(int argc, char *argv[])
 { std::cout << "Not implemented" << std::endl; }
+void movementSystemP(int argc, char *argv[])
+{ std::cout << "Not supported" << std::endl; }
+void advancedMovementSystemP(int argc, char *argv[])
+{ std::cout << "Not supported" << std::endl; }
 
 int main(int argc, char* argv[])
 {
