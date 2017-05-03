@@ -31,5 +31,5 @@ axis(2, at=atTicks, labels=myTicks)
 points(dataTable$Entropy~dataTable$Threads, type="o", lwd=2, col="blue", pch=19)
 
 legend("bottomright", pch=c(19), lty=c(1), legend=c("Entropy"), col=c("blue"), pt.lwd=2, box.lwd=2)
-title(main="Processing entities with Changesets", xlab="Number of threads", ylab="Time per iteration [ns]")
+title(main="Processing entities with Changesets", xlab="Number of threads", ylab="Relative performance")
 
