@@ -24,6 +24,8 @@ COMP_PARAMS=(
 
 NUM_COMP=${#COMP_PARAMS[@]}
 
+: <<'END'
+
 COMP_PARAMS_ENTROPY=(
     "5 10000 10000 100000 20 5 sm 0"
     "5 10000 10000 100000 20 5 mm 0"
@@ -61,6 +63,8 @@ COMP_PARAMS_ENTROPY=(
     "7 10000 10 2 10 5 50"
     "7 10000 10 4 10 5 50"
 )
+
+END
 
 GRAPH_SCRIPTS=(
     "entityCreation.r"
@@ -121,6 +125,7 @@ done
 echo "Running graph creation scripts!"
 
 for script in "${GRAPH_SCRIPTS[@]}"; do
+    echo "Running ${script} ..."
     Rscript ${script} ${BUILD_PATH}/${OUTPUT_DIR}/
 done
 
