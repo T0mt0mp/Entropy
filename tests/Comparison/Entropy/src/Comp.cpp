@@ -11,8 +11,8 @@ inline void computation(Universe::EntityT &e)
     PositionC *p{e.get<PositionC>()};
     MovementC *m{e.get<MovementC>()};
 
-    p->x += m->dX * 0.1f;
-    p->y += m->dY * 0.1f;
+    p->x += m->dX;
+    p->y += m->dY;
     for (u64 iii = 0; iii < TASK_HARDNESS; ++iii)
     {
         p->x += cos(p->x + m->dX);
@@ -27,8 +27,8 @@ inline void computationPar(Universe::EntityT &e)
 
     PositionC tmp;
 
-    tmp.x = pos->x + mov->dX * 0.1f;
-    tmp.y = pos->y + mov->dY * 0.1f;
+    tmp.x = pos->x + mov->dX;
+    tmp.y = pos->y + mov->dY;
     for (u64 iii = 0; iii < TASK_HARDNESS; ++iii)
     {
         tmp.x += cos(tmp.x + mov->dX);
@@ -297,6 +297,8 @@ private:
 protected:
 }; // class ThreadPool
 
+//#define USE_THREAD_POOL
+
 void parallelEntity(int argc, char *argv[])
 {
     ASSERT_FATAL(argc >= 6);
@@ -328,6 +330,7 @@ void parallelEntity(int argc, char *argv[])
 
 #ifndef USE_THREAD_POOL
         std::vector<std::thread> threadList;
+#else
 #endif
 
         for (std::size_t idx = 0; idx < numEntities; idx++)
@@ -401,7 +404,7 @@ void parallelEntity(int argc, char *argv[])
     }
 }
 
-#define USE_THREAD_POOL
+//#define USE_THREAD_POOL
 
 void parallelChangeset(int argc, char *argv[])
 {
@@ -434,6 +437,7 @@ void parallelChangeset(int argc, char *argv[])
 
 #ifndef USE_THREAD_POOL
         std::vector<std::thread> threadList;
+#else
 #endif
 
         for (std::size_t idx = 0; idx < numEntities; idx++)
@@ -543,13 +547,17 @@ void holdersHelper(int argc, char *argv[])
             u.registerComponent<ComponentT>();
             u.init();
 
-            Timer t1;
             for (std::size_t idx = 0; idx < creating; idx++)
             {
                 Universe::EntityT e = u.createEntity();
-                e.add<ComponentT>();
             }
-            creation += t1.nanoseconds();
+
+            Timer t1;
+            for (std::size_t iii = 0; iii < creating; iii++)
+            {
+                u.addComponent<ComponentT>(ent::EntityId(iii + 1u, 0u));
+            }
+            creation += static_cast<double>(t1.nanoseconds()) / creating;
 
             Timer t2;
             if (doRand)
@@ -574,14 +582,15 @@ void holdersHelper(int argc, char *argv[])
                     }
                 }
             }
-            access = t2.nanoseconds() / operations;
+            access += static_cast<double>(t2.nanoseconds()) / operations / creating;
         }
 
         creation /= numRepeats;
         access /= numRepeats;
 
+
         std::cout << creating << "\t"
-                  << static_cast<std::size_t>(static_cast<double>(creation + access) / creating)
+                  << creation + access
                   << std::endl;
     }
 }

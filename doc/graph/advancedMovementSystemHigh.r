@@ -17,10 +17,16 @@ dataTable <- data.frame(Entities=entropyTable$Change, Entropy=entropyTable$Entro
 xRange <- range(dataTable$Entities)
 yRange <- range(0, max(dataTable$Entropy, dataTable$Anax, dataTable$Artemis, dataTable$EntityX))
 
-plot(dataTable$Entropy~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(100000, 43000000), ann=FALSE, axes=FALSE)
+plot(dataTable$Entropy~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(0, 43000000), ann=FALSE, axes=FALSE)
 axis(1, at=seq(from=xRange[1], to=xRange[2], by=5), lwd=2)
 #yTicks <- seq()
-axis(2, lwd=2)
+#axis(2, lwd=2)
+yAt <- seq(from=0, to=40000000, by=10000000)
+yVal1 <- transform(yAt, Result=round(yAt / 10 ^ floor(log10(yAt)), 1))$Result
+yVal2 <- transform(yAt, Result=floor(log10(yAt)))$Result
+yTicks <- parse(text=paste(yVal1, "%*%10^", yVal2, sep=""))
+yTicks[1][1] <- 0
+axis(2, at=yAt, labels=yTicks, lwd=2)
 #axis(2, at=seq(from=0, to=yRange[2], by=100), lwd=2)
 #lines(dataTable$Entropy~dataTable$Entities, lwd=2, col="blue")
 points(dataTable$Entropy~dataTable$Entities, type="o", lwd=2, col="blue", pch=19)

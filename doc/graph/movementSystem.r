@@ -17,11 +17,16 @@ dataTable <- data.frame(Entities=entropyTable$InUse, Entropy=entropyTable$Entrop
 xRange <- range(dataTable$Entities)
 yRange <- range(0, max(dataTable$Entropy, dataTable$Anax, dataTable$Artemis, dataTable$EntityX))
 
-plot(dataTable$Anax~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(1, 7000000), ann=FALSE, axes=FALSE)
+plot(dataTable$Anax~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(0, 12000000), ann=FALSE, axes=FALSE)
 axis(1, at=seq(from=xRange[1], to=xRange[2], by=10), lwd=2)
 #yTicks <- seq()
 #axis(2, at=seq(from=0, to=yRange[2] + 200000, by=200000), lwd=2)
-axis(2, lwd=2)
+yAt <- seq(from=0, to=12000000, by=2000000)
+yVal1 <- transform(yAt, Result=round(yAt / 10 ^ floor(log10(yAt)), 1))$Result
+yVal2 <- transform(yAt, Result=floor(log10(yAt)))$Result
+yTicks <- parse(text=paste(yVal1, "%*%10^", yVal2, sep=""))
+yTicks[1][1] <- 0
+axis(2, at=yAt, labels=yTicks, lwd=2)
 #axis(2, at=seq(from=0, to=yRange[2], by=100), lwd=2)
 #lines(dataTable$Entropy~dataTable$Entities, lwd=2, col="blue")
 points(dataTable$Entropy~dataTable$Entities, type="o", lwd=2, col="blue", pch=19)
@@ -34,6 +39,6 @@ points(dataTable$Artemis~dataTable$Entities, type="o", lwd=2, col="orange", pch=
 #lines(dataTable$EntityX~dataTable$Entities, lwd=2, col="red")
 points(dataTable$EntityX~dataTable$Entities, type="o", lwd=2, col="red", pch=17)
 
-legend("bottomright", pch=c(19, 10, 13, 15, 18, 17), lty=c(1,1,1,1,1,1), legend=c("Entropy", "Entropy 2 threads", "Entropy 4 threads", "Anax", "ArtemisCpp", "EntityX"), col=c("blue","darkorchid1","darkred","green","orange","red"), pt.lwd=2, box.lwd=2)
+legend("topright", pch=c(19, 10, 13, 15, 18, 17), lty=c(1,1,1,1,1,1), legend=c("Entropy", "Entropy 2 threads", "Entropy 4 threads", "Anax", "ArtemisCpp", "EntityX"), col=c("blue","darkorchid1","darkred","green","orange","red"), pt.lwd=2, box.lwd=2)
 title(main="Entity iteration", xlab="Entities in use [%]", ylab="Time per iteration [ns]")
 

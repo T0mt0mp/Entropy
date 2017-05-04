@@ -27,12 +27,16 @@ dataTable <- data.frame(Entities=smTable$Entities,
                         ll=llTable$EntropyPerEnt)
 
 xRange <- range(dataTable$Entities)
-yRange <- range(150, 350)
+yRange <- range(200, 600)
 
 pdf(file="holdersRS.pdf")
 
 plot(dataTable$sm~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(yRange[1], yRange[2]), ann=FALSE, axes=FALSE)
-axis(1, at=seq(from=xRange[1], to=xRange[2], by=10000), lwd=2)
+xAt <- seq(from=10000, to=100000, by=10000)
+xVal1 <- transform(xAt, Result=round(xAt / 10 ^ floor(log10(xAt)), 1))$Result
+xVal2 <- transform(xAt, Result=floor(log10(xAt)))$Result
+xTicks <- parse(text=paste(xVal1, "%*%10^", xVal2, sep=""))
+axis(1, at=xAt, labels=xTicks, lwd=2)
 axis(2, lwd=2)
 points(dataTable$sm~dataTable$Entities, type="o", lwd=2, col="blue", pch=19)
 points(dataTable$sml~dataTable$Entities, type="o", lwd=2, col="green", pch=15)
@@ -44,7 +48,11 @@ title(main="Small component (16B) - random", xlab="Number of entities", ylab="Ti
 pdf(file="holdersRM.pdf")
 
 plot(dataTable$sm~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(yRange[1], yRange[2]), ann=FALSE, axes=FALSE)
-axis(1, at=seq(from=xRange[1], to=xRange[2], by=10000), lwd=2)
+xAt <- seq(from=10000, to=100000, by=10000)
+xVal1 <- transform(xAt, Result=round(xAt / 10 ^ floor(log10(xAt)), 1))$Result
+xVal2 <- transform(xAt, Result=floor(log10(xAt)))$Result
+xTicks <- parse(text=paste(xVal1, "%*%10^", xVal2, sep=""))
+axis(1, at=xAt, labels=xTicks, lwd=2)
 axis(2, lwd=2)
 points(dataTable$mm~dataTable$Entities, type="o", lwd=2, col="blue", pch=19)
 points(dataTable$mml~dataTable$Entities, type="o", lwd=2, col="green", pch=15)
@@ -56,7 +64,11 @@ title(main="Medium component (64B) - random", xlab="Number of entities", ylab="T
 pdf(file="holdersRL.pdf")
 
 plot(dataTable$sm~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(yRange[1], yRange[2]), ann=FALSE, axes=FALSE)
-axis(1, at=seq(from=xRange[1], to=xRange[2], by=10000), lwd=2)
+xAt <- seq(from=10000, to=100000, by=10000)
+xVal1 <- transform(xAt, Result=round(xAt / 10 ^ floor(log10(xAt)), 1))$Result
+xVal2 <- transform(xAt, Result=floor(log10(xAt)))$Result
+xTicks <- parse(text=paste(xVal1, "%*%10^", xVal2, sep=""))
+axis(1, at=xAt, labels=xTicks, lwd=2)
 axis(2, lwd=2)
 points(dataTable$lm~dataTable$Entities, type="o", lwd=2, col="blue", pch=19)
 points(dataTable$lml~dataTable$Entities, type="o", lwd=2, col="green", pch=15)

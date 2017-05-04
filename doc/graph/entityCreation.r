@@ -15,7 +15,8 @@ dataTable <- data.frame(Entities=entropyTable$Entities, Entropy=entropyTable$Ent
 xRange <- range(dataTable$Entities)
 yRange <- range(0, max(dataTable$Entropy, dataTable$Anax, dataTable$Artemis, dataTable$EntityX))
 
-plot(dataTable$EntityX~dataTable$Entities, log="y", type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(20, 1000), ann=FALSE, axes=FALSE)
+#plot(dataTable$EntityX~dataTable$Entities, log="y", type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(20, 1000), ann=FALSE, axes=FALSE)
+plot(dataTable$EntityX~dataTable$Entities, type="n", xlim=c(xRange[1], xRange[2] + 1), ylim=c(20, 600), ann=FALSE, axes=FALSE)
 axis(1, at=seq(from=xRange[1], to=xRange[2], by=5000), lwd=2)
 #yTicks <- seq()
 axis(2, lwd=2)
@@ -30,6 +31,6 @@ points(dataTable$Artemis~dataTable$Entities, type="o", lwd=2, col="orange", pch=
 #lines(dataTable$EntityX~dataTable$Entities, lwd=2, col="red")
 points(dataTable$EntityX~dataTable$Entities, type="o", lwd=2, col="red", pch=17)
 
-legend("bottomright", pch=c(19, 15, 18, 17), lty=c(1,1,1,1), legend=c("Entropy", "Anax", "ArtemisCpp", "EntityX"), col=c("blue","green","orange","red"), pt.lwd=2, box.lwd=2)
+legend("topleft", pch=c(19, 15, 18, 17), lty=c(1,1,1,1), legend=c("Entropy", "Anax", "ArtemisCpp", "EntityX"), col=c("blue","green","orange","red"), pt.lwd=2, box.lwd=2)
 title(main="Entity creation", xlab="Number of entities", ylab="Time per Entity [ns]")
 
