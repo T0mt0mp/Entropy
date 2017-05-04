@@ -41,37 +41,37 @@ struct LargeCM
 
 struct SmallCML
 {
-    using HolderT = ent::ComponentHolderMapList<SmallCM>;
+    using HolderT = ent::ComponentHolderMapList<SmallCML>;
     char data[SMALL_COMP_SIZE];
 };
 
 struct MediumCML
 {
-    using HolderT = ent::ComponentHolderMapList<MediumCM>;
+    using HolderT = ent::ComponentHolderMapList<MediumCML>;
     char data[MEDIUM_COMP_SIZE];
 };
 
 struct LargeCML
 {
-    using HolderT = ent::ComponentHolderMapList<LargeCM>;
+    using HolderT = ent::ComponentHolderMapList<LargeCML>;
     char data[LARGE_COMP_SIZE];
 };
 
 struct SmallCL
 {
-    using HolderT = ent::ComponentHolderList<SmallCM>;
+    using HolderT = ent::ComponentHolderList<SmallCL>;
     char data[SMALL_COMP_SIZE];
 };
 
 struct MediumCL
 {
-    using HolderT = ent::ComponentHolderList<MediumCM>;
+    using HolderT = ent::ComponentHolderList<MediumCL>;
     char data[MEDIUM_COMP_SIZE];
 };
 
 struct LargeCL
 {
-    using HolderT = ent::ComponentHolderList<LargeCM>;
+    using HolderT = ent::ComponentHolderList<LargeCL>;
     char data[LARGE_COMP_SIZE];
 };
 
