@@ -42,7 +42,7 @@ points(dataTable$sm~dataTable$Entities, type="o", lwd=2, col="blue", pch=19)
 points(dataTable$sml~dataTable$Entities, type="o", lwd=2, col="green", pch=15)
 points(dataTable$sl~dataTable$Entities, type="o", lwd=2, col="orange", pch=18)
 
-legend("topright", pch=c(19, 15, 18), lty=c(1,1,1), legend=c("Map", "MapList", "List"), col=c("blue","green","orange"), pt.lwd=2, box.lwd=2)
+legend("topright", pch=c(19, 15, 18), lty=c(1,1,1), legend=c("Map", "MapList", "List"), col=c("blue","green","orange"), pt.lwd=2, box.lwd=2, cex=1.5)
 title(main="Small component (16B) - random", xlab="Number of entities", ylab="Time per entity [ns]")
 
 pdf(file="holdersRM.pdf")
@@ -58,7 +58,7 @@ points(dataTable$mm~dataTable$Entities, type="o", lwd=2, col="blue", pch=19)
 points(dataTable$mml~dataTable$Entities, type="o", lwd=2, col="green", pch=15)
 points(dataTable$ml~dataTable$Entities, type="o", lwd=2, col="orange", pch=18)
 
-legend("topright", pch=c(19, 15, 18), lty=c(1,1,1), legend=c("Map", "MapList", "List"), col=c("blue","green","orange"), pt.lwd=2, box.lwd=2)
+#legend("topright", pch=c(19, 15, 18), lty=c(1,1,1), legend=c("Map", "MapList", "List"), col=c("blue","green","orange"), pt.lwd=2, box.lwd=2)
 title(main="Medium component (64B) - random", xlab="Number of entities", ylab="Time per entity [ns]")
 
 pdf(file="holdersRL.pdf")
@@ -74,6 +74,6 @@ points(dataTable$lm~dataTable$Entities, type="o", lwd=2, col="blue", pch=19)
 points(dataTable$lml~dataTable$Entities, type="o", lwd=2, col="green", pch=15)
 points(dataTable$ll~dataTable$Entities, type="o", lwd=2, col="orange", pch=18)
 
-legend("topright", pch=c(19, 15, 18), lty=c(1,1,1), legend=c("Map", "MapList", "List"), col=c("blue","green","orange"), pt.lwd=2, box.lwd=2)
+#legend("topright", pch=c(19, 15, 18), lty=c(1,1,1), legend=c("Map", "MapList", "List"), col=c("blue","green","orange"), pt.lwd=2, box.lwd=2)
 title(main="Large component (128B) - random", xlab="Number of entities", ylab="Time per entity [ns]")
 
