@@ -237,9 +237,16 @@ namespace ent
             }
         }
 
+        CT *result{&mList[id.index()]};
+        *result = CT(std::forward<CArgTs>(cArgs)...);
+
+        return result;
+
+        /*
         mList.emplace(mList.begin() + id.index(), std::forward<CArgTs>(cArgs)...);
 
         return &mList[id.index()];
+         */
     }
 
     template <typename CT>

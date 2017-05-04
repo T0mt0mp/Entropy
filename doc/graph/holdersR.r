@@ -2,17 +2,17 @@
 args <- commandArgs(trailingOnly = TRUE)
 inputFolder <- args[1]
 
-smTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec11", sep=""), sep="\t", header=TRUE)
-mmTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec12", sep=""), sep="\t", header=TRUE)
-lmTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec13", sep=""), sep="\t", header=TRUE)
+smTable <- read.table(file=paste(inputFolder, "/ComparisonEntropyHolder9", sep=""), sep="\t", header=TRUE)
+mmTable <- read.table(file=paste(inputFolder, "/ComparisonEntropyHolder10", sep=""), sep="\t", header=TRUE)
+lmTable <- read.table(file=paste(inputFolder, "/ComparisonEntropyHolder11", sep=""), sep="\t", header=TRUE)
 
-smlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec14", sep=""), sep="\t", header=TRUE)
-mmlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec15", sep=""), sep="\t", header=TRUE)
-lmlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec16", sep=""), sep="\t", header=TRUE)
+smlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropyHolder12", sep=""), sep="\t", header=TRUE)
+mmlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropyHolder13", sep=""), sep="\t", header=TRUE)
+lmlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropyHolder14", sep=""), sep="\t", header=TRUE)
 
-slTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec17", sep=""), sep="\t", header=TRUE)
-mlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec18", sep=""), sep="\t", header=TRUE)
-llTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec19", sep=""), sep="\t", header=TRUE)
+slTable <- read.table(file=paste(inputFolder, "/ComparisonEntropyHolder15", sep=""), sep="\t", header=TRUE)
+mlTable <- read.table(file=paste(inputFolder, "/ComparisonEntropyHolder16", sep=""), sep="\t", header=TRUE)
+llTable <- read.table(file=paste(inputFolder, "/ComparisonEntropyHolder17", sep=""), sep="\t", header=TRUE)
 
 #dataTable <- data.frame(Entities=entropyTable$Entities, Entropy=entropyTable$EntropyPerEnt, Anax=anaxTable$AnaxPerEnt, Artemis=artemisTable$ArtemisPerEnt, EntityX=entityxTable$EntityXPerEnt)
 dataTable <- data.frame(Entities=smTable$Entities, 

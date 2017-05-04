@@ -184,13 +184,11 @@ void advancedMovementSystem(int argc, char *argv[])
                 {
                     if (e.hasComponent<MovementC>())
                     {
-                        counter1++;
                         e.removeComponent<MovementC>();
                         e.activate();
                     }
                     else
                     {
-                        counter2++;
                         e.addComponent<MovementC>(1.0f, 2.0f);
                         //e.activate();
                     }

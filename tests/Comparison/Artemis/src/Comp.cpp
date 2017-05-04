@@ -105,12 +105,10 @@ void PositionSystem::processEntity(artemis::Entity &e)
         //if (e.getTypeBits().test(compId))
         if (mMovMapper.get(e))
         {
-            counter1++;
             e.removeComponent<MovementC>();
         }
         else
         {
-            counter2++;
             e.addComponent(new MovementC(1.0f, 2.0f));
         }
         e.refresh();

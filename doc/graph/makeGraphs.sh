@@ -12,8 +12,6 @@ EXECUTABLES=(
     "ComparisonEntityx"
 )
 
-: <<'END'
-
 COMP_PARAMS=(
 #    CompNum, Start, delta and max entities
     "0 10000 20000 100000"
@@ -24,11 +22,26 @@ COMP_PARAMS=(
     "2 10000 10 10 5 50"
 )
 
-END
-
 NUM_COMP=${#COMP_PARAMS[@]}
 
 COMP_PARAMS_ENTROPY=(
+    "3 10000 100 1 1 12"
+
+    "4 10000 100 1 1 12"
+
+    "6 10000 10 2 25 10 75"
+    "6 10000 10 4 25 10 75"
+
+    "7 10000 10 2 1 1 10"
+    "7 10000 10 4 1 1 10"
+    "7 10000 10 2 10 5 50"
+    "7 10000 10 4 10 5 50"
+)
+
+NUM_COMP_ENT=${#COMP_PARAMS_ENTROPY[@]}
+
+: <<'END'
+COMP_PARAMS_HOLDERS=(
     "5 10000 10000 100000 20 20 sm 0"
     "5 10000 10000 100000 20 20 mm 0"
     "5 10000 10000 100000 20 20 lm 0"
@@ -41,10 +54,6 @@ COMP_PARAMS_ENTROPY=(
     "5 10000 10000 100000 20 20 ml 0"
     "5 10000 10000 100000 20 20 ll 0"
 
-    "3 10000 100 1 1 12"
-
-    "4 10000 100 1 1 12"
-
     "5 10000 10000 100000 20 20 sm 1"
     "5 10000 10000 100000 20 20 mm 1"
     "5 10000 10000 100000 20 20 lm 1"
@@ -56,15 +65,10 @@ COMP_PARAMS_ENTROPY=(
     "5 10000 10000 100000 20 20 sl 1"
     "5 10000 10000 100000 20 20 ml 1"
     "5 10000 10000 100000 20 20 ll 1"
-
-    "6 10000 10 2 25 10 75"
-    "6 10000 10 4 25 10 75"
-
-    "7 10000 10 2 1 1 10"
-    "7 10000 10 4 1 1 10"
-    "7 10000 10 2 10 5 50"
-    "7 10000 10 4 10 5 50"
 )
+END
+
+NUM_COMP_HOLDERS=${#COMP_PARAMS_HOLDERS[@]}
 
 GRAPH_SCRIPTS=(
     "entityCreation.r"
@@ -76,8 +80,6 @@ GRAPH_SCRIPTS=(
     "entityChangeset.r"
     "holdersR.r"
 )
-
-NUM_COMP_ENT=${#COMP_PARAMS_ENTROPY[@]}
 
 echo "Running graph creation script: "
 echo "  BUILD_PATH = ${BUILD_PATH}"
@@ -120,6 +122,15 @@ for (( index=0; index<${#COMP_PARAMS_ENTROPY[@]}; index++ )); do
     echo "Running Entropy comparison experiment number ${index}, parameters \"${params}\""
     sudo nice -20 ${BUILD_PATH}/${ENTROPY_EXEC} ${params} \
         > ${BUILD_PATH}/${OUTPUT_DIR}/${ENTROPY_EXEC}Spec${index}
+done
+
+echo "${NUM_COMP_HOLDERS} comparison parameter lists for Entropy holders found."
+
+for (( index=0; index<${#COMP_PARAMS_HOLDERS[@]}; index++ )); do
+    params="${COMP_PARAMS_HOLDERS[${index}]}"
+    echo "Running Entropy holder comparison experiment number ${index}, parameters \"${params}\""
+    sudo nice -20 ${BUILD_PATH}/${ENTROPY_EXEC} ${params} \
+        > ${BUILD_PATH}/${OUTPUT_DIR}/${ENTROPY_EXEC}Holder${index}
 done
 
 echo "Running graph creation scripts!"

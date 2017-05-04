@@ -154,7 +154,7 @@ void advancedMovementSystem(int argc, char *argv[])
 
         for (std::size_t rep = 0; rep < repeats; ++rep)
         {
-            ex.entities.each<PositionC, MovementC>([]
+            ex.entities.each<PositionC, MovementC>([&]
                                                    (entityx::Entity e,
                                                     PositionC &pos,
                                                     MovementC &mov) {
@@ -167,7 +167,6 @@ void advancedMovementSystem(int argc, char *argv[])
                     pos.y += sin(pos.y + mov.dY);
                 }
             });
-
             ex.entities.each<PositionC>([&]
                                                    (entityx::Entity e,
                                                     PositionC &pos) {
@@ -175,12 +174,10 @@ void advancedMovementSystem(int argc, char *argv[])
                 {
                     if (e.has_component<MovementC>())
                     {
-                        counter1++;
                         e.remove<MovementC>();
                     }
                     else
                     {
-                        counter2++;
                         e.assign<MovementC>(1.0f, 2.0f);
                     }
                 }

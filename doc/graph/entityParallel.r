@@ -9,7 +9,7 @@ inputFolder <- args[1]
 #artemisTable <- read.table(file=paste(inputFolder, "/ComparisonArtemis0", sep=""), sep="\t", header=TRUE)
 #entityxTable <- read.table(file=paste(inputFolder, "/ComparisonEntityx0", sep=""), sep="\t", header=TRUE)
 
-dataTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec9", sep=""), sep="\t", header=TRUE)
+dataTable <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec0", sep=""), sep="\t", header=TRUE)
 
 baseVal <- dataTable$Entropy[1]
 #print(dataTable)

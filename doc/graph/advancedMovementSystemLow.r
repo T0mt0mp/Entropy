@@ -5,8 +5,8 @@ args <- commandArgs(trailingOnly = TRUE)
 inputFolder <- args[1]
 
 entropyTable <- read.table(file=paste(inputFolder, "/ComparisonEntropy2", sep=""), sep="\t", header=TRUE)
-entropy2Table <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec22", sep=""), sep="\t", header=TRUE)
-entropy4Table <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec23", sep=""), sep="\t", header=TRUE)
+entropy2Table <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec4", sep=""), sep="\t", header=TRUE)
+entropy4Table <- read.table(file=paste(inputFolder, "/ComparisonEntropySpec5", sep=""), sep="\t", header=TRUE)
 anaxTable <- read.table(file=paste(inputFolder, "/ComparisonAnax2", sep=""), sep="\t", header=TRUE)
 artemisTable <- read.table(file=paste(inputFolder, "/ComparisonArtemis2", sep=""), sep="\t", header=TRUE)
 entityxTable <- read.table(file=paste(inputFolder, "/ComparisonEntityx2", sep=""), sep="\t", header=TRUE)
