@@ -8,9 +8,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(external/anax EXCLUDE_FROM_ALL)
 add_subdirectory(external/artemis EXCLUDE_FROM_ALL)
 
-set(ENTITYX_BUILD_SHARED false)
-set(ENTITYX_BUILD_TESTING false CACHE INTERNAL "" FORCE)
-add_subdirectory(external/entityx EXCLUDE_FROM_ALL)
+if ((${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.1) OR (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} EQUAL 3.1))
+    set(ENTITYX_BUILD_SHARED false)
+    set(ENTITYX_BUILD_TESTING false CACHE INTERNAL "" FORCE)
+    add_subdirectory(external/entityx EXCLUDE_FROM_ALL)
+endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "-std=c++1z -O3")
@@ -38,7 +40,9 @@ set(COMMON_INCLUDE
         ${CMAKE_CURRENT_SOURCE_DIR}/external/common
         )
 
-add_subdirectory(Entityx)
+if ((${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.1) OR (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} EQUAL 3.1))
+    add_subdirectory(Entityx)
+endif()
 add_subdirectory(Entropy)
 add_subdirectory(Anax)
 add_subdirectory(Artemis)
