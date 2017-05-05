@@ -41,9 +41,9 @@ cmake --build . --config Release
 ```
 
 Výsledkem jsou spustitelné soubory v adresáři build nebo Release.
- - **Comparison** -- Porovnání různých volně dostupných knihoven.
- - **Test** -- Testy knihovny Entropy.
- - **gameTest** -- Testovací implementaci hry za použití knihovny Entropy.
+ - **Comparison** - Porovnání různých volně dostupných knihoven.
+ - **Test** - Testy knihovny Entropy.
+ - **gameTest** - Testovací implementaci hry za použití knihovny Entropy.
 
 ## Instalace
 
@@ -88,7 +88,7 @@ using Entity = MyUniverse::EntityT;
 Entity e = u.createEntity();
 ```
 
-`Entity` je dále možné zničit, použitím metody destroy:
+`Entity` je dále možné zničit, použitím metody `destroy`:
 ```C++
 e.destroy();
 ```
@@ -110,9 +110,9 @@ Aby třída, nebo struktura, mohla být považována za komponentu, musí splňo
 
 Každý typ komponent v knihovně Entropy má vlastní tzv. nosič komponent. Nové typy nosičů lze definovat skrz dědění třídy `BaseComponentHolder` a implementaci všech virtuálních metod. Knihovna Entropy obsahuje tři typy předdefinovaných nosičů:
 
- - `ComponentHolder` -- výchozí nosič pro komponenty, které nemají specifikovaný jiný. Používá `std::map`. Tento nosič je výhodný v případech, kdy nejsou entity, které obsahují daný typ komponenty nijak seřazené.
- - `ComponentHolderMapList` -- Používá `std::map`, který mapuje entity do souvislého pole komponent.
- - `ComponentHolderList` -- Používá pole, do kterého jsou přímo namapovány identifikátory entit. Tento nosič je výhodný pro případy, kdy každá entita obsahuje daný typ komponent.
+ - `ComponentHolder` - Výchozí nosič pro komponenty, které nemají specifikovaný jiný. Používá `std::map`. Tento nosič je výhodný v případech, kdy nejsou entity, které obsahují daný typ komponenty nijak seřazené.
+ - `ComponentHolderMapList` - Používá `std::map`, který mapuje entity do souvislého pole komponent.
+ - `ComponentHolderList` - Používá pole, do kterého jsou přímo namapovány identifikátory entit. Tento nosič je výhodný pro případy, kdy každá entita obsahuje daný typ komponent.
 
 Specifikaci nosiče komponent lze provést následujícím způsobem:
 
@@ -170,7 +170,7 @@ void MovementS::doMove()
 }
 ```
 
-Děděná třída `System`, obsahuje 3 metody -- `foreach`, `foreachAdded` a `foreachRemoved` - díky kterým lze iterovat před entity vyhovující specifikovanému filtru. Systémy lze přidat danému vesmíru voláním metody `addSystem<S>`.
+Děděná třída `System`, obsahuje 3 metody - `foreach`, `foreachAdded` a `foreachRemoved` - díky kterým lze iterovat před entity vyhovující specifikovanému filtru. Systémy lze přidat danému vesmíru voláním metody `addSystem<S>`.
 
 ### Kontrolní tok
 
@@ -179,6 +179,19 @@ Důležitou součástí knihovny Entropy je tok kontroly, který postupuje násl
 2. Registrace komponent, metodou `registerComponent<C>`. Tento krok je možný pouze před inicializací!
 3. Inicializace vesmíru zavoláním metody `init` na dané instanci třídy `Universe`.
 4. Následně je již možná práce s entitním systémem - přidávání systémů, tvorba entit apod. 
-5. Kdykoliv lze z předchozí fáze přejít do fáze obnovy, kdy je obnovena konzistence celého entitního systému. Po dokončení se systém vrací do čtvrtého kroku .
+5. Kdykoliv lze z předchozí fáze přejít do fáze obnovy, kdy je obnovena konzistence celého entitního systému. Po dokončení se systém vrací do čtvrtého kroku . Součástí obnovovací fáze je také aktualizace seznamů, nad kterými systémy iterují. 
 
-Součástí obnovovací fáze je také aktualizace seznamů, nad kterými systémy iterují. 
+```C++
+MyUniverse u;
+u.registerComponent<PositionC>();
+u.registerComponent<MovementC>();
+u.init();
+MovementS *ms{u.addSystem<MovementS>()};
+u.refresh();
+/* create entities, add components etc. */
+while (running)
+{
+    ms->doMove();
+    u.refresh();
+}
+```
