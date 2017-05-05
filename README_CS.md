@@ -1,18 +1,18 @@
-﻿# Entropy - Entity-Component-System knihovna pro jazyk C++.
+﻿# Entropy - Entity-Component-System knihovna.
 
-#Co je Entropy
+# Co je Entropy
 
 Entropy je knihovna napsaná v programovacím jazyce C++, která umožňuje návrh aplikací za použití Entity-Component-System paradigmatu. Knihovna je volně k dispozici, pod MIT licencí. 
 
-#Použití knihovny
+# Použití knihovny
 
-##Požadavky
+## Požadavky
 
 Pro správnou funkci vyžaduje knihovna následující nástroje: 
  - Překladač jazyka C++, který podporuje standard jazyka C++14 - mezi testované překladače patří GCC 6.3.1, Clang 3.9.1 a MSVC 19.10
  - (volitelné) CMake - alespoň verze 2.8
 
-##Stažení
+## Stažení
 
 Nejjednodušším způsobem, jak získat knihovnu Entropy, je klonováním jejího repositáře:
 
@@ -23,7 +23,7 @@ cd Entropy
 git submodule update --init --recursive
 ```
 
-##Překlad testů
+## Překlad testů
 
 Součástí knihovny Entropy jsou testy, které lze přeložit pomocí systému CMake. 
 
@@ -45,7 +45,7 @@ Výsledkem jsou spustitelné soubory v adresáři build nebo Release.
  - **Test** -- Testy knihovny Entropy.
  - **gameTest** -- Testovací implementaci hry za použití knihovny Entropy.
 
-##Instalace
+## Instalace
 
 Po stažení knihovny ji lze nainstalovat do adresáře /usr/local/include (nebo alternativy OS Windows) následující sekvencí příkazů: 
 
@@ -56,7 +56,7 @@ cmake ../Entropy/ && make install
 
 Alternativně je možné manuálně nakopírovat obsah adresáře Entropy/include/ (obsahuje složku Entropy) do systémového include, nebo jiného adresáře, kde ji překladač najde.
 
-##Základy
+## Základy
 
 Před jejím použitím je nutno knihovnu přidat do zdrojového kódu, pomocí direktivy include:
 
@@ -64,7 +64,7 @@ Před jejím použitím je nutno knihovnu přidat do zdrojového kódu, pomocí 
 #include <Entropy/Entropy.h>
 ```
 
-###Universe
+### Universe
 
 Středem knihovny Entropy je třída `Universe`, která umožňuje komunikaci s entitním systémem. Z této třídy je třeba nejdříve podědit což umožňuje existenci několika oddělených světů:
 
@@ -79,7 +79,7 @@ Potom již lze vytvořit instance daného vesmíru:
 MyUniverse u;
 ```
 
-###Entity
+### Entity
 
 `Entity` jsou v knihovně Entropy jednoduché číselné identifikátory, kterým je možné přiřadit 0-1 komponent. Entity se mohou nacházet ve dvou stavech - aktivní a neaktivní. Tvorba nových entit je možná skrz třídu Universe:
 
@@ -95,7 +95,7 @@ e.destroy();
 
 Informaci, zda je entita platná lze získat metodou `valid`. `Entity` se stává nevalidní ve chvíli, kdy je zničena.
 
-###Komponenty
+### Komponenty
 
 Komponenty jsou základními nosiči dat v ECS. Nové typy komponent lze definovat následovně:
 
@@ -141,7 +141,7 @@ e.has<PositionC>();             // -> true
 e.get<PositionC>->y;            // -> 2.0f
 ```
 
-###Systémy
+### Systémy
 
 Systémy umožňují iteraci nad entitami, tedy i nad komponentami, které vyhovují danému filtru. Jelikož komponenty neobsahují žádnou logiku, systémy plní funkci tvorby akcí. Pokud bychom chtěli vytvořit systém, který bude iterovat nad entitamy s komponenty typu `PositionC` a `MovementC`, vypadala by jeho deklarace následovně:
 
@@ -172,7 +172,7 @@ void MovementS::doMove()
 
 Děděná třída `System`, obsahuje 3 metody -- `foreach`, `foreachAdded` a `foreachRemoved` - díky kterým lze iterovat před entity vyhovující specifikovanému filtru. Systémy lze přidat danému vesmíru voláním metody `addSystem<S>`.
 
-###Kontrolní tok
+### Kontrolní tok
 
 Důležitou součástí knihovny Entropy je tok kontroly, který postupuje následujícím způsobem: 
 1. Vytvoření instance třídy `Universe`.
