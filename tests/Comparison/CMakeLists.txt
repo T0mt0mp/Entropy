@@ -9,7 +9,7 @@ add_subdirectory(external/anax EXCLUDE_FROM_ALL)
 add_subdirectory(external/artemis EXCLUDE_FROM_ALL)
 
 set(ENTITYX_BUILD_SHARED false)
-set(ENTITYX_BUILD_TESTING false)
+set(ENTITYX_BUILD_TESTING false CACHE INTERNAL "" FORCE)
 add_subdirectory(external/entityx EXCLUDE_FROM_ALL)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
