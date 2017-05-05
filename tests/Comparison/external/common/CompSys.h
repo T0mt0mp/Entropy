@@ -149,7 +149,7 @@ static constexpr ParamCheckFun checkFunctions[] = {
 };
 static constexpr std::size_t numFunctions()
 { return sizeof(functions) / sizeof(CompFun); }
-static_assert(numFunctions() == (sizeof(checkFunctions) / sizeof(ParamCheckFun)));
+static_assert(numFunctions() == (sizeof(checkFunctions) / sizeof(ParamCheckFun)), "Check");
 // End of prototypes.
 
 void printUsage()

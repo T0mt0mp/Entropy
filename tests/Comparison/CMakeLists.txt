@@ -5,12 +5,12 @@ project(Comparison)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_subdirectory(external/anax)
-add_subdirectory(external/artemis)
+add_subdirectory(external/anax EXCLUDE_FROM_ALL)
+add_subdirectory(external/artemis EXCLUDE_FROM_ALL)
 
 set(ENTITYX_BUILD_SHARED false)
 set(ENTITYX_BUILD_TESTING false)
-add_subdirectory(external/entityx)
+add_subdirectory(external/entityx EXCLUDE_FROM_ALL)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "-std=c++1z -O3")
