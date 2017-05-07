@@ -1,5 +1,5 @@
 
-pdf(file="poster0.pdf")
+pdf(file="poster0.pdf", width=7, height=4)
 
 args <- commandArgs(trailingOnly = TRUE)
 inputFolder <- args[1]
@@ -39,5 +39,5 @@ axis(2, at=atTicks, labels=myTicks)
 points(dataTable$Entropy~dataTable$Threads, type="o", lwd=2, col="blue", pch=19)
 
 #legend("bottomright", pch=c(19), lty=c(1), legend=c("Entropy"), col=c("blue"), pt.lwd=2, box.lwd=2)
-title(main="Processing entities in parallel", xlab="Number of threads", ylab="Relative performance")
+title(main="Processing entities in parallel", xlab="Number of threads", ylab="Relative performance increase", cex.main=1.5, cex.sub=1.5, cex.lab=1.0)
 

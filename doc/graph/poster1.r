@@ -1,5 +1,5 @@
 
-pdf(file="poster1.pdf")
+pdf(file="poster1.pdf", width=7, height=4)
 
 args <- commandArgs(trailingOnly = TRUE)
 inputFolder <- args[1]
@@ -20,7 +20,7 @@ box("outer", lwd=2)
 axis(1, at=seq(from=xRange[1], to=xRange[2], by=10), lwd=2)
 #yTicks <- seq()
 #axis(2, lwd=2)
-yAt <- seq(from=70000000, to=100000000, by=5000000)
+yAt <- seq(from=70000000, to=100000000, by=10000000)
 yVal1 <- transform(yAt, Result=round(yAt / 10 ^ floor(log10(yAt)), 1))$Result
 yVal2 <- transform(yAt, Result=floor(log10(yAt)))$Result
 yTicks <- parse(text=paste(yVal1, "%*%10^", yVal2, sep=""))
@@ -30,5 +30,5 @@ axis(2, at=yAt, labels=yTicks, lwd=2)
 #lines(dataTable$Entropy~dataTable$Entities, lwd=2, col="blue")
 points(dataTable$Entropy~dataTable$Entities, type="o", lwd=2, col="blue", pch=19)
 
-title(main="Entity change", xlab="Entities changed [%]", ylab="Time per iteration [ns]")
+title(main="Entity change", xlab="Entities changed [%]", ylab="Time per iteration [ns]", cex.main=1.5, cex.sub=1.5, cex.lab=1.0)
 
