@@ -30,5 +30,5 @@ axis(2, at=yAt, labels=yTicks, lwd=2)
 #lines(dataTable$Entropy~dataTable$Entities, lwd=2, col="blue")
 points(dataTable$Entropy~dataTable$Entities, type="o", lwd=2, col="blue", pch=19)
 
-title(main="Entity change", xlab="Entities changed [%]", ylab="Time per iteration [ns]", cex.main=1.5, cex.sub=1.5, cex.lab=1.0)
+title(main="Entity change", xlab="Entities changed [%]", cex.main=2.0, cex.sub=1.5, cex.lab=1.5)
 
