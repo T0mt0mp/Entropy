@@ -93,20 +93,20 @@ target_link_libraries(${PROJECT_NAME} ECS-FIT ENTROPY ${GL_LIB} glew_static glfw
 
 if(MSVC)
     add_custom_target(
-            copyShaders
+            copyResources
             ALL
             COMMAND ${CMAKE_COMMAND} -E copy_directory
             #"${PROJECT_SOURCE_DIR}/shaders" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
-            "${PROJECT_SOURCE_DIR}/shaders" "${EXECUTABLE_OUTPUT_PATH}/Release/shaders"
+            "${CMAKE_CURRENT_SOURCE_DIR}/res" "${EXECUTABLE_OUTPUT_PATH}/Release/res"
     )
 else()
     add_custom_target(
-            copyShaders
+            copyResources
             ALL
             COMMAND ${CMAKE_COMMAND} -E copy_directory
             #"${PROJECT_SOURCE_DIR}/shaders" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
-            "${PROJECT_SOURCE_DIR}/shaders" "${EXECUTABLE_OUTPUT_PATH}/shaders"
+            "${CMAKE_CURRENT_SOURCE_DIR}/res" "${EXECUTABLE_OUTPUT_PATH}/res"
     )
 endif()
 
-add_dependencies(${PROJECT_NAME} copyShaders)
+add_dependencies(${PROJECT_NAME} copyResources)

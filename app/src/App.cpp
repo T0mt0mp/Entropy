@@ -190,7 +190,7 @@ void App::run()
 {
     PROF_BLOCK("Init");
 
-    ttf::FontFile ff("font.ttf");
+    ttf::FontFile ff("res/font.ttf");
     ttf::FontParser fp(ff);
     ttf::Font font = fp.parse();
 
@@ -579,8 +579,8 @@ void App::reloadShaders()
 {
     try {
         GLSLProgram newProgram{
-            {GL_VERTEX_SHADER, std::string("shaders/basic.vert")},
-            {GL_FRAGMENT_SHADER, std::string("shaders/basic.frag")}
+            {GL_VERTEX_SHADER, std::string("res/basic.vert")},
+            {GL_FRAGMENT_SHADER, std::string("res/basic.frag")}
         };
 
         mProgram = std::move(newProgram);
