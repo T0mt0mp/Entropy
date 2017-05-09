@@ -32,4 +32,16 @@
 #include "testing/Testing.h"
 #include "ECS.h"
 
+static constexpr std::size_t SHORT_FRAC_BIAS{14};
+using ShortFrac = float;
+static constexpr std::size_t FIXED_BIAS{16};
+using Fixed = float;
+using FWord = i16;
+using UFWord = u16;
+static constexpr std::size_t F2DOT14_BIAS{14};
+using F2Dot14 = float;
+
+/// How many character should be mapped.
+static constexpr std::size_t CHAR_MAPPING{256u};
+
 #endif //ECS_FIT_TYPES_H

@@ -68,7 +68,11 @@ endif()
 
 set(APP_SOURCES
         ${PROJECT_SOURCE_DIR}/ECS.cpp
-        ${PROJECT_SOURCE_DIR}/App.cpp)
+        ${PROJECT_SOURCE_DIR}/App.cpp
+        ${PROJECT_SOURCE_DIR}/Font.cpp
+        ${PROJECT_SOURCE_DIR}/FontFile.cpp
+        ${PROJECT_SOURCE_DIR}/FontParser.cpp
+        ${PROJECT_SOURCE_DIR}/Tables.cpp)
 set(APP_HEADERS
         ${PROJECT_INCLUDE_DIR}/Types.h
         ${PROJECT_INCLUDE_DIR}/ECS.h
@@ -78,7 +82,11 @@ set(APP_HEADERS
         ${PROJECT_INCLUDE_DIR}/Keyboard.h
         ${PROJECT_INCLUDE_DIR}/Mouse.h
         ${PROJECT_INCLUDE_DIR}/Gamepad.h
-        ${PROJECT_INCLUDE_DIR}/App.h)
+        ${PROJECT_INCLUDE_DIR}/Font.h
+        ${PROJECT_INCLUDE_DIR}/FontFile.h
+        ${PROJECT_INCLUDE_DIR}/FontFile.inl
+        ${PROJECT_INCLUDE_DIR}/FontParser.h
+        ${PROJECT_INCLUDE_DIR}/Tables.h)
 
 add_executable(${PROJECT_NAME} ${APP_SOURCES} ${APP_HEADERS})
 target_link_libraries(${PROJECT_NAME} ECS-FIT ENTROPY ${GL_LIB} glew_static glfw)

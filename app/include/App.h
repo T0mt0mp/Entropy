@@ -11,6 +11,10 @@
 
 #include "Timer.h"
 
+#include "Font.h"
+#include "FontFile.h"
+#include "FontParser.h"
+
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "Gamepad.h"

@@ -190,6 +190,10 @@ void App::run()
 {
     PROF_BLOCK("Init");
 
+    ttf::FontFile ff("font.ttf");
+    ttf::FontParser fp(ff);
+    ttf::Font font = fp.parse();
+
     Universe u;
 
     u.initialize();
@@ -209,6 +213,7 @@ void App::run()
     static constexpr u64 Z_SIZE{30};
     static constexpr f32 Z_START{-1.0f * ((Z_SIZE - 1) * Z_SPACE / 2.0f)};
 
+    /*
     for (u64 zPos = 0; zPos < Z_SIZE; ++zPos)
     {
         for (u64 yPos = 0; yPos < Y_SIZE; ++yPos)
@@ -224,6 +229,63 @@ void App::run()
                 e.add<TransformC>();
             }
         }
+    }
+     */
+
+    // Values are fixed for now.
+    static constexpr char TEXT[] = "Entropy\nECS";
+    static constexpr u64 TEXT_FRAGMENTATION{4};
+    static constexpr float TEXT_X_START{-50.0f};
+    static constexpr float TEXT_X_INC{15.0f};
+    static constexpr float TEXT_Y_START{-1.0f};
+    static constexpr float TEXT_Y_INC{-20.0f};
+    static constexpr float TEXT_Z_START{-70.0f};
+    static constexpr float TEXT_Z_INC{0.0f};
+
+    float letterPosX{TEXT_X_START};
+    float letterPosY{TEXT_Y_START};
+    float letterPosZ{TEXT_Z_START};
+
+    for (char c: TEXT)
+    {
+        if (c == '\0')
+        {
+            break;
+        }
+        else if (c == '\n')
+        {
+            letterPosY += TEXT_Y_INC;
+            letterPosX = TEXT_X_START;
+            continue;
+        }
+
+        auto letter = font.letter(c);
+        auto it = letter.begin();
+        auto end = letter.end();
+        ASSERT_FAST(it != end);
+        float lastX{it->x / 102.4f};
+        float lastY{it->y / 102.4f};
+        for (; it != end; ++it)
+        {
+            float x{it->x / 102.4f};
+            float y{it->y / 102.4f};
+            float dX{(x - lastX) / static_cast<float>(TEXT_FRAGMENTATION)};
+            float dY{(y - lastY) / static_cast<float>(TEXT_FRAGMENTATION)};
+            for (u64 iii = 0; iii < TEXT_FRAGMENTATION; ++iii)
+            {
+                Universe::EntityT e{u.createEntity()};
+                e.add<PositionC>()->p = glm::vec3(letterPosX + lastX + dX * iii,
+                                                  letterPosY + lastY + dY * iii,
+                                                  letterPosZ);
+                e.get<PositionC>()->r = glm::vec3(0.0f);
+                e.add<RotSpeedC>()->rs = glm::vec3(glm::linearRand(-1.0f, 1.0f));
+                e.add<TransformC>();
+            }
+            lastX = x;
+            lastY = y;
+        }
+
+        letterPosX += TEXT_X_INC;
     }
 
     u.refresh();
@@ -274,6 +336,7 @@ void App::run()
     gamepad.setJoystickDeadzone(0.0f);
     u32 usedJoystick{0};
 
+    bool cameraEnabled{false};
     CameraInfo cameraInfo;
 
     static constexpr double MAX_ANGULAR_SPEED_X{1.5f};
@@ -338,11 +401,13 @@ void App::run()
         static bool disabled{false};
         if (disabled)
         {
+            cameraEnabled = false;
             disabled = false;
             glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
         else
         {
+            cameraEnabled = true;
             disabled = true;
             glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
@@ -378,8 +443,6 @@ void App::run()
 
             std::cout << "FrameTime[ms] : " << static_cast<f64>(sincePrint) / frameCounter
                       << "\nFrames : " << frameCounter << "; Updates : " << updateCounter << std::endl;
-
-            std::cout << "To scroll : " << xScroll << " " << yScroll << std::endl;
 
             frameCounter = 0;
             updateCounter = 0;
@@ -429,8 +492,32 @@ void App::run()
             camera.setRot({-glm::radians(xAngle), 0.0f, -glm::radians(zAngle)});
              */
 
-            cameraInfo.rot.x = yMousePos / 400.0f;
-            cameraInfo.rot.y = xMousePos / 400.0f;
+            if (cameraEnabled)
+            {
+                cameraInfo.rot.x = (yMousePos - mWindowHeight / 2.0f) / 400.0f;
+                if (cameraInfo.rot.x > M_PI_4 / 2.0f)
+                {
+                    cameraInfo.rot.x = M_PI_4 / 2.0f;
+                }
+                if (cameraInfo.rot.x < -M_PI_4 / 2.0f)
+                {
+                    cameraInfo.rot.x = -M_PI_4 / 2.0f;
+                }
+                cameraInfo.rot.y = (xMousePos - mWindowWidth / 2.0f) / 400.0f;
+                if (cameraInfo.rot.y > M_PI_4)
+                {
+                    cameraInfo.rot.y = M_PI_4;
+                }
+                if (cameraInfo.rot.y < -M_PI_4)
+                {
+                    cameraInfo.rot.y = -M_PI_4;
+                }
+            }
+            else
+            {
+                cameraInfo.rot.x = 0.0f;
+                cameraInfo.rot.y = 0.0f;
+            }
             cameraInfo.rot.z = 0.0f;
 
             glm::vec3 spherePoint;

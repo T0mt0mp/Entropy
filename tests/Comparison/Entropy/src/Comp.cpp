@@ -311,11 +311,120 @@ void parallelEntity(int argc, char *argv[])
 
     ASSERT_FATAL(start >= 1);
 
-    std::cout << "Threads\tEntropy" << std::endl;
+    /*
+    for (std::size_t threads = start;
+         threads <= max;
+         threads += increment)
+    {
+        ThreadPool tp(threads);
+
+        PositionC *positions = new PositionC[numEntities];
+        MovementC *movements = new MovementC[numEntities];
+
+        Timer t;
+        for (std::size_t rep = 0; rep < repeats; ++rep)
+        {
+            if (threads > 1)
+            {
+
+                for (u64 iii = 1; iii < threads; ++iii)
+                {
+#ifdef USE_THREAD_POOL
+                    tp.addJob(new ThreadPool::Job([iii, numEntities, threads, &positions, &movements]() {
+                        u64 start{numEntities / threads * iii};
+                        u64 end{numEntities / threads * (iii + 1)};
+                        for (u64 iii = start; iii < end; ++iii)
+                        {
+                            PositionC *p = &positions[iii];
+                            MovementC *m = &movements[iii];
+
+                            p->x += m->dX;
+                            p->y += m->dY;
+                            for (u64 iii = 0; iii < TASK_HARDNESS; ++iii)
+                            {
+                                p->x += cos(p->x + m->dX);
+                                p->y += sin(p->y + m->dY);
+                            }
+                        }
+                    }));
+#else
+                    threadList.emplace_back([iii, numEntities, threads, &positions, &movements] () {
+                        u64 start{numEntities / threads * iii};
+                        u64 end{numEntities / threads * (iii + 1)};
+                        for (u64 iii = start; iii < end; ++iii)
+                        {
+                            PositionC *p = &positions[iii];
+                            MovementC *m = &movements[iii];
+
+                            p->x += m->dX;
+                            p->y += m->dY;
+                            for (u64 iii = 0; iii < TASK_HARDNESS; ++iii)
+                            {
+                                p->x += cos(p->x + m->dX);
+                                p->y += sin(p->y + m->dY);
+                            }
+                        }
+                    });
+#endif
+                }
+
+                u64 start{numEntities / threads * 0};
+                u64 end{numEntities / threads * (0 + 1)};
+                for (u64 iii = start; iii < end; ++iii)
+                {
+                    PositionC *p = &positions[iii];
+                    MovementC *m = &movements[iii];
+
+                    p->x += m->dX;
+                    p->y += m->dY;
+                    for (u64 iii = 0; iii < TASK_HARDNESS; ++iii)
+                    {
+                        p->x += cos(p->x + m->dX);
+                        p->y += sin(p->y + m->dY);
+                    }
+                }
+
 
 #ifdef USE_THREAD_POOL
-    ThreadPool tp(max);
+                tp.waitUntilAllFinished();
+#else
+                for (std::thread &th : threadList)
+                    {
+                        th.join();
+                    }
+
+                    threadList.clear();
 #endif
+            }
+            else
+            {
+                u64 start{numEntities / threads * 0};
+                u64 end{numEntities / threads * (0 + 1)};
+                for (u64 iii = start; iii < end; ++iii)
+                {
+                    PositionC *p = &positions[iii];
+                    MovementC *m = &movements[iii];
+
+                    p->x += m->dX;
+                    p->y += m->dY;
+                    for (u64 iii = 0; iii < TASK_HARDNESS; ++iii)
+                    {
+                        p->x += cos(p->x + m->dX);
+                        p->y += sin(p->y + m->dY);
+                    }
+                }
+            }
+        }
+        std::size_t nanoseconds{t.nanoseconds()};
+        std::cout << threads << "\t"
+                  << static_cast<std::size_t>(static_cast<double>(nanoseconds) / repeats)
+                  << std::endl;
+    }
+
+    return;
+     */
+
+    std::cout << "Threads\tEntropy" << std::endl;
 
     for (std::size_t threads = start;
          threads <= max;
@@ -331,6 +440,7 @@ void parallelEntity(int argc, char *argv[])
 #ifndef USE_THREAD_POOL
         std::vector<std::thread> threadList;
 #else
+        ThreadPool tp(threads);
 #endif
 
         for (std::size_t idx = 0; idx < numEntities; idx++)
@@ -350,7 +460,7 @@ void parallelEntity(int argc, char *argv[])
             {
                 auto parForeach = ms->foreachP(threads);
 
-                for (u64 iii = 1; iii < threads; ++iii)
+                for (u64 iii = 0; iii < threads; ++iii)
                 {
 #ifdef USE_THREAD_POOL
                     tp.addJob(new ThreadPool::Job([iii, &parForeach] () {
@@ -371,10 +481,12 @@ void parallelEntity(int argc, char *argv[])
 #endif
                 }
 
+                /*
                 for (auto &e : parForeach.forThread(0))
                 {
                     computation(e);
                 }
+                 */
 
 
 #ifdef USE_THREAD_POOL
