@@ -26,8 +26,9 @@ struct PositionC
 {
     using HolderT = ent::ComponentHolderList<PositionC>;
 
-    glm::vec3 p;
-    glm::vec3 r;
+    glm::vec3 pos;
+    glm::vec3 rot;
+    glm::vec3 scale;
 }; // struct PositionC
 
 /// Transform component.
@@ -41,15 +42,16 @@ struct TransformC
 /// Velocity component.
 struct VelocityC
 {
-    glm::vec3 v;
+    glm::vec3 vel;
+    glm::vec3 targetPos;
 }; // struct VelocityC
 
 /// Rotation momentum component.
-struct RotSpeedC
+struct RotationVelocityC
 {
-    using HolderT = ent::ComponentHolderList<RotSpeedC>;
+    using HolderT = ent::ComponentHolderList<RotationVelocityC>;
 
-    glm::vec3 rs;
+    glm::vec3 rv;
 }; // struct RotSpeedC
 
 class Universe : public ent::Universe<Universe>

@@ -171,6 +171,9 @@ namespace ent
 
         /// Group ID getter.
         u64 groupId() const;
+
+        /// Universe getter.
+        UniverseT *universe();
     private:
         /**
          * Set Entity Group containing Entities which are

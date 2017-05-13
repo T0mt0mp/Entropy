@@ -12,7 +12,7 @@ void Universe::initialize()
 {
     registerComponent<PositionC>();
     registerComponent<VelocityC>();
-    registerComponent<RotSpeedC>();
+    registerComponent<RotationVelocityC>();
     registerComponent<TransformC>();
 
     init();

@@ -12,7 +12,6 @@ EXECUTABLES=(
     "ComparisonEntityx"
 )
 
-: <<'END'
 COMP_PARAMS=(
 #    CompNum, Start, delta and max entities
     "0 10000 20000 100000"
@@ -22,11 +21,9 @@ COMP_PARAMS=(
     "2 10000 10 1 1 10"
     "2 10000 10 10 5 50"
 )
-END
 
 NUM_COMP=${#COMP_PARAMS[@]}
 
-: <<'END'
 COMP_PARAMS_ENTROPY=(
     "3 10000 100 1 1 12"
 
@@ -40,7 +37,6 @@ COMP_PARAMS_ENTROPY=(
     "7 10000 10 2 10 5 50"
     "7 10000 10 4 10 5 50"
 )
-END
 
 NUM_COMP_ENT=${#COMP_PARAMS_ENTROPY[@]}
 

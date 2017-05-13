@@ -9,7 +9,7 @@ add_subdirectory(external/anax EXCLUDE_FROM_ALL)
 add_subdirectory(external/artemis EXCLUDE_FROM_ALL)
 
 if ((${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.1) OR (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} EQUAL 3.1))
-    set(ENTITYX_BUILD_SHARED false)
+    set(ENTITYX_BUILD_SHARED false CACHE INTERNAL "" FORCE)
     set(ENTITYX_BUILD_TESTING false CACHE INTERNAL "" FORCE)
     add_subdirectory(external/entityx EXCLUDE_FROM_ALL)
 endif()

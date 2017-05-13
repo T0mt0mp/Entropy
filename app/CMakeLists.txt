@@ -69,6 +69,11 @@ endif()
 set(APP_SOURCES
         ${PROJECT_SOURCE_DIR}/ECS.cpp
         ${PROJECT_SOURCE_DIR}/App.cpp
+        ${PROJECT_SOURCE_DIR}/Keyboard.cpp
+        ${PROJECT_SOURCE_DIR}/Mouse.cpp
+        ${PROJECT_SOURCE_DIR}/Gamepad.cpp
+        ${PROJECT_SOURCE_DIR}/Cube.cpp
+        ${PROJECT_SOURCE_DIR}/TextS.cpp
         ${PROJECT_SOURCE_DIR}/Font.cpp
         ${PROJECT_SOURCE_DIR}/FontFile.cpp
         ${PROJECT_SOURCE_DIR}/FontParser.cpp
@@ -76,12 +81,23 @@ set(APP_SOURCES
 set(APP_HEADERS
         ${PROJECT_INCLUDE_DIR}/Types.h
         ${PROJECT_INCLUDE_DIR}/ECS.h
+        ${PROJECT_INCLUDE_DIR}/App.h
         ${PROJECT_INCLUDE_DIR}/GLSLProgram.h
         ${PROJECT_INCLUDE_DIR}/Camera.h
         ${PROJECT_INCLUDE_DIR}/Timer.h
         ${PROJECT_INCLUDE_DIR}/Keyboard.h
         ${PROJECT_INCLUDE_DIR}/Mouse.h
         ${PROJECT_INCLUDE_DIR}/Gamepad.h
+        ${PROJECT_INCLUDE_DIR}/Cube.h
+        ${PROJECT_INCLUDE_DIR}/MovementS.h
+        ${PROJECT_INCLUDE_DIR}/MovementS.inl
+        ${PROJECT_INCLUDE_DIR}/RotationS.h
+        ${PROJECT_INCLUDE_DIR}/RotationS.inl
+        ${PROJECT_INCLUDE_DIR}/TransformS.h
+        ${PROJECT_INCLUDE_DIR}/TransformS.inl
+        ${PROJECT_INCLUDE_DIR}/RenderS.h
+        ${PROJECT_INCLUDE_DIR}/RenderS.inl
+        ${PROJECT_INCLUDE_DIR}/TextS.h
         ${PROJECT_INCLUDE_DIR}/Font.h
         ${PROJECT_INCLUDE_DIR}/FontFile.h
         ${PROJECT_INCLUDE_DIR}/FontFile.inl

@@ -5,134 +5,6 @@
  */
 
 #include "App.h"
-
-const GLfloat Triangle::VERTEX_BUFFER_DATA[] =
-    {
-        // x      y     z
-        -1.0f, -1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f,
-        0.0f,  1.0f, 0.0f
-    };
-
-const GLfloat Cube::VERTEX_BUFFER_DATA[] =
-    {
-        // x      y     z
-        // Left
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f,
-
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f, -1.0f,
-
-        // Front
-        -1.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-
-        -1.0f, -1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f,
-
-        // Right
-        1.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, -1.0f,
-        1.0f, 1.0f, -1.0f,
-
-        1.0f, -1.0f, 1.0f,
-        1.0f, 1.0f, -1.0f,
-        1.0f, 1.0f, 1.0f,
-
-        // Back
-        1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, 1.0f, -1.0f,
-
-        1.0f, -1.0f, -1.0f,
-        -1.0f, 1.0f, -1.0f,
-        1.0f, 1.0f, -1.0f,
-
-        // Up
-        -1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, -1.0f,
-
-        -1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, -1.0f,
-        -1.0f, 1.0f, -1.0f,
-
-        // Down
-        1.0f, -1.0f, 1.0f,
-        -1.0f, -1.0f, 1.0f,
-        -1.0f, -1.0f, -1.0f,
-
-        1.0f, -1.0f, 1.0f,
-        -1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-    };
-
-const GLfloat Cube::COLOR_BUFFER_DATA[] =
-    {
-        1.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-
-        1.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-
-        0.0f, 1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-
-        0.0f, 1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
-
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
-
-        0.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, 1.0f,
-
-        0.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, 1.0f,
-
-        1.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 1.0f,
-
-        1.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 1.0f,
-
-        0.0f, 1.0f, 1.0f,
-        0.0f, 1.0f, 1.0f,
-        0.0f, 1.0f, 1.0f,
-
-        0.0f, 1.0f, 1.0f,
-        0.0f, 1.0f, 1.0f,
-        0.0f, 1.0f, 1.0f,
-    };
-
-const Keyboard Keyboard::sEmptyKeyboard;
-const Keyboard *Keyboard::sSelected{&Keyboard::sEmptyKeyboard};
-
-const Mouse Mouse::sEmptyMouse;
-const Mouse *Mouse::sSelected{&Mouse::sEmptyMouse};
-
-std::vector<Gamepad::GamepadData> Gamepad::sConnected;
-const Gamepad::CallbackInformation Gamepad::sDefaultCallbacks{};
-const Gamepad::CallbackInformation *Gamepad::sSelectedCallbacks{&Gamepad::sDefaultCallbacks};
-
 App::App()
 {
     glfwSetErrorCallback(App::glfwErrorCallback);
@@ -175,7 +47,7 @@ App::App()
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
-    glClearColor(0.0f, 0.7f, 0.1f, 0.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 
     mRunning = true;
 }
@@ -202,93 +74,18 @@ void App::run()
     RotationS *rotationSystem{u.addSystem<RotationS>()};
     TransformS *transformSystem{u.addSystem<TransformS>()};
     RenderS *renderSystem{u.addSystem<RenderS>()};
-
-    static constexpr f32 X_SPACE{3.0f};
-    static constexpr u64 X_SIZE{30};
-    static constexpr f32 X_START{-1.0f * ((X_SIZE - 1) * X_SPACE / 2.0f)};
-    static constexpr f32 Y_SPACE{3.0f};
-    static constexpr u64 Y_SIZE{30};
-    static constexpr f32 Y_START{-1.0f * ((Y_SIZE - 1) * Y_SPACE / 2.0f)};
-    static constexpr f32 Z_SPACE{3.0f};
-    static constexpr u64 Z_SIZE{30};
-    static constexpr f32 Z_START{-1.0f * ((Z_SIZE - 1) * Z_SPACE / 2.0f)};
-
-    /*
-    for (u64 zPos = 0; zPos < Z_SIZE; ++zPos)
-    {
-        for (u64 yPos = 0; yPos < Y_SIZE; ++yPos)
-        {
-            for (u64 xPos = 0; xPos < X_SIZE; ++xPos)
-            {
-                Universe::EntityT e{u.createEntity()};
-                e.add<PositionC>()->p = glm::vec3(X_START + xPos * X_SPACE,
-                                                  Y_START + yPos * Y_SPACE,
-                                                  Z_START + zPos * Z_SPACE);
-                e.get<PositionC>()->r = glm::vec3(0.0f);
-                e.add<RotSpeedC>()->rs = glm::vec3(glm::linearRand(-1.0f, 1.0f));
-                e.add<TransformC>();
-            }
-        }
-    }
-     */
-
-    // Values are fixed for now.
-    static constexpr char TEXT[] = "Entropy\nECS";
-    static constexpr u64 TEXT_FRAGMENTATION{4};
-    static constexpr float TEXT_X_START{-50.0f};
-    static constexpr float TEXT_X_INC{15.0f};
-    static constexpr float TEXT_Y_START{-1.0f};
-    static constexpr float TEXT_Y_INC{-20.0f};
-    static constexpr float TEXT_Z_START{-70.0f};
-    static constexpr float TEXT_Z_INC{0.0f};
-
-    float letterPosX{TEXT_X_START};
-    float letterPosY{TEXT_Y_START};
-    float letterPosZ{TEXT_Z_START};
-
-    for (char c: TEXT)
-    {
-        if (c == '\0')
-        {
-            break;
-        }
-        else if (c == '\n')
-        {
-            letterPosY += TEXT_Y_INC;
-            letterPosX = TEXT_X_START;
-            continue;
-        }
-
-        auto letter = font.letter(c);
-        auto it = letter.begin();
-        auto end = letter.end();
-        ASSERT_FAST(it != end);
-        float lastX{it->x / 102.4f};
-        float lastY{it->y / 102.4f};
-        for (; it != end; ++it)
-        {
-            float x{it->x / 102.4f};
-            float y{it->y / 102.4f};
-            float dX{(x - lastX) / static_cast<float>(TEXT_FRAGMENTATION)};
-            float dY{(y - lastY) / static_cast<float>(TEXT_FRAGMENTATION)};
-            for (u64 iii = 0; iii < TEXT_FRAGMENTATION; ++iii)
-            {
-                Universe::EntityT e{u.createEntity()};
-                e.add<PositionC>()->p = glm::vec3(letterPosX + lastX + dX * iii,
-                                                  letterPosY + lastY + dY * iii,
-                                                  letterPosZ);
-                e.get<PositionC>()->r = glm::vec3(0.0f);
-                e.add<RotSpeedC>()->rs = glm::vec3(glm::linearRand(-1.0f, 1.0f));
-                e.add<TransformC>();
-            }
-            lastX = x;
-            lastY = y;
-        }
-
-        letterPosX += TEXT_X_INC;
-    }
+    TextS *textSystem{u.addSystem<TextS>(&font)};
+    textSystem->addText("Entropy");
+    textSystem->addText("Entity");
+    textSystem->addText("Component");
+    textSystem->addText("System");
 
     u.refresh();
+
+    PROF_BLOCK("Creating cubes");
+    textSystem->initializeCubes(10);
+    u.refresh();
+    PROF_BLOCK_END();
 
     Keyboard kb;
 
@@ -397,7 +194,7 @@ void App::run()
         }
     });
 
-    kb.setAction(GLFW_KEY_SPACE, 0, GLFW_PRESS, [&] () {
+    kb.setAction(GLFW_KEY_C, 0, GLFW_PRESS, [&] () {
         static bool disabled{false};
         if (disabled)
         {
@@ -411,6 +208,10 @@ void App::run()
             disabled = true;
             glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
+    });
+
+    kb.setAction(GLFW_KEY_T, 0, GLFW_PRESS, [&] () {
+        textSystem->nextText();
     });
 
     // In ms.
@@ -451,6 +252,8 @@ void App::run()
         glfwPollEvents();
         gamepad.pollEvents();
 
+        textSystem->updateText();
+
         PROF_BLOCK("Update loop");
         while (lag >= MS_PER_UPDATE)
         {
@@ -459,11 +262,11 @@ void App::run()
 
             // Update...
             PROF_BLOCK("Movement");
-            movementSystem->run(static_cast<f32>(MS_PER_UPDATE / MS_IN_S));
+            movementSystem->doMove(static_cast<f32>(MS_PER_UPDATE / MS_IN_S));
             PROF_BLOCK_END();
 
             PROF_BLOCK("Rotation");
-            rotationSystem->run(static_cast<f32>(MS_PER_UPDATE / MS_IN_S));
+            rotationSystem->doRot(static_cast<f32>(MS_PER_UPDATE / MS_IN_S));
             PROF_BLOCK_END();
 
             PROF_BLOCK("Refresh");
@@ -495,22 +298,22 @@ void App::run()
             if (cameraEnabled)
             {
                 cameraInfo.rot.x = (yMousePos - mWindowHeight / 2.0f) / 400.0f;
-                if (cameraInfo.rot.x > M_PI_4 / 2.0f)
+                if (cameraInfo.rot.x > PI_8)
                 {
-                    cameraInfo.rot.x = M_PI_4 / 2.0f;
+                    cameraInfo.rot.x = PI_8;
                 }
-                if (cameraInfo.rot.x < -M_PI_4 / 2.0f)
+                if (cameraInfo.rot.x < -PI_8)
                 {
-                    cameraInfo.rot.x = -M_PI_4 / 2.0f;
+                    cameraInfo.rot.x = -PI_8;
                 }
                 cameraInfo.rot.y = (xMousePos - mWindowWidth / 2.0f) / 400.0f;
-                if (cameraInfo.rot.y > M_PI_4)
+                if (cameraInfo.rot.y > PI_4)
                 {
-                    cameraInfo.rot.y = M_PI_4;
+                    cameraInfo.rot.y = PI_4;
                 }
-                if (cameraInfo.rot.y < -M_PI_4)
+                if (cameraInfo.rot.y < -PI_4)
                 {
-                    cameraInfo.rot.y = -M_PI_4;
+                    cameraInfo.rot.y = -PI_4;
                 }
             }
             else
@@ -545,7 +348,7 @@ void App::run()
         camera.recalculate();
 
         PROF_BLOCK("Transform system");
-        transformSystem->run();
+        transformSystem->doTransform();
         PROF_BLOCK_END();
 
         PROF_BLOCK_END();

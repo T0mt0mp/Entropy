@@ -147,6 +147,10 @@ namespace ent
     { ENT_ASSERT_FAST(isInitialized()); return mGroup->id(); }
 
     template <typename UT>
+    UT *System<UT>::universe()
+    { ENT_ASSERT_FAST(isInitialized()); return mUniverse; }
+
+    template <typename UT>
     void System<UT>::setGroup(EntityGroup *grp)
     { mGroup = grp; }
 

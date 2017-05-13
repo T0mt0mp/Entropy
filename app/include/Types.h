@@ -44,4 +44,8 @@ using F2Dot14 = float;
 /// How many character should be mapped.
 static constexpr std::size_t CHAR_MAPPING{256u};
 
+static constexpr float PI{3.141f};
+static constexpr float PI_4{PI / 4.0f};
+static constexpr float PI_8{PI / 8.0f};
+
 #endif //ECS_FIT_TYPES_H

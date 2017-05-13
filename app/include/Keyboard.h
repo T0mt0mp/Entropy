@@ -142,18 +142,7 @@ private:
      * @param action GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT.
      * @param mods Key modifiers.
      */
-    void keyboardCallback(GLFWwindow *window, int key, int scancode, int action, int mods) const
-    {
-        decltype(mMapping.begin()) search{mMapping.find({key, mods, action})};
-        if (search != mMapping.end())
-        { // We found an action!
-            search->second();
-        }
-        else if (mDefaultAction)
-        {
-            mDefaultAction(window, key, scancode, action, mods);
-        }
-    }
+    void keyboardCallback(GLFWwindow *window, int key, int scancode, int action, int mods) const;
 
     /// Mapping from keys to actions.
     std::map<KeyCombination, ActionFun> mMapping;

@@ -181,23 +181,7 @@ public:
     /**
      * Poll gamepad events and call corresponding callbacks.
      */
-    void pollEvents()
-    {
-        sConnected.erase(std::remove_if(sConnected.begin(), sConnected.end(),
-                                        [] (const GamepadData &gamepad){ return !gamepad.isConnected(); }),
-                         sConnected.end());
-
-        for (GamepadData &gamepad : sConnected)
-        {
-            try
-            {
-                gamepad.pollEvents();
-            } catch (std::runtime_error &e)
-            {
-                std::cout << "Gamepad event polling failed : \n" << e.what() << std::endl;
-            }
-        }
-    }
+    void pollEvents();
 
     /**
      * Select this gamepad mapping as current.
@@ -226,48 +210,21 @@ public:
      * Check, if any of the controllers were already connected and
      * no connected events will be sent.
      */
-    static void checkAlreadyConnected()
-    {
-        for (u16 gamepadId = GLFW_JOYSTICK_1; gamepadId <= GLFW_JOYSTICK_LAST; ++gamepadId)
-        {
-            if (glfwJoystickPresent(gamepadId))
-            {
-                gamepadCallback(gamepadId, GLFW_CONNECTED);
-            }
-        }
-    }
+    static void checkAlreadyConnected();
 
     /**
      * Get number of joysticks for given gamepad.
      * @param gamepadId ID of the gamepad.
      * @return Number of joysticks.
      */
-    static u64 getNumberOfJoysticks(u16 gamepadId)
-    {
-        auto findIt{findGamepad(gamepadId)};
-        if (findIt != sConnected.end())
-        {
-            return findIt->numberOfJoysticks();
-        }
-
-        return 0;
-    }
+    static u64 getNumberOfJoysticks(u16 gamepadId);
 
     /**
      * Get number of buttons for given gamepad.
      * @param gamepadId ID of the gamepad.
      * @return Number of buttons.
      */
-    static u64 getNumberOfButtons(u16 gamepadId)
-    {
-        auto findIt{findGamepad(gamepadId)};
-        if (findIt != sConnected.end())
-        {
-            return findIt->numberOfButtons();
-        }
-
-        return 0;
-    }
+    static u64 getNumberOfButtons(u16 gamepadId);
 private:
     /// Helper structure for searching in map.
     struct KeyCombination
@@ -319,52 +276,7 @@ private:
         }
 
         /// Get values from gamepad and call corresponding callbacks.
-        void pollEvents()
-        {
-            const float *joystickValues{nullptr};
-            const unsigned char *buttonValues{nullptr};
-            const CallbackInformation &callbackInfo{callbacks()};
-
-            getValues(&joystickValues, &buttonValues);
-
-            // Process joystick events.
-            for (u32 iii = 0; iii < mJoystickValues.size(); ++iii)
-            {
-                if (std::abs(joystickValues[iii]) > callbackInfo.joystickDeadzone)
-                {
-                    decltype(callbackInfo.joystickMapping.begin()) search{callbackInfo.joystickMapping.find(iii)};
-                    if (search != callbackInfo.joystickMapping.end())
-                    { // We found an action!
-                        search->second(mId, joystickValues[iii]);
-                    }
-                    else if (callbackInfo.defaultJoystickAction)
-                    {
-                        callbackInfo.defaultJoystickAction(mId, iii, joystickValues[iii]);
-                    }
-                }
-            }
-
-            // Process button events.
-            for (u32 iii = 0; iii < mButtonValues.size(); ++iii)
-            {
-                int newState{buttonValues[iii]};
-                if (newState != mButtonValues[iii])
-                {
-                    decltype(callbackInfo.mapping.begin()) search{callbackInfo.mapping.find({iii, newState})};
-                    if (search != callbackInfo.mapping.end())
-                    { // We found an action!
-                        search->second(mId);
-                    }
-                    else if (callbackInfo.defaultAction)
-                    {
-                        callbackInfo.defaultAction(mId, iii, newState);
-                    }
-                }
-            }
-
-            copyJoystickValues(joystickValues);
-            copyButtonValues(buttonValues);
-        }
+        void pollEvents();
 
         /**
          * Get the number of joysticks.
@@ -427,30 +339,7 @@ private:
         }
 
         /// Initialize inner vectors.
-        void initVectors()
-        {
-            assertPresence();
-
-            i32 count{0};
-
-            // Get joystick values.
-            const float *joystickAxes{glfwGetJoystickAxes(mId, &count)};
-            if (count < 0)
-            {
-                throw std::runtime_error("Number of joystick axes on gamepad is negative!");
-            }
-            mJoystickValues.resize(static_cast<u32>(count));
-            copyJoystickValues(joystickAxes);
-
-            // Get button values.
-            const unsigned char *buttons{glfwGetJoystickButtons(mId, &count)};
-            if (count < 0)
-            {
-                throw std::runtime_error("Number of buttons on gamepad is negative!");
-            }
-            mButtonValues.resize(static_cast<u32>(count));
-            copyButtonValues(buttons);
-        }
+        void initVectors();
 
         /**
          * Checks, if gamepad is connected and that the number of axes on joysticks or buttons
@@ -458,23 +347,9 @@ private:
          * @param joystickValues Output, set to array filled with joystick values.
          * @param buttonValues Output, set to array filled with button values.
          */
-        void getValues(const float **joystickValues, const unsigned char **buttonValues)
-        {
-            i32 joystickCount{0};
-            i32 buttonCount{0};
+        void getValues(const float **joystickValues, const unsigned char **buttonValues);
 
-            assertPresence();
-            *joystickValues = glfwGetJoystickAxes(mId, &joystickCount);
-            *buttonValues = glfwGetJoystickButtons(mId, &buttonCount);
-
-            if (static_cast<u32>(joystickCount) != mJoystickValues.size() ||
-                static_cast<u32>(buttonCount) != mButtonValues.size())
-            {
-                throw std::runtime_error("Number of joystick axes or button axes on gamepad has changed!");
-            }
-        }
-
-        ///
+        /// Is this gamepad disconnected?
         bool mDisconnected{false};
         /// ID of the gamepad.
         u16 mId;
@@ -492,44 +367,7 @@ private:
      * @param joystick ID of the joystick.
      * @param event Event - GLFW_CONNECTED or GLFW_DISCONNECTED.
      */
-    static void gamepadCallback(int gamepad, int event)
-    {
-        std::cout << "Gamepad : " << gamepad << " ";
-        if (event == GLFW_CONNECTED)
-        {
-            std::cout << "has been connected!" << std::endl;
-            auto findIt{findGamepad(gamepad)};
-            if (findIt == sConnected.end())
-            { // Add gamepad to list of connected gamepads.
-                sConnected.emplace_back(gamepad, &sSelectedCallbacks);
-                std::cout << "Gamepad has been added, it has " << getNumberOfJoysticks(gamepad) << " joysticks and "
-                          << getNumberOfButtons(gamepad) << " buttons: " << sConnected.size() << " gamepads connected" << std::endl;
-            } else
-            {
-                std::cout << "But it was already connected?!?" << std::endl;
-            }
-        }
-        /*
-        else if (event == GLFW_DISCONNECTED)
-        {
-            std::cout << "has been disconnected!" << std::endl;
-
-            auto findIt{findGamepad(gamepad)};
-            if (findIt != sConnected.end())
-            { // Remove gamepad from list of connected gamepads.
-                sConnected.erase(findIt);
-                std::cout << "Gamepad has been removed: " << sConnected.size()<< " gamepads connected" << std::endl;
-            } else
-            {
-                std::cout << "But it was not connected?!?" << std::endl;
-            }
-        }
-        else
-        {
-            std::cout << "unknown event!" << std::endl;
-        }
-         */
-    }
+    static void gamepadCallback(int gamepad, int event);
 
     /**
      * Search for given gamepad amongst the connected gamepads.

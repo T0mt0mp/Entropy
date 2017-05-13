@@ -27,7 +27,7 @@ namespace ttf
         FontLetterIterator(0u, nullptr, nullptr)
     { }
 
-    FontLetterIterator::FontLetterIterator(i16 numContours, u16 *contourBegin, FontCoord *coordBegin) :
+    FontLetterIterator::FontLetterIterator(i16 numContours, const u16 *contourBegin, const FontCoord *coordBegin) :
         mNumContours{numContours}, mContourIterator{contourBegin}, mCoordIterator{coordBegin},
         mNumCoords{0u}, mRemainingContours{numContours}, mRemainingCoords{0u}
     {
@@ -99,13 +99,23 @@ namespace ttf
     bool FontLetterIterator::operator!=(const FontLetterIterator &rhs) const
     { return !(*this == rhs); }
 
-    FontLetter::FontLetter(i16 numContours, u16 *contourBegin, FontCoord *coordBegin) :
-        mNumContrours{numContours}, mContourBegin{contourBegin}, mCoordBegin{coordBegin}
+    FontLetter::FontLetter()
     { }
+
+    FontLetter::FontLetter(const FontHolder &holder, const FontMapping &mapping)
+    {
+        mNumContours = mapping.numContours;
+        mContourBegin = &holder.contours[mapping.contourIndex];
+        mCoordBegin = &holder.coordinates[mapping.coordinateIndex];
+        mXMin = mapping.xMin;
+        mYMin = mapping.yMin;
+        mXMax = mapping.xMax;
+        mYMax = mapping.yMax;
+    }
 
     FontLetterIterator FontLetter::begin() const
     {
-        return FontLetterIterator(mNumContrours, mContourBegin, mCoordBegin);
+        return FontLetterIterator(mNumContours, mContourBegin, mCoordBegin);
     }
 
     FontLetterIterator FontLetter::end() const
@@ -114,7 +124,16 @@ namespace ttf
     }
 
     bool FontLetter::valid() const
-    { return mNumContrours > 0; }
+    { return mNumContours > 0; }
+
+    FWord FontLetter::xMin() const
+    { return mXMin; }
+    FWord FontLetter::yMin() const
+    { return mYMin; }
+    FWord FontLetter::xMax() const
+    { return mXMax; }
+    FWord FontLetter::yMax() const
+    { return mYMax; }
 
     Font::Font()
     {
@@ -125,13 +144,12 @@ namespace ttf
     {
         if (character < 0 || character > CHAR_MAPPING)
         {
-            return FontLetter(0, nullptr, nullptr);
+            return FontLetter();
         }
 
         FontMapping &mapping = mHolder.mapping[character];
 
-        return FontLetter(mapping.numContours, &mHolder.contours[mapping.contourIndex],
-                          &mHolder.coordinates[mapping.coordinateIndex]);
+        return FontLetter(mHolder, mapping);
     }
 
     std::ostream &operator<<(std::ostream &out, const Font &font)

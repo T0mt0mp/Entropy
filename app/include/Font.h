@@ -37,6 +37,10 @@ namespace ttf
         std::size_t contourIndex;
         i16 numContours;
         std::size_t coordinateIndex;
+        FWord xMin;
+        FWord yMin;
+        FWord xMax;
+        FWord yMax;
         bool isMapped;
     };
 
@@ -53,7 +57,7 @@ namespace ttf
         /// End iterator
         FontLetterIterator();
         /// Begin iterator
-        FontLetterIterator(i16 numContours, u16 *contourBegin, FontCoord *coordBegin);
+        FontLetterIterator(i16 numContours, const u16 *contourBegin, const FontCoord *coordBegin);
 
         /// Move to next coordinate.
         FontLetterIterator &operator++();
@@ -66,8 +70,8 @@ namespace ttf
         bool operator!=(const FontLetterIterator &rhs) const;
     private:
         i16 mNumContours;
-        u16 *mContourIterator;
-        FontCoord *mCoordIterator;
+        const u16 *mContourIterator;
+        const FontCoord *mCoordIterator;
 
         u16 mNumCoords;
         i16 mRemainingContours;
@@ -79,16 +83,27 @@ namespace ttf
     class FontLetter
     {
     public:
-        FontLetter(i16 numContours, u16 *contourBegin, FontCoord *coordBegin);
+        FontLetter();
+        FontLetter(const FontHolder &holder, const FontMapping &mapping);
         FontLetterIterator begin() const;
         FontLetterIterator end() const;
 
         /// Returns true, if the letter is mapped.
         bool valid() const;
+
+        FWord xMin() const;
+        FWord yMin() const;
+        FWord xMax() const;
+        FWord yMax() const;
     private:
-        i16 mNumContrours;
-        u16 *mContourBegin;
-        FontCoord *mCoordBegin;
+        i16 mNumContours{0u};
+        const u16 *mContourBegin{nullptr};
+        const FontCoord *mCoordBegin{nullptr};
+
+        FWord mXMin{0};
+        FWord mYMin{0};
+        FWord mXMax{0};
+        FWord mYMax{0};
     protected:
     };
 

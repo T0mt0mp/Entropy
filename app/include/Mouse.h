@@ -205,24 +205,7 @@ private:
      * @param action GLFW_PRESS, GLFW_RELEASE or GLFW_REPEAT.
      * @param mods Key modifiers.
      */
-    void mouseCallback(GLFWwindow *window, int key, int action, int mods) const
-    {
-        decltype(mMapping.begin()) search{mMapping.find({key, mods, action})};
-
-        double xPos{0};
-        double yPos{0};
-
-        glfwGetCursorPos(window, &xPos, &yPos);
-
-        if (search != mMapping.end())
-        { // We found an action!
-            search->second(xPos, yPos);
-        }
-        else if (mDefaultAction)
-        {
-            mDefaultAction(window, key, action, mods, xPos, yPos);
-        }
-    }
+    void mouseCallback(GLFWwindow *window, int key, int action, int mods) const;
 
     /**
      * Called, when scrolling occurs.
@@ -230,18 +213,7 @@ private:
      * @param xOffset X offset of the scrolling.
      * @param yOffset Y offset of the scrolling.
      */
-    void scrollCallback(GLFWwindow *window, double xOffset, double yOffset) const
-    {
-        if (mScrollFun)
-        {
-            double xPos{0};
-            double yPos{0};
-
-            glfwGetCursorPos(window, &xPos, &yPos);
-
-            mScrollFun(xOffset, yOffset, xPos, yPos);
-        }
-    }
+    void scrollCallback(GLFWwindow *window, double xOffset, double yOffset) const;
 
     /**
      * Called, when position of the cursor is gained.

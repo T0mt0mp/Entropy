@@ -266,6 +266,10 @@ namespace ttf
         mapping.contourIndex = fh.contours.size();
         mapping.coordinateIndex = fh.coordinates.size();
         mapping.numContours = header.numberOfContours;
+        mapping.xMin = header.xMin;
+        mapping.yMin = header.yMin;
+        mapping.xMax = header.xMax;
+        mapping.yMax = header.yMax;
         mapping.isMapped = true;
 
         u16 numPoints{0u};
