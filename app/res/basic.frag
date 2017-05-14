@@ -5,9 +5,9 @@ in vec3 vertexPos;
 
 out vec3 color;
 
-uniform float negativeBorder = -0.8;
-uniform float positiveBorder = 0.8;
-uniform vec3 borderColor = vec3(0.1, 0.3, 1.0);
+uniform float negativeBorder = -0.9;
+uniform float positiveBorder = 0.9;
+uniform vec3 borderColor = vec3(0.46, 0.46, 0.82);
 
 void main()
 {

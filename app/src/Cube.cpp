@@ -72,6 +72,7 @@ const GLfloat Cube::VERTEX_BUFFER_DATA[] =
         1.0f, -1.0f, -1.0f,
     };
 
+/*
 #define COLOR1 0.24f, 0.19f, 0.46f
 #define COLOR2 0.18f, 0.26f, 0.45f
 #define COLOR3 0.37f, 0.32f, 0.22f
@@ -81,6 +82,19 @@ const GLfloat Cube::VERTEX_BUFFER_DATA[] =
 #define COLOR6 0.09f, 0.16f, 0.33f
 #define COLOR7 0.07f, 0.22f, 0.18f
 #define COLOR8 0.10f, 0.36f, 0.28f
+*/
+
+#define FIRST_COLOR 0.2f, 0.2f, 0.7f
+
+#define COLOR1 FIRST_COLOR
+#define COLOR2 FIRST_COLOR
+#define COLOR3 FIRST_COLOR
+#define COLOR4 FIRST_COLOR
+
+#define COLOR5 FIRST_COLOR
+#define COLOR6 FIRST_COLOR
+#define COLOR7 FIRST_COLOR
+#define COLOR8 FIRST_COLOR
 
 const GLfloat Cube::COLOR_BUFFER_DATA[] =
     {
