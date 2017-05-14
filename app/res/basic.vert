@@ -8,6 +8,7 @@ layout(location = 1) in vec3 vertColor;
 layout(location = 2) in mat4 model;
 
 out vec3 fragColor;
+out vec3 vertexPos;
 
 /// View-Projection matrix.
 uniform mat4 vp;
@@ -15,6 +16,7 @@ uniform mat4 vp;
 void main()
 {
     gl_Position = vp * model * vec4(vertexPosMS, 1.0);
+	vertexPos = vertexPosMS;
     fragColor = vertColor;
 }
 
