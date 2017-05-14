@@ -70,8 +70,9 @@ private:
     static constexpr f32 Y_SPACE{1.0f};
     static constexpr f32 Z_SPACE{1.0f};
 
-    static constexpr f32 TEXT_OFFSET_MULT{-2.0f};
+    static constexpr f32 TEXT_OFFSET_MULT{-1.5f};
     static constexpr f32 TEXT_OFFSET{0.5f};
+	static constexpr f32 Y_LEVEL{-1.5f};
     static constexpr f32 TEXT_SCALE_FACTOR{450.0f};
     static constexpr f32 SPEED_MULT{2.0f};
     static constexpr f64 MIN_CUBES{4.0};

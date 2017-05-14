@@ -136,7 +136,7 @@ void TextS::moveToText(const std::string &text)
     ASSERT_FAST(upc > 0.0);
     std::cout << upc << std::endl;
 
-    glm::vec3 letterPos{text.size() * TEXT_OFFSET_MULT, 0.0f, Z_LEVEL};
+    glm::vec3 letterPos{text.size() * TEXT_OFFSET_MULT, Y_LEVEL, Z_LEVEL};
 
     ASSERT_FAST(mSize * mSize * mSize == foreach().size());
 
